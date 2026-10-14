@@ -59,10 +59,20 @@
 <main class="page" id="page">
   <div class="map-wrap">
     <div id="map" class="map" role="img" aria-label="Map showing Holborn Mosque"></div>
-    <a class="map-pill" id="directions" href="#" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 3 10.53v.98l6.84 2.65L12.48 21h.98z"/></svg>
-      <span>Directions</span>
-    </a>
+    <nav class="map-controls" aria-label="Map">
+      <a id="ctl-report" href="#" aria-label="Report incorrect times">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="ctl-warn"><path d="M12 3.2 1.9 20.5h20.2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9.5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.1" fill="currentColor"/></svg>
+      </a>
+      <a id="ctl-map" href="#" target="_blank" rel="noopener" aria-label="Open in maps">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z M9 4v13.5 M15 6.5V20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+      </a>
+      <a id="ctl-walk" href="#" target="_blank" rel="noopener" aria-label="Walking directions">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 3.5 3.5 10.6l7.2 2.7 2.7 7.2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+      </a>
+      <a id="ctl-drive" href="#" target="_blank" rel="noopener" aria-label="Driving directions">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.6 6.2C6 5 7 4.3 8.2 4.3h7.6c1.2 0 2.2.7 2.6 1.9L20 10.6c.9.4 1.5 1.3 1.5 2.3v4.6c0 .6-.4 1-1 1h-1.2v1.4c0 .6-.4 1-1 1h-1.6c-.6 0-1-.4-1-1v-1.4H8.3v1.4c0 .6-.4 1-1 1H5.7c-.6 0-1-.4-1-1v-1.4H3.5c-.6 0-1-.4-1-1v-4.6c0-1 .6-1.9 1.5-2.3zm1.7 4.1h9.4l-1-3.1c-.1-.4-.5-.6-.9-.6H9.2c-.4 0-.8.2-.9.6zM6.2 15.6a1.4 1.4 0 1 0 0-2.8 1.4 1.4 0 0 0 0 2.8zm11.6 0a1.4 1.4 0 1 0 0-2.8 1.4 1.4 0 0 0 0 2.8z"/></svg>
+      </a>
+    </nav>
   </div>
 
   <section class="content">

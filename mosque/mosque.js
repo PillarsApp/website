@@ -8,7 +8,7 @@
   var masjid = data.masjid;
   var tz = masjid.timezone;
   var params = new URLSearchParams(location.search);
-  var use24h = params.get('clock') === '24';
+  var use24h = params.get('clock') !== '12';
   var COL = use24h ? 64 : 86;
 
   var PRAYERS = [
@@ -69,16 +69,19 @@
   }
 
   var gregFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' });
-  var hijriDay = new Intl.DateTimeFormat('en-GB-u-ca-islamic-umalqura', { timeZone: 'UTC', day: 'numeric' });
-  var hijriMonth = new Intl.DateTimeFormat('en-GB-u-ca-islamic-umalqura', { timeZone: 'UTC', month: 'long' });
+  // App month names (app_en.arb hijriMonth*). Umm al-Qura calendar.
+  var HIJRI_MONTHS = ['Muharram', 'Safar', 'Rabi al-Awwal', 'Rabi al-Thani', 'Jumada al-Awwal', 'Jumada al-Thani',
+    'Rajab', "Sha'ban", 'Ramadan', 'Shawwal', "Dhul-Qa'dah", 'Dhul-Hijjah'];
+  var hijriFmt = new Intl.DateTimeFormat('en-GB-u-ca-islamic-umalqura-nu-latn', { timeZone: 'UTC', day: 'numeric', month: 'numeric', year: 'numeric' });
 
+  // "4 Jumada al-Awwal 1448". After Maghrib the Islamic day has turned, so
+  // today's page shows the next Hijri date (hijri_date_widget.dart).
   function hijriLabel(ymd, afterSunset) {
     var d = dateObj(ymd);
-    var day = hijriDay.format(d), month = hijriMonth.format(d);
-    if (!afterSunset) return day + ' ' + month;
-    var next = new Date(d.getTime() + 864e5);
-    var nDay = hijriDay.format(next), nMonth = hijriMonth.format(next);
-    return nMonth === month ? day + '/' + nDay + ' ' + month : nDay + ' ' + nMonth;
+    if (afterSunset) d = new Date(d.getTime() + 864e5);
+    var p = {};
+    hijriFmt.formatToParts(d).forEach(function (x) { p[x.type] = x.value; });
+    return parseInt(p.day, 10) + ' ' + HIJRI_MONTHS[parseInt(p.month, 10) - 1] + ' ' + parseInt(p.year, 10);
   }
 
   // ---------- State ----------
@@ -90,15 +93,15 @@
   var $ = function (id) { return document.getElementById(id); };
   var body = document.body;
 
-  // ---------- Theme: night after Maghrib until Fajr; Fajr theme until sunrise ----------
+  // ---------- Theme: AUTO setting = night from Maghrib until sunrise ----------
+  // (prayers_screen.dart _computeIsNight; the pink Fajr theme is supporters-only.)
   function applyTheme() {
     var forced = params.get('theme');
     var t = days[todayIdx].athan;
     var n = localNow().secs;
     var theme = 'day';
     if (forced) theme = forced;
-    else if (n >= toSecs(t.maghrib) || n < toSecs(t.fajr)) theme = 'night';
-    else if (n < toSecs(t.sunrise)) theme = 'fajr';
+    else if (n >= toSecs(t.maghrib) || n < toSecs(t.sunrise)) theme = 'night';
     body.classList.toggle('theme-night', theme === 'night');
     body.classList.toggle('theme-fajr', theme === 'fajr');
     return theme;
@@ -228,7 +231,11 @@
   $('next').addEventListener('click', function () { if (selected < days.length - 1) { selected++; render(); } });
   $('chip').addEventListener('click', function () { if (selected !== todayIdx) { selected = todayIdx; render(); } });
 
-  $('directions').href = 'https://www.google.com/maps/dir/?api=1&destination=' + masjid.lat + ',' + masjid.lng;
+  var dest = masjid.lat + ',' + masjid.lng;
+  $('ctl-map').href = 'https://www.google.com/maps/search/?api=1&query=' + dest;
+  $('ctl-walk').href = 'https://www.google.com/maps/dir/?api=1&travelmode=walking&destination=' + dest;
+  $('ctl-drive').href = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + dest;
+  $('ctl-report').href = 'mailto:support@thepillarsapp.com?subject=' + encodeURIComponent('Incorrect times: ' + masjid.name + ' (' + masjid.id + ')');
 
   $('share').addEventListener('click', function () {
     var text = 'Prayer & Iqama Times for ' + masjid.name;
