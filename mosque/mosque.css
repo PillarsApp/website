@@ -1,0 +1,278 @@
+/* Mosque prayer times page. Mirrors the Pillars app's single-mosque page
+   (prayers_screen.dart _buildMosquePageBody + masjid_timetable_list.dart). */
+
+:root {
+  --deep-blue: #00193E;
+  --standard-blue: #062447;
+  --navy-ink: #001A3E;
+  --gold: #FBBC91;
+  --separator: rgba(191, 197, 207, .30);
+  --red: #D00206;
+
+  /* Day theme (default) */
+  --bg: #FFFFFF;
+  --bg-gradient: linear-gradient(180deg, #C5DFF1 0, #C5DFF1 10vh, #FFFFFF 37vh);
+  --ink: var(--deep-blue);
+  --accent: var(--deep-blue);         /* chip text, date */
+  --chip-border: var(--standard-blue);
+  --arrow: #002449;
+  --hijri: #F9A68E;
+  --quiet: #A6AFBB;                   /* deepBlue @35% over white */
+  --quiet-text: var(--navy-ink);
+  --body: #8493A4;
+  --pill-bg: rgba(6, 36, 71, .04);
+  --pill-ink: #808080;
+  --map-pill-bg: rgba(255, 255, 255, .8);
+  --cta-ink: #FFFFFF;
+}
+
+body.theme-fajr {
+  --bg-gradient: linear-gradient(180deg, #FFCBCB 0, #FFCBCB 10vh, #FFFFFF 37vh);
+}
+
+body.theme-night {
+  --bg: var(--standard-blue);
+  --bg-gradient: linear-gradient(180deg, #031831 0, #031831 30vh, #062447 60vh);
+  --ink: #FFFFFF;
+  --accent: var(--gold);
+  --chip-border: var(--gold);
+  --arrow: var(--gold);
+  --hijri: var(--gold);
+  --quiet: #596A81;                   /* white @35% over navy */
+  --quiet-text: #FFFFFF;
+  --body: #C0C0C0;
+  --pill-bg: rgba(255, 255, 255, .04);
+  --map-pill-bg: rgba(0, 0, 0, .45);
+  --cta-ink: var(--deep-blue);
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: 'Poppins', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg-gradient), var(--bg);
+  background-color: var(--bg);
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color .52s ease-in-out, color .26s;
+}
+
+.page {
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ---------- Map header ---------- */
+.map-wrap {
+  position: relative;
+  height: clamp(200px, 30vh, 300px);
+}
+
+.map {
+  position: absolute;
+  inset: 0 0 -36px 0;  /* bottomOverlap: runs under the chip */
+  -webkit-mask-image: linear-gradient(180deg, #000 0, #000 calc(100% - 130px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0, #000 calc(100% - 130px), transparent 100%);
+  background: transparent;
+}
+body.theme-night .map {
+  -webkit-mask-image: linear-gradient(180deg, #000 0, #000 calc(100% - 170px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0, #000 calc(100% - 170px), transparent 100%);
+}
+.map .leaflet-tile-pane { filter: grayscale(.85) brightness(1.04) contrast(.92); }
+body.theme-night .map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) grayscale(.6) brightness(.8) contrast(.9); }
+.map .leaflet-control-attribution {
+  font: 9px 'Poppins', sans-serif;
+  background: transparent;
+  color: var(--body);
+  margin-bottom: 40px;
+}
+.map .leaflet-control-attribution a { color: inherit; }
+
+.pin {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: #062447;
+  display: grid; place-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+}
+.pin svg { width: 16px; height: 16px; fill: #FFFFFF; }
+body.theme-night .pin { background: #FFFFFF; }
+body.theme-night .pin svg { fill: var(--deep-blue); }
+
+.map-pill {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 500;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--map-pill-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--accent);
+  font: 600 15px/1 'Poppins', sans-serif;
+  text-decoration: none;
+}
+body.theme-night .map-pill { color: #FFFFFF; }
+body:not(.theme-night) .map-pill { color: var(--deep-blue); }
+.map-pill svg { width: 16px; height: 16px; fill: currentColor; }
+
+/* ---------- Content ---------- */
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 0 20px 40px;
+  text-align: center;
+}
+
+/* TODAY | (mosque) Name chip — today_widget.dart */
+.chip {
+  display: inline-flex; align-items: center;
+  margin: 0;
+  min-height: 22px;
+  padding: 1px 5px;
+  border: 1px solid var(--chip-border);
+  border-radius: 4px;
+  color: var(--accent);
+  font: 700 11px/1.5 'Poppins', sans-serif;
+  max-width: calc(100% - 140px);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.chip-bar { margin: 0 4px; }
+.chip-icon { width: 10px; height: 10px; fill: currentColor; flex: none; }
+.chip-name { margin-left: 4px; overflow: hidden; }
+
+/* Date row */
+.date-row {
+  margin-top: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+.arrow {
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border: 0; background: none; padding: 0;
+  color: var(--arrow);
+  cursor: pointer;
+}
+.arrow svg { width: 12px; height: 17px; }
+.arrow:disabled { opacity: .25; cursor: default; }
+.date-col {
+  width: 250px; min-height: 50px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.date-greg { font-weight: 500; font-size: 16px; line-height: 1.4; color: var(--accent); }
+.date-hijri { font-weight: 500; font-size: 14px; line-height: 1.4; color: var(--hijri); }
+
+/* ---------- Timetable — masjid_timetable_list.dart ---------- */
+.timetable { margin-top: 10px; text-align: left; }
+
+.warn {
+  margin: 0 16px 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
+  font-size: 11px; font-weight: 500;
+}
+
+.head {
+  position: relative;
+  display: flex; justify-content: flex-end; gap: 5px;
+  padding: 10px 16px 2.5px;
+}
+.head::before {
+  content: ''; position: absolute; left: 16px; right: 16px; top: calc(10px + 7px);
+  height: 1px; background: var(--separator);
+}
+.head-chip {
+  position: relative;
+  width: var(--col); text-align: right;
+}
+.head-chip span {
+  display: inline-block;
+  padding: 1.5px 7px;
+  border-radius: 20px;
+  background: var(--quiet);
+  color: var(--quiet-text);
+  font: 700 9px/1.25 'Poppins', sans-serif;
+  letter-spacing: 1.1px;
+}
+
+.row {
+  display: flex; align-items: center; gap: 5px;
+  padding: 14px 16px;
+  font-size: 17px; font-weight: 500; letter-spacing: .5px;
+  line-height: 1.3;
+}
+.row .name { flex: 1; min-width: 0; white-space: nowrap; }
+.row .t { width: var(--col); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.row .countdown {
+  color: var(--quiet);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+}
+.row.finished { opacity: .35; }
+.row.current {
+  border: 3px solid var(--ink);
+  border-radius: 10px;
+  padding: 14px 13px;
+  font-weight: 600;
+}
+
+.sep {
+  height: 1px;
+  margin: 2.5px 16px;
+  background: var(--separator);
+}
+.sep.hidden { visibility: hidden; }
+
+.load-error { text-align: center; padding: 24px 0; color: color-mix(in srgb, var(--ink) 80%, transparent); }
+
+/* ---------- Action pills — masjid_page_actions.dart ---------- */
+.actions {
+  padding-top: 15px;
+  display: flex; justify-content: center; gap: 14px;
+}
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px;
+  border: 0; border-radius: 15px;
+  background: var(--pill-bg);
+  color: var(--pill-ink);
+  font: 400 14px/1.4 'Poppins', sans-serif;
+  cursor: pointer;
+}
+.pill svg { width: 16px; height: 16px; fill: currentColor; }
+
+/* ---------- App CTA — masjid_page_message.dart style ---------- */
+.cta { margin-top: 48px; }
+.cta-title { margin: 0; font-weight: 500; font-size: 16px; color: var(--ink); }
+.cta-body { margin: 8px 0 0; font-weight: 500; font-size: 15px; line-height: 1.4; color: var(--body); }
+.cta-btn {
+  display: inline-block;
+  margin-top: 19px;
+  padding: 12px 28px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--cta-ink);
+  font: 600 15px/1.2 'Poppins', sans-serif;
+  text-decoration: none;
+}
+
+.about {
+  margin: 40px 0 0;
+  font-size: 12px; line-height: 1.6;
+  color: var(--body);
+}

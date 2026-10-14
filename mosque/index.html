@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Holborn Mosque Prayer Times Today – Athan &amp; Iqama | Pillars</title>
+<meta name="description" content="Today's prayer times for Holborn Mosque, London: Fajr, Dhuhr, Asr, Maghrib and Isha athan and iqama (jamaah) times, plus Jumuah. Updated daily by Pillars.">
+<link rel="canonical" href="https://thepillarsapp.com/mosques/holborn-mosque">
+<meta property="og:title" content="Holborn Mosque Prayer Times Today">
+<meta property="og:description" content="Athan and iqama times for Holborn Mosque, London. Updated daily.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#062447" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#C5DFF1" media="(prefers-color-scheme: light)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="mosque.css">
+
+<!-- Template data. Shape mirrors the masjid-times API (/v1/masjids/:id + /timetable).
+     SAMPLE DATA: the mosque and its times are placeholders until pages are generated from the API. -->
+<script id="mosque-data" type="application/json">
+{
+  "masjid": {
+    "id": "plr_sample_holborn",
+    "name": "Holborn Mosque",
+    "address": "Holborn",
+    "city": "London",
+    "postcode": "WC1",
+    "country": "GB",
+    "lat": 51.5174,
+    "lng": -0.1200,
+    "timezone": "Europe/London"
+  },
+  "times_reliable": true,
+  "days": [
+    {"date":"2026-10-14","athan":{"fajr":"05:47","sunrise":"07:22","dhuhr":"12:53","asr":"15:38","maghrib":"18:14","isha":"19:44"},"iqamah":{"fajr":"06:15","dhuhr":"13:30","asr":"16:00","maghrib":"18:19","isha":"20:00"},"jummah":["13:00","13:45"]},
+    {"date":"2026-10-15","athan":{"fajr":"05:49","sunrise":"07:24","dhuhr":"12:53","asr":"15:36","maghrib":"18:12","isha":"19:42"},"iqamah":{"fajr":"06:15","dhuhr":"13:30","asr":"16:00","maghrib":"18:17","isha":"20:00"},"jummah":["13:00","13:45"]},
+    {"date":"2026-10-16","athan":{"fajr":"05:50","sunrise":"07:25","dhuhr":"12:53","asr":"15:35","maghrib":"18:10","isha":"19:40"},"iqamah":{"fajr":"06:15","dhuhr":"13:30","asr":"16:00","maghrib":"18:15","isha":"20:00"},"jummah":["13:00","13:45"]},
+    {"date":"2026-10-17","athan":{"fajr":"05:52","sunrise":"07:27","dhuhr":"12:52","asr":"15:33","maghrib":"18:08","isha":"19:38"},"iqamah":{"fajr":"06:15","dhuhr":"13:30","asr":"16:00","maghrib":"18:13","isha":"20:00"},"jummah":["13:00","13:45"]},
+    {"date":"2026-10-18","athan":{"fajr":"05:53","sunrise":"07:29","dhuhr":"12:52","asr":"15:31","maghrib":"18:06","isha":"19:36"},"iqamah":{"fajr":"06:20","dhuhr":"13:30","asr":"15:50","maghrib":"18:11","isha":"19:50"},"jummah":["13:00","13:45"]},
+    {"date":"2026-10-19","athan":{"fajr":"05:55","sunrise":"07:31","dhuhr":"12:52","asr":"15:30","maghrib":"18:04","isha":"19:34"},"iqamah":{"fajr":"06:20","dhuhr":"13:30","asr":"15:50","maghrib":"18:09","isha":"19:50"},"jummah":["13:00","13:45"]},
+    {"date":"2026-10-20","athan":{"fajr":"05:56","sunrise":"07:32","dhuhr":"12:52","asr":"15:28","maghrib":"18:02","isha":"19:32"},"iqamah":{"fajr":"06:20","dhuhr":"13:30","asr":"15:50","maghrib":"18:07","isha":"19:50"},"jummah":["13:00","13:45"]}
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Mosque",
+  "name": "Holborn Mosque",
+  "address": {"@type": "PostalAddress", "addressLocality": "London", "streetAddress": "Holborn", "postalCode": "WC1", "addressCountry": "GB"},
+  "geo": {"@type": "GeoCoordinates", "latitude": 51.5174, "longitude": -0.1200},
+  "url": "https://thepillarsapp.com/mosques/holborn-mosque"
+}
+</script>
+</head>
+<body>
+<main class="page" id="page">
+  <div class="map-wrap">
+    <div id="map" class="map" role="img" aria-label="Map showing Holborn Mosque"></div>
+    <a class="map-pill" id="directions" href="#" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 3 10.53v.98l6.84 2.65L12.48 21h.98z"/></svg>
+      <span>Directions</span>
+    </a>
+  </div>
+
+  <section class="content">
+    <h1 class="chip" id="chip">
+      <span class="chip-today">TODAY</span><span class="chip-bar" aria-hidden="true">|</span>
+      <svg class="chip-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10c.29 0 .57.06.84.13.09-.33.16-.67.16-1.04 0-1.31-.65-2.53-1.74-3.25L12 1 7.74 3.84C6.65 4.56 6 5.78 6 7.09c0 .37.07.71.16 1.04.27-.07.55-.13.84-.13zm17-1c0-1.1-2-3-2-3s-2 1.9-2 3c0 .74.4 1.38 1 1.72V13h-2v-2c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v2H3V8.72c.6-.34 1-.98 1-1.72 0-1.1-2-3-2-3S0 5.9 0 7c0 .74.4 1.38 1 1.72V21h9v-4c0-1.1.9-2 2-2s2 .9 2 2v4h9V8.72c.6-.34 1-.98 1-1.72z"/></svg>
+      <span class="chip-name" id="chip-name">Holborn Mosque</span><span class="sr-only"> prayer times</span>
+    </h1>
+
+    <div class="date-row">
+      <button class="arrow" id="prev" aria-label="Previous day">
+        <svg viewBox="0 0 12 17" aria-hidden="true"><path d="M9.5 2 3 8.5 9.5 15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/></svg>
+      </button>
+      <div class="date-col">
+        <div class="date-greg" id="date-greg"></div>
+        <div class="date-hijri" id="date-hijri"></div>
+      </div>
+      <button class="arrow" id="next" aria-label="Next day">
+        <svg viewBox="0 0 12 17" aria-hidden="true" style="transform:scaleX(-1)"><path d="M9.5 2 3 8.5 9.5 15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/></svg>
+      </button>
+    </div>
+
+    <div class="timetable" id="timetable" aria-live="polite"></div>
+
+    <div class="actions">
+      <button class="pill" id="share">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5l-1.42 1.42-1.59-1.59V16h-1.98V4.83L9.42 6.42 8 5l4-4 4 4zm4 5v11c0 1.1-.9 2-2 2H6c-1.11 0-2-.9-2-2V10c0-1.11.89-2 2-2h3v2H6v11h12V10h-3V8h3c1.1 0 2 .89 2 2z"/></svg>
+        <span id="share-label">SHARE</span>
+      </button>
+    </div>
+
+    <div class="cta">
+      <h2 class="cta-title">Get Holborn Mosque times on your phone</h2>
+      <p class="cta-body">Prayer &amp; Iqama times for your local mosque, a live countdown to the next jamaah and the athan, all in the Pillars app.</p>
+      <a class="cta-btn" href="https://pillars.app.link/mosque">Get Pillars</a>
+    </div>
+
+    <p class="about">
+      Holborn Mosque, Holborn, London WC1. Athan times show when each prayer begins; iqama times show when the congregation (jamaah) starts. Times are in UK time and update daily.
+    </p>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="mosque.js"></script>
+</body>
+</html>
