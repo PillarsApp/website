@@ -168,7 +168,7 @@
     if (data.times_reliable === false) {
       html += '<div class="warn">The prayer times from this mosque seem incorrect. Please verify prayer times with the mosque directly.</div>';
     }
-    html += '<div class="head"><div class="head-chip"><span>ATHAN</span></div><div class="head-chip"><span>IQAMA</span></div></div>';
+    html += '<div class="head' + (current === 0 ? ' on-border' : '') + '"><div class="head-inner"><div class="head-chip"><span>ATHAN</span></div><div class="head-chip"><span>IQAMA</span></div></div></div>';
 
     rows.forEach(function (r, i) {
       var finished = isPast;
@@ -247,6 +247,20 @@
         setTimeout(function () { $('share-label').textContent = 'SHARE'; }, 2500);
       });
     }
+  });
+
+  // ---------- Floating app banner ----------
+  var banner = $('app-banner');
+  var BANNER_KEY = 'pillars-mosque-banner-closed';
+  try { if (localStorage.getItem(BANNER_KEY)) banner.hidden = true; } catch (e) {}
+  if (/android/i.test(navigator.userAgent)) {
+    $('ab-get').href = 'https://play.google.com/store/apps/details?id=com.pillars.pillars';
+    banner.querySelector('.ab-meta').textContent = 'Pillars · Free on Google Play';
+  }
+  $('ab-close').addEventListener('click', function () {
+    banner.classList.add('hidden');
+    setTimeout(function () { banner.hidden = true; }, 300);
+    try { localStorage.setItem(BANNER_KEY, '1'); } catch (e) {}
   });
 
   render();
