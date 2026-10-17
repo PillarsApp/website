@@ -1,0 +1,7 @@
+{
+  "name": "pillars-city-pages",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node build.mjs" },
+  "dependencies": { "adhan": "4.4.3" }
+}

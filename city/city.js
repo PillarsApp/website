@@ -408,6 +408,28 @@
     $('list').innerHTML = html;
   }
 
+  // ---------- Pre-rendered SEO content (build.mjs) ----------
+  // The page ships with the build day's times as HTML. If the visitor's "today"
+  // differs (stale build, or the page left open past midnight), refresh the
+  // today-values and the timetable highlight; the "Updated" stamp stays true.
+  var longFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  function each(sel, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), fn); }
+  function syncSeo() {
+    var answer = $('answer');
+    if (answer && answer.getAttribute('data-date') !== todayYmd) {
+      var t = dayFor(todayYmd).t;
+      answer.setAttribute('data-date', todayYmd);
+      each('[data-today]', function (n) { n.textContent = formatTime(t[+n.getAttribute('data-today')]); });
+      each('[data-today-date]', function (n) { n.textContent = longFmt.format(dateObj(todayYmd)).replace(',', ''); });
+      each('[data-today-hijri]', function (n) { n.textContent = hijriLabel(todayYmd, false); });
+    }
+    each('.timetable tr[data-date]', function (r) {
+      var on = r.getAttribute('data-date') === todayYmd;
+      r.classList.toggle('today', on);
+      if (on) r.setAttribute('aria-current', 'date'); else r.removeAttribute('aria-current');
+    });
+  }
+
   function render() {
     var now = nowMs();
     var newToday = ymdOf(now);
@@ -416,6 +438,7 @@
     renderHeader(now);
     renderCurve(now);
     renderDay(now);
+    syncSeo();
   }
 
   // ---------- Wiring ----------
