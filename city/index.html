@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prayer Times London Today – Fajr, Dhuhr, Asr, Maghrib, Isha | Pillars</title>
+<meta name="description" content="Today's prayer times in London: Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha, with a live countdown to the next prayer. Calculated daily by Pillars.">
+<link rel="canonical" href="https://thepillarsapp.com/prayer-times/london">
+<meta property="og:title" content="Prayer Times London Today">
+<meta property="og:description" content="Fajr, Dhuhr, Asr, Maghrib and Isha times for London, with a countdown to the next prayer.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#062447" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#C5DFF1" media="(prefers-color-scheme: light)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="city.css">
+
+<!-- Template data: one city per page. Times are calculated in the browser with
+     the adhan library, using the app's defaults for this country.
+     method: an adhan CalculationMethod name. App country -> method map
+     (prayer_time_manager.dart countryCodeToParamMap), for when more cities land:
+       us, ca: NorthAmerica · sa: UmmAlQura · qa: Qatar · eg, lb: Egyptian ·
+       pk, in: Karachi · ae: Dubai · kw: Kuwait · sg: Singapore · tr: Turkey ·
+       au, nl, za: MuslimWorldLeague · fr, ma: custom 18/18 · id, my: custom 20/18 ·
+       be, jo, tn: custom 18/17 · everything else (incl. gb): MoonsightingCommittee.
+     The app always uses Shafi Asr by default and the TwilightAngle high-latitude rule. -->
+<script id="city-data" type="application/json">
+{
+  "name": "London",
+  "country": "GB",
+  "lat": 51.5072,
+  "lng": -0.1276,
+  "timezone": "Europe/London",
+  "method": "MoonsightingCommittee",
+  "madhab": "Shafi",
+  "highLatitudeRule": "TwilightAngle"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Prayer Times London Today",
+  "url": "https://thepillarsapp.com/prayer-times/london",
+  "about": {
+    "@type": "City",
+    "name": "London",
+    "address": {"@type": "PostalAddress", "addressLocality": "London", "addressCountry": "GB"},
+    "geo": {"@type": "GeoCoordinates", "latitude": 51.5072, "longitude": -0.1276}
+  }
+}
+</script>
+</head>
+<body>
+<div class="page-gradient" aria-hidden="true"></div>
+
+<div class="sky" id="sky" aria-hidden="true">
+  <svg class="sun" id="sun" xmlns="http://www.w3.org/2000/svg">
+    <circle id="sun3" r="140" fill="#EDC798" fill-opacity=".3"/>
+    <circle id="sun2" r="90" fill="#F0A852" fill-opacity=".5626"/>
+    <circle id="sun1" r="80" fill="#F1A853"/>
+  </svg>
+  <svg class="moon" id="moon" xmlns="http://www.w3.org/2000/svg">
+    <g id="stars"></g>
+    <circle id="moon3" r="90" fill="#FFFFFF" fill-opacity=".3"/>
+    <circle id="moon2" r="60" fill="#FFFFFF" fill-opacity=".56"/>
+    <circle id="moon1" r="40" fill="#FFFFFF"/>
+  </svg>
+</div>
+
+<main class="page" id="page">
+  <div class="screen">
+  <header class="now" id="now">
+    <p class="current-name" id="current-name">&nbsp;</p>
+    <p class="countdown" id="countdown" aria-live="off">&nbsp;</p>
+  </header>
+
+  <div class="curve-box" aria-hidden="true">
+    <img class="tree" id="tree" src="assets/tree_two.png" alt="" width="36" height="63">
+    <svg class="curve" id="curve" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <section class="content">
+    <h1 class="chip" id="chip">
+      <span class="chip-today">TODAY | </span>
+      <svg class="chip-icon" viewBox="0 0 23 23" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M0.755196 8.8346L21.7285 -0.038704C21.9775 -0.144081 22.2587 -0.144081 22.5077 -0.038704C23.0164 0.17649 23.2543 0.76327 23.0391 1.2719L14.1658 22.2452C14.0434 22.5345 13.7921 22.7495 13.4873 22.8257C12.9515 22.9596 12.4086 22.6339 12.2747 22.0981L10.0002 13.0002L0.9023 10.7257C0.597527 10.6495 0.346275 10.4345 0.223868 10.1452C0.0086761 9.6366 0.246559 9.0498 0.755196 8.8346z"/></svg>
+      <span class="chip-name" id="chip-name">&nbsp;London</span><span class="sr-only"> prayer times</span>
+    </h1>
+
+    <div class="date-row">
+      <button class="arrow" id="prev" aria-label="Previous day">
+        <svg viewBox="0 0 12 17" aria-hidden="true"><path d="M9.5 2 3 8.5 9.5 15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/></svg>
+      </button>
+      <div class="date-col">
+        <div class="date-greg" id="date-greg"></div>
+        <div class="date-hijri" id="date-hijri"></div>
+      </div>
+      <button class="arrow" id="next" aria-label="Next day">
+        <svg viewBox="0 0 12 17" aria-hidden="true" style="transform:scaleX(-1)"><path d="M9.5 2 3 8.5 9.5 15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/></svg>
+      </button>
+    </div>
+
+    <div class="list" id="list" aria-live="polite"></div>
+  </section>
+  </div>
+
+  <p class="about" id="about">
+    Prayer times for London, United Kingdom, calculated with the Moonsighting Committee method (Fajr and Isha at 18°) and the Shafi Asr, the defaults Pillars uses in the UK. Times are in UK time and update daily.
+  </p>
+</main>
+
+<aside class="app-banner" id="app-banner" aria-label="Get the Pillars app">
+  <button class="ab-close" id="ab-close" aria-label="Close">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+  </button>
+  <img class="ab-icon" src="../assets/icon-pillars-notification.png" alt="" width="52" height="52">
+  <div class="ab-text">
+    <div class="ab-title" id="ab-title">Get London prayer times on your phone</div>
+    <div class="ab-meta">Pillars · Free on the App Store</div>
+  </div>
+  <a class="ab-get" id="ab-get" href="https://pillars.app.link/city">GET</a>
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/adhan@4.4.3/lib/bundles/adhan.umd.min.js"></script>
+<script src="city.js"></script>
+</body>
+</html>
