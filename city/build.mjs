@@ -163,7 +163,7 @@ const mosques = (mosqueData ? mosqueData.mosques : []).map((m) => {
 });
 
 // ---------- head ----------
-const title = `${city.name} Prayer Times Today – Fajr, Dhuhr, Asr, Maghrib, Isha | ${SITE.name}`;
+const title = `${city.name} Prayer Times Today – Salah Times, Fajr to Isha | ${SITE.name}`;
 const description = `${city.name} prayer times today, ${longDate(date)}: ${timesText}. Monthly timetable and calculation method.`;
 const ld = {
   '@context': 'https://schema.org',
@@ -220,7 +220,7 @@ const head = `<title>${esc(title)}</title>
 ${JSON.stringify(cityData, null, 2)}
 </script>
 <script type="application/ld+json">
-${JSON.stringify(ld, null, 2)}
+__LD__
 </script>`;
 
 // ---------- app replica: same markup city.js renders at the build moment ----------
@@ -323,10 +323,28 @@ const faq = [
   [`Why is Isha so late in ${city.name} in summer?`,
     `${city.name} is far enough north that the sky barely gets fully dark around midsummer. On ${longDate(mid)}, Fajr is at ${fmt(midT[0])}, Maghrib at ${fmt(midT[4])} and Isha at ${fmt(midT[5])}. The ${methodName} method applies seasonal limits so Isha and Fajr stay at a practical time.`],
 ];
+// Qibla: initial great-circle bearing from the city to the Kaaba.
+const KAABA = [21.4225, 39.8262];
+const qibla = (() => {
+  const r = Math.PI / 180, [p1, p2] = [city.lat * r, KAABA[0] * r], dl = (KAABA[1] - city.lng) * r;
+  const b = Math.atan2(Math.sin(dl) * Math.cos(p2), Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl));
+  return Math.round((b / r + 360) % 360);
+})();
+const compass = ['north', 'north-northeast', 'northeast', 'east-northeast', 'east', 'east-southeast', 'southeast', 'south-southeast',
+  'south', 'south-southwest', 'southwest', 'west-southwest', 'west', 'west-northwest', 'northwest', 'north-northwest'][Math.round(qibla / 22.5) % 16];
+faq.push([`What is the Qibla direction in ${city.name}?`,
+  `The Qibla from ${city.name} is ${qibla}° from true north, roughly ${compass}. That is the shortest path across the globe to the Kaaba in Makkah, which is why it points ${compass} rather than straight towards Saudi Arabia on a flat map.`]);
 if (clockChange) {
   faq.push([`Are these times in GMT or BST?`,
     `All times are ${country.name} local time, currently ${nowAbbr}. The clocks change on ${longDate(clockChange)}; from that day the times are in ${tzAbbr(noonUTC(clockChange))}, and the timetable already accounts for it.`]);
 }
+
+// FAQPage schema mirrors the visible FAQ word for word (answers as plain text).
+const plain = (h) => h.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+ld['@graph'].push({
+  '@type': 'FAQPage', '@id': `${url}#faq`,
+  mainEntity: faq.map(([q, a, raw]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: plain(raw ? a : esc(a)) } })),
+});
 
 const P5 = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const K5 = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
@@ -428,7 +446,7 @@ html = html.replace(/href="city\.css(\?v=[^"]*)?"/, `href="city.css?v=${ver('cit
   .replace(/src="city\.js(\?v=[^"]*)?"/, `src="city.js?v=${ver('city.js')}"`);
 html = html.replace(/<ul class="list" id="list"[^>]*>/, `<ul class="list" id="list" aria-label="${esc(city.name)} prayer times today">`);
 html = html.replace(/<html lang="[^"]*">/, `<html lang="${country.lang}">`);
-region('head', head);
+region('head', head.replace('__LD__', () => JSON.stringify(ld, null, 2)));
 region('chip', chip);
 region('date', dateBlock);
 region('list', list);
