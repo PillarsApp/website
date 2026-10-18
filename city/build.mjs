@@ -157,7 +157,7 @@ let list = '<div class="sep"></div>';
 for (let i = 0; i < 6; i++) {
   list += `<div class="row" aria-label="${NAMES[i]}, ${hm(today[i])}"><span class="name">${NAMES[i]}</span><span class="t">${hm(today[i])}</span><span class="bell">${BELL}</span></div><div class="sep"></div>`;
 }
-const chip = `<span class="chip-name" id="chip-name">&nbsp;${esc(city.name)}</span>`;
+const chip = `<span class="chip-name" id="chip-name">&nbsp;${esc(city.name)} Prayer Times</span>`;
 const banner = `<div class="ab-title" id="ab-title">Get ${esc(city.name)} prayer times on your phone</div>`;
 
 // ---------- below the replica ----------
