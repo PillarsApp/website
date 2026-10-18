@@ -313,6 +313,7 @@ if (clockChange) {
 const P5 = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const K5 = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 const mosquesHtml = !mosques.length ? '' : `
+    <div class="card">
     <h2 id="mosques">Mosques in ${esc(city.name)}: prayer and jamaat times today</h2>
     <p>Start (athan) and jamaat (congregation) times for ${longDate(date)}, as published by each mosque. Mosques set their own times, so check with the mosque before you go.</p>${mosqueData.sample ? `
     <p class="note">Sample times for layout only. These are not the mosques' real timetables.</p>` : ''}
@@ -331,6 +332,7 @@ const mosquesHtml = !mosques.length ? '' : `
         <p class="jummah">Jumu'ah ${m.jummah.map((j) => sfmt(j, false)).join(', ')}</p>` : ''}
       </li>`).join('\n      ')}
     </ul>
+    </div>
 `;
 const seo = `<section class="seo" id="seo">
     <nav class="crumbs" aria-label="Breadcrumb">
@@ -341,9 +343,11 @@ const seo = `<section class="seo" id="seo">
       </ol>
     </nav>
 
+    <div class="card">
     <h1>Prayer Times in ${esc(city.name)}, ${esc(country.name)}</h1>
     <p class="answer" id="answer" data-date="${date}">Salah (namaz) times in ${esc(city.name)} today, <span data-today-date>${longDate(date)}</span> (<span data-today-hijri>${hijriLong(date)}</span>): ${todayList}. ${methodName} method · Updated <time datetime="${isoLocal(updatedMs)}">${fmt(updatedMs)} ${tzAbbr(updatedMs)}</time></p>
     <p>Prayer times for ${esc(city.name)}, ${esc(country.name)} (${tz}, ${nowAbbr}), recalculated every day with the same engine and settings as the ${SITE.name} app. Asr is given twice: the Shafi'i, Maliki and Hanbali time (shadow equal to an object's length) and the later Hanafi time (shadow twice its length).</p>
+    </div>
 
     <div class="card">
     <h2 id="timetable">${esc(city.name)} prayer timetable | ${thisMonth.label}</h2>
@@ -360,12 +364,12 @@ ${mosquesHtml}
       <div><dt>High latitudes</dt><dd>${city.method === 'MoonsightingCommittee' ? 'Moonsighting Committee seasonal limits on Fajr and Isha' : 'Twilight angle rule'}</dd></div>${adj ? `\n      <div><dt>Adjustments</dt><dd>${adj}</dd></div>` : ''}
       <div><dt>Time zone</dt><dd>${tz} (${country.name} local time)</dd></div>
       <div><dt>Engine</dt><dd>adhan, the same calculation the ${SITE.name} app uses</dd></div>
-    </dl>
-    </div>
-${lt ? `
+    </dl>${lt ? `
     <h2>Which timetable do ${esc(city.name)} mosques follow?</h2>
-    <p>${esc(lt.note)}</p>
-` : ''}
+    <p>${esc(lt.note)}</p>` : ''}
+    </div>
+
+    <div class="card">
     <h2>Frequently asked questions</h2>
     <div class="faq">
       ${faq.map(([q, a, raw], i) => `<details class="faq-item"${i === 0 ? ' open' : ''}>
@@ -373,13 +377,16 @@ ${lt ? `
         <div class="faq-a"><p>${raw ? a : esc(a)}</p></div>
       </details>`).join('\n      ')}
     </div>
+    </div>
 
+    <div class="card">
     <h2>Prayer times near ${esc(city.name)}</h2>
     <!-- PROVISIONAL hrefs: same /prayer-times/{country}/{city}/ scheme; these pages do not exist yet. -->
     <ul class="nearby">
       ${city.nearby.map(([n, s]) => `<li><a href="/prayer-times/${city.country}/${s}/">${esc(n)}</a></li>`).join('\n      ')}
     </ul>
     <p class="hub-link"><a href="/prayer-times/${city.country}/">All prayer times in ${esc(country.name)}</a></p>
+    </div>
   </section>`;
 
 // Headings in Title Case (first letter of every word; existing capitals such as

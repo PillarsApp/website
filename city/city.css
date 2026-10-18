@@ -300,7 +300,7 @@ body.theme-night .seo {
 
 .method { margin: 0; }
 
-/* Deep-blue cards (month timetable, calculation method). White text on navy in
+/* Deep-blue cards: every section below the replica (breadcrumb stays outside). White text on navy in
    both themes; night uses a navy a step lighter than the page so it reads as a card. */
 .seo .card {
   --ink: #FFFFFF;
@@ -308,7 +308,7 @@ body.theme-night .seo {
   --rule: rgba(255, 255, 255, .12);
   --row-today: rgba(255, 255, 255, .10);
   --accent: #FFFFFF;
-  margin: 40px -11px 0;
+  margin: 16px -11px 0;
   padding: 20px 16px;
   border-radius: 20px;
   background: var(--deep-blue);
@@ -316,7 +316,16 @@ body.theme-night .seo {
 }
 body.theme-night .seo .card { background: var(--standard-blue); }
 .seo .card + .card { margin-top: 16px; }
+.seo .card > :first-child { margin-top: 0; }
+.seo .card > :last-child { margin-bottom: 0; }
+.seo .card h2 { margin-top: 28px; }
 .seo .card > h2:first-child { margin-top: 0; }
+.seo .card .answer { color: #FFFFFF; }
+.seo .card .mosques li:last-child { border-bottom: 0; padding-bottom: 0; }
+.seo .card .faq { border-bottom: 0; }
+.seo .card .faq-item:first-child { border-top: 0; }
+.seo .card .faq-item:first-child summary { padding-top: 4px; }
+.seo .card .faq-item:last-child .faq-a p { padding-bottom: 4px; }
 .seo .card .method div:last-child { border-bottom: 0; padding-bottom: 0; }
 .table-wrap { overflow-x: auto; margin: 0 -16px; padding: 0 16px; }
 .card .timetable th, .card .timetable td { padding-left: 3px; padding-right: 3px; }
