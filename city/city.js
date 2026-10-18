@@ -509,3 +509,54 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
     if (d.open) all.forEach(function (o) { if (o !== d) o.open = false; });
   });
 });
+
+// Timetable: the column headings float at the top of the screen while the month scrolls past, then the
+// table's last row pushes them off. A fixed clone of the thead, because the wrapper scrolls sideways
+// (which stops CSS sticky). The clone scrolls in step with the wrapper, so the date corner stays sticky.
+(function () {
+  var items = [];
+  document.querySelectorAll('.table-wrap').forEach(function (wrap) {
+    var table = wrap.querySelector('table.timetable');
+    if (!table || !table.tHead) return;
+    var box = document.createElement('div');
+    box.className = 'tt-float';
+    box.setAttribute('aria-hidden', 'true');
+    var clone = document.createElement('table');
+    clone.className = 'timetable';
+    clone.appendChild(table.tHead.cloneNode(true));
+    box.appendChild(clone);
+    (wrap.closest('.card') || wrap.parentNode).appendChild(box);
+    items.push({ wrap: wrap, table: table, box: box, clone: clone, on: false });
+  });
+  if (!items.length) return;
+
+  function measure(it) {
+    var real = it.table.tHead.rows[0].cells, copy = it.clone.tHead.rows[0].cells;
+    it.clone.style.width = it.table.getBoundingClientRect().width + 'px';
+    for (var i = 0; i < real.length; i++) copy[i].style.width = real[i].getBoundingClientRect().width + 'px';
+    it.clone.tHead.rows[0].style.height = it.table.tHead.getBoundingClientRect().height + 'px';
+  }
+  function update() {
+    queued = false;
+    items.forEach(function (it) {
+      var head = it.table.tHead.getBoundingClientRect();
+      var tb = it.table.getBoundingClientRect();
+      var show = head.top < 0 && tb.bottom > 0;
+      if (show !== it.on) { it.on = show; it.box.classList.toggle('on', show); }
+      if (!show) return;
+      var w = it.wrap.getBoundingClientRect();
+      it.box.style.left = w.left + 'px';
+      it.box.style.width = it.wrap.clientWidth + 'px';
+      it.box.style.transform = 'translateY(' + Math.min(0, tb.bottom - head.height) + 'px)';
+      it.box.scrollLeft = it.wrap.scrollLeft;
+    });
+  }
+  var queued = false;
+  function queue() { if (!queued) { queued = true; requestAnimationFrame(update); } }
+  function remeasure() { items.forEach(measure); queue(); }
+  window.addEventListener('scroll', queue, { passive: true });
+  window.addEventListener('resize', remeasure, { passive: true });
+  items.forEach(function (it) { it.wrap.addEventListener('scroll', queue, { passive: true }); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
+  remeasure();
+})();

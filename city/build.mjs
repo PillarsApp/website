@@ -238,6 +238,16 @@ const chip = `<span class="chip-name" id="chip-name">&nbsp;${esc(city.name)} Pra
 const banner = `<div class="ab-title" id="ab-title">${SITE.name} App: ${esc(city.name)} Prayer Times</div>`;
 
 // ---------- below the replica ----------
+// Decorative section-heading icons (Material rounded, matching the app's Icons.*); white on the deep-blue cards.
+const ICONS = {
+  schedule: 'M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm-.22-13h-.06c-.4 0-.72.32-.72.72v4.72c0 .35.18.68.49.86l4.15 2.49c.34.2.78.1.98-.24.21-.34.1-.79-.25-.99l-3.87-2.3V7.72c0-.4-.32-.72-.72-.72z',
+  calendar_month: 'M19 4h-1V3c0-.55-.45-1-1-1s-1 .45-1 1v1H8V3c0-.55-.45-1-1-1s-1 .45-1 1v1H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 15c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1V9h14v10zM7 11h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2zM7 15h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z',
+  mosque: 'M7 8h10c.29 0 .57.06.84.11C17.36 6.58 16.4 5.7 15 5c-1.85-.92-3-1.94-3-3.5V1h-.03L11.97 1C11.97 2.56 10.83 3.58 9 4.5c-1.4.7-2.36 1.58-2.84 3.11C6.43 8.06 6.71 8 7 8zM24 7c0-1.1-2-3-2-3s-2 1.9-2 3c0 .74.4 1.38 1 1.72V13h-2v-2c0-1.1-.9-2-2-2H7c-1.1 0-2 .9-2 2v2H3V8.72c.6-.34 1-.98 1-1.72 0-1.1-2-3-2-3S0 5.9 0 7c0 .74.4 1.38 1 1.72V21h9v-4c0-1.1.9-2 2-2s2 .9 2 2v4h9V8.72c.6-.34 1-.98 1-1.72z',
+  tune: 'M3 18c0 .55.45 1 1 1h5v-2H4c-.55 0-1 .45-1 1zM3 6c0 .55.45 1 1 1h9V5H4c-.55 0-1 .45-1 1zm10 14v-1h7c.55 0 1-.45 1-1s-.45-1-1-1h-7v-1c0-.55-.45-1-1-1s-1 .45-1 1v4c0 .55.45 1 1 1s1-.45 1-1zM7 10v1H4c-.55 0-1 .45-1 1s.45 1 1 1h3v1c0 .55.45 1 1 1s1-.45 1-1v-4c0-.55-.45-1-1-1s-1 .45-1 1zm14 2c0-.55-.45-1-1-1h-9v2h9c.55 0 1-.45 1-1zm-5-3c.55 0 1-.45 1-1V7h3c.55 0 1-.45 1-1s-.45-1-1-1h-3V4c0-.55-.45-1-1-1s-1 .45-1 1v4c0 .55.45 1 1 1z',
+  help: 'M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z',
+  location_on: 'M12 2c-4.2 0-8 3.22-8 8.2 0 3.18 2.45 6.92 7.34 11.23.38.33.95.33 1.33 0C17.55 17.12 20 13.38 20 10.2 20 5.22 16.2 2 12 2zm0 10c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z',
+};
+const ico = (n) => `<svg class="h-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="${ICONS[n]}"/></svg>`;
 const [y, mo] = ymdParts(date);
 function monthTable(year, month) {
   const first = `${year}-${pad(month)}-01`;
@@ -253,10 +263,11 @@ function monthTable(year, month) {
     rows += `\n        <tr data-date="${ymd}"${isToday ? ' class="today" aria-current="date"' : ymd < date ? ' class="past"' : ''}><th scope="row">${shortDay(ymd)}<span class="hj" title="${h.d} ${HIJRI_MONTHS[h.m]} ${h.y}">${h.d} ${HIJRI_SHORT[h.m]}</span></th>${t.map((x, i) => `<td>${tfmt(x)}</td>${i === 3 ? `<td>${tfmt(asrHanafi(ymd))}</td>` : ''}`).join('')}</tr>`;
   }
   const label = monthYear(first);
-  return { label, html: `<div class="table-wrap">
-      <table class="timetable">
-        <caption>${esc(city.name)} prayer times for ${label}, in ${country.name} local time (${clock}-hour clock). Asr is the Shafi'i, Maliki and Hanbali time; Hanafi Asr is the later Hanafi time.${dstNote}</caption>
-        <thead><tr><th scope="col"><span class="sr-only">Date</span></th>${NAMES.map((n, i) => `<th scope="col">${n}</th>${i === 3 ? '<th scope="col">Hanafi Asr</th>' : ''}`).join('')}</tr></thead>
+  const noteId = `tt-note-${year}-${pad(month)}`;
+  return { label, note: `<p class="table-note" id="${noteId}">${esc(city.name)} prayer times for ${label}, in ${country.name} local time (${clock}-hour clock). Asr (I) is the first mithl (Shafi'i, Maliki, Hanbali); Asr (II) is the second mithl (Hanafi).${dstNote}</p>`, html: `<div class="table-wrap">
+      <table class="timetable" aria-describedby="${noteId}">
+        <caption class="sr-only">${esc(city.name)} prayer timetable, ${label}</caption>
+        <thead><tr><th scope="col"><span class="sr-only">Date</span></th>${NAMES.map((n, i) => `<th scope="col">${i === 3 ? 'Asr (I)' : n}</th>${i === 3 ? '<th scope="col">Asr (II)</th>' : ''}`).join('')}</tr></thead>
         <tbody>${rows}
         </tbody>
       </table>
@@ -264,10 +275,11 @@ function monthTable(year, month) {
 }
 const thisMonth = monthTable(y, mo);
 const daysInMonth = new Date(Date.UTC(y, mo, 0)).getUTCDate();
-let nextMonthHtml = '';
+let nextMonthHtml = '', nextMonthNote = '';
 if (daysInMonth - ymdParts(date)[2] < 10) {   // late in the month: also serve next month
   const nm = mo === 12 ? [y + 1, 1] : [y, mo + 1];
   const t = monthTable(...nm);
+  nextMonthNote = `\n    ${t.note}`;
   nextMonthHtml = `\n    <h3>${esc(city.name)} prayer timetable | ${t.label}</h3>\n    ${t.html}`;
 }
 
@@ -315,7 +327,7 @@ const P5 = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const K5 = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 const mosquesHtml = !mosques.length ? '' : `
     <div class="card">
-    <h2 id="mosques">Mosques in ${esc(city.name)}: prayer and jamaat times today</h2>
+    <h2 id="mosques">${ico('mosque')}Mosques in ${esc(city.name)}: prayer and jamaat times today</h2>
     <p>Start (athan) and jamaat (congregation) times for ${longDate(date)}, as published by each mosque. Mosques set their own times, so check with the mosque before you go.</p>${mosqueData.sample ? `
     <p class="note">Sample times for layout only. These are not the mosques' real timetables.</p>` : ''}
     <!-- PROVISIONAL hrefs: /mosques/{country}/{city}/{slug}/ is not a live route yet. -->
@@ -345,18 +357,19 @@ const seo = `<section class="seo" id="seo">
     </nav>
 
     <div class="card">
-    <h1>Prayer Times in ${esc(city.name)}, ${esc(country.name)}</h1>
+    <h1>${ico('schedule')}Prayer Times in ${esc(city.name)}, ${esc(country.name)}</h1>
     <p class="answer" id="answer" data-date="${date}">Salah (namaz) times in ${esc(city.name)} today, <span data-today-date>${longDate(date)}</span> (<span data-today-hijri>${hijriLong(date)}</span>): ${todayList}. ${methodName} method · Updated <time datetime="${isoLocal(updatedMs)}">${fmt(updatedMs)} ${tzAbbr(updatedMs)}</time></p>
     <p>Prayer times for ${esc(city.name)}, ${esc(country.name)} (${tz}, ${nowAbbr}), recalculated every day with the same engine and settings as the ${SITE.name} app. Asr is given twice: the Shafi'i, Maliki and Hanbali time (shadow equal to an object's length) and the later Hanafi time (shadow twice its length).</p>
     </div>
 
     <div class="card">
-    <h2 id="timetable">${esc(city.name)} prayer timetable | ${thisMonth.label}</h2>
+    <h2 id="timetable">${ico('calendar_month')}${esc(city.name)} prayer timetable | ${thisMonth.label}</h2>
     ${thisMonth.html}${nextMonthHtml}
     </div>
-${mosquesHtml}
+    ${thisMonth.note}${nextMonthNote}
+
     <div class="card">
-    <h2>How are ${esc(city.name)} prayer times calculated?</h2>
+    <h2>${ico('tune')}How are ${esc(city.name)} prayer times calculated?</h2>
     <dl class="method">
       <div><dt>Method</dt><dd>${methodName}</dd></div>
       <div><dt>Fajr angle</dt><dd>${p0.fajrAngle}° below the horizon</dd></div>
@@ -367,9 +380,10 @@ ${mosquesHtml}
       <div><dt>Engine</dt><dd>adhan, the same calculation the ${SITE.name} app uses</dd></div>
     </dl>
     </div>
+${mosquesHtml}
 
     <div class="card">
-    <h2>Frequently asked questions</h2>
+    <h2>${ico('help')}Frequently asked questions</h2>
     <div class="faq">
       ${faq.map(([q, a, raw], i) => `<details class="faq-item" name="faq">
         <summary><h3 class="faq-h">${esc(q)}</h3></summary>
@@ -379,7 +393,7 @@ ${mosquesHtml}
     </div>
 
     <div class="card">
-    <h2>Prayer times near ${esc(city.name)}</h2>
+    <h2>${ico('location_on')}Prayer times near ${esc(city.name)}</h2>
     <!-- PROVISIONAL hrefs: same /prayer-times/{country}/{city}/ scheme; these pages do not exist yet. -->
     <ul class="nearby">
       ${city.nearby.map(([n, s]) => `<li><a href="/prayer-times/${city.country}/${s}/">${esc(n)}</a></li>`).join('\n      ')}
@@ -393,6 +407,12 @@ ${mosquesHtml}
 const titleWords = (t) => t.replace(/(^|[\s(])([a-z])/g, (_, p, c) => p + c.toUpperCase());
 const titleHeadings = (h) => h.replace(/<(h[1-3])([^>]*)>([\s\S]*?)<\/\1>/g, (_, tag, attrs, inner) =>
   `<${tag}${attrs}>${inner.split(/(<[^>]+>)/).map((part) => (part.startsWith('<') ? part : titleWords(part.replace(/\s*—\s*/g, ' | ')))).join('')}</${tag}>`);
+
+// Heading icon goes after the last word, joined to it so the two wrap together.
+const iconToEnd = (h) => h.replace(/<(h[12])([^>]*)>(<svg class="h-ico"[\s\S]*?<\/svg>)([\s\S]*?)<\/\1>/g, (_, tag, attrs, svg, text) => {
+  const i = text.lastIndexOf(' ');
+  return `<${tag}${attrs}>${text.slice(0, i + 1)}<span class="h-end">${text.slice(i + 1)}${svg}</span></${tag}>`;
+});
 
 // ---------- write ----------
 let html = readFileSync(outPath, 'utf8');
@@ -412,7 +432,7 @@ region('chip', chip);
 region('date', dateBlock);
 region('list', list);
 region('caption', listCaption);
-region('seo', titleHeadings(seo));
+region('seo', iconToEnd(titleHeadings(seo)));
 region('banner', banner);
 writeFileSync(outPath, html);
 console.log(`Built ${city.name} for ${date}: ${timesText} (updated ${isoLocal(updatedMs)})`);
