@@ -256,7 +256,7 @@ function monthTable(year, month) {
   return { label, html: `<div class="table-wrap">
       <table class="timetable">
         <caption>${esc(city.name)} prayer times for ${label}, in ${country.name} local time (${clock}-hour clock). Asr shows the Shafi'i, Maliki and Hanbali time with the Hanafi time below it.${dstNote}</caption>
-        <thead><tr><th scope="col">Date</th>${NAMES.map((n, i) => `<th scope="col">${n}${i === 3 ? '<span class="sub">Hanafi</span>' : ''}</th>`).join('')}</tr></thead>
+        <thead><tr><th scope="col"><span class="sr-only">Date</span></th>${NAMES.map((n, i) => `<th scope="col">${n}${i === 3 ? '<span class="sub">Hanafi</span>' : ''}</th>`).join('')}</tr></thead>
         <tbody>${rows}
         </tbody>
       </table>

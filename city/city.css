@@ -438,3 +438,4 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 @media (prefers-color-scheme: dark) {
   .app-banner { background: rgba(44, 44, 46, .86); color: #FFFFFF; box-shadow: 0 8px 30px rgba(0, 0, 0, .4), 0 0 0 .5px rgba(255, 255, 255, .1); }
 }
+.timetable thead th { vertical-align: top; }
