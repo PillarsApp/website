@@ -311,7 +311,7 @@ body.theme-night .seo {
   --row-today: rgba(255, 255, 255, .10);
   --accent: #FFFFFF;
   margin: 16px -11px 0;
-  padding: 20px 16px;
+  padding: 28px 24px;
   border-radius: 20px;
   background: var(--deep-blue);
   color: var(--text);
@@ -329,9 +329,9 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .seo .card .faq-item:first-child summary { padding-top: 4px; }
 .seo .card .faq-item:last-child .faq-a p { padding-bottom: 4px; }
 .seo .card .method div:last-child { border-bottom: 0; padding-bottom: 0; }
-.table-wrap { overflow-x: auto; margin: 0 -16px; padding: 0; }
-.timetable th:last-child, .timetable td:last-child { padding-right: 16px; }
-.timetable thead th:first-child { padding-left: 16px; }
+.table-wrap { overflow-x: auto; margin: 0 -24px; padding: 0; }
+.timetable th:last-child, .timetable td:last-child { padding-right: 24px; }
+.timetable thead th:first-child { padding-left: 24px; }
 .timetable {
   width: 100%; border-collapse: collapse;
   font-size: 15px; line-height: 1.4;
@@ -341,7 +341,7 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .timetable caption { caption-side: bottom; text-align: left; padding-top: 10px; font-size: 12px; }
 .timetable th, .timetable td { padding: 14px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; vertical-align: middle; }
 .timetable { min-width: 600px; }
-.timetable th[scope="row"] { position: sticky; left: 0; background: var(--deep-blue); padding-left: 16px; z-index: 1; }
+.timetable th[scope="row"] { position: sticky; left: 0; background: var(--deep-blue); padding-left: 24px; z-index: 1; }
 .timetable thead th { font-weight: 600; color: #FFFFFF; font-size: 13px; opacity: .7; }
 .timetable th[scope="row"] { text-align: left; font-weight: 500; color: var(--ink); }
 .timetable thead th:first-child { text-align: left; }
