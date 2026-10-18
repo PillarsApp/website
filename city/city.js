@@ -173,6 +173,15 @@
       text = secs + ' ' + (secs === 1 ? 'sec' : 'secs');
     }
     $('countdown').textContent = text + ' until ' + NAMES[nextIdx];
+
+    // Scroll bar: current prayer and time left in it, as h:mm:ss.
+    var tbName = $('tb-name'), tbTime = $('tb-time');
+    if (tbName && tbTime) {
+      var sec = secs % 60, two = function (n) { return (n < 10 ? '0' : '') + n; };
+      tbName.textContent = name;
+      if ($('tb-city')) $('tb-city').textContent = city.name;
+      tbTime.textContent = (h > 0 ? h + ':' + two(m) : m) + ':' + two(sec);
+    }
   }
 
   // ---------- Curve (prayer_curve_geometry.dart) ----------
@@ -550,16 +559,19 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
     items.forEach(function (it) {
       var head = it.table.tHead.getBoundingClientRect();
       var tb = it.table.getBoundingClientRect();
-      var show = head.top < 0 && tb.bottom > 0;
+      var top = barH();
+      var show = head.top < top && tb.bottom > top;
       if (show !== it.on) { it.on = show; it.box.classList.toggle('on', show); }
       if (!show) return;
       var w = it.wrap.getBoundingClientRect();
       it.box.style.left = w.left + 'px';
       it.box.style.width = it.wrap.clientWidth + 'px';
-      it.box.style.transform = 'translateY(' + Math.min(0, tb.bottom - head.height) + 'px)';
+      it.box.style.top = top + 'px';
+      it.box.style.transform = 'translateY(' + Math.min(0, tb.bottom - top - head.height) + 'px)';
       it.box.scrollLeft = it.wrap.scrollLeft;
     });
   }
+  function barH() { var b = document.getElementById('topbar'); return b ? b.offsetHeight : 0; }
   var queued = false;
   function queue() { if (!queued) { queued = true; requestAnimationFrame(update); } }
   function remeasure() { items.forEach(measure); queue(); }
@@ -568,4 +580,21 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
   items.forEach(function (it) { it.wrap.addEventListener('scroll', queue, { passive: true }); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(remeasure);
   remeasure();
+})();
+
+// Scroll bar: a blurred strip with the current prayer and its countdown appears once the header's pill
+// scrolls up under it, so the time left stays in view anywhere on the page.
+(function () {
+  var bar = document.getElementById('topbar'), pill = document.getElementById('countdown');
+  if (!bar || !pill) return;
+  var on = false, queued = false;
+  function update() {
+    queued = false;
+    var show = pill.getBoundingClientRect().bottom < bar.offsetHeight;
+    if (show !== on) { on = show; bar.classList.toggle('on', show); }
+  }
+  function queue() { if (!queued) { queued = true; requestAnimationFrame(update); } }
+  window.addEventListener('scroll', queue, { passive: true });
+  window.addEventListener('resize', queue, { passive: true });
+  update();
 })();

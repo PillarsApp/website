@@ -508,3 +508,24 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .seo .card .answer .a-date { margin-top: 4px; font-size: 14px; font-weight: 400; color: rgba(255, 255, 255, .6); }
 .seo .card .answer .a-times { margin-top: 16px; font-size: 16px; font-weight: 500; color: #FFFFFF; line-height: 1.8; font-variant-numeric: tabular-nums; }
 .seo .card .answer .a-meta { margin-top: 16px; font-size: 13px; font-weight: 400; color: rgba(255, 255, 255, .6); }
+/* Scroll bar: blurred strip with the current prayer + time left, shown once the header scrolls away. */
+:root { --bar-bg: rgba(255, 255, 255, .72); --bar-rule: rgba(0, 25, 62, .08); }
+body.theme-night { --bar-bg: rgba(3, 24, 49, .62); --bar-rule: rgba(255, 255, 255, .08); }
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 950;
+  height: calc(52px + var(--st));
+  padding-top: var(--st);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--bar-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 .5px 0 var(--bar-rule);
+  font: 600 17px/1 'Poppins', sans-serif;
+  color: var(--ink);
+  opacity: 0; transform: translateY(-100%);
+  transition: opacity .25s ease, transform .25s ease;
+  pointer-events: none;
+}
+.topbar.on { opacity: 1; transform: none; }
+.topbar .tb-time { font-weight: 500; opacity: .5; font-variant-numeric: tabular-nums; }
+.topbar .tb-in { opacity: .5; font-weight: 500; }
