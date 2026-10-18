@@ -353,15 +353,14 @@ const mosquesHtml = !mosques.length ? '' : `
     </div>
 `;
 const seo = `<section class="seo" id="seo">
-    <nav class="crumbs" aria-label="Breadcrumb">
-      <ol>
-        <li><a href="${SITE.hubPath}">Prayer Times</a></li>
-        <li><a href="/prayer-times/${city.country}/">${esc(country.name)}</a></li>
-        <li aria-current="page">${esc(city.name)}</li>
-      </ol>
-    </nav>
-
     <div class="card">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="${SITE.hubPath}">Prayer Times</a></li>
+          <li><a href="/prayer-times/${city.country}/">${esc(country.name)}</a></li>
+          <li aria-current="page">${esc(city.name)}</li>
+        </ol>
+      </nav>
     <h1>${ico('schedule')}Prayer Times in ${esc(city.name)}, ${esc(country.name)}</h1>
     <p class="answer" id="answer" data-date="${date}"><span class="a-lead">Salah (namaz) times in ${esc(city.name)} today</span><span class="sr-only">, </span><span class="a-date"><span data-today-date>${longDate(date)}</span> · <span data-today-hijri>${hijriLong(date)}</span></span><span class="sr-only">: </span><span class="a-times">${todayList.split(', ').join(' · ')}</span><span class="sr-only">. </span><span class="a-meta">${methodName} method · Updated <time datetime="${isoLocal(updatedMs)}">${fmt(updatedMs)} ${tzAbbr(updatedMs)}</time></span></p>
     </div>

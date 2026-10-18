@@ -180,7 +180,18 @@
       var sec = secs % 60, two = function (n) { return (n < 10 ? '0' : '') + n; };
       tbName.textContent = name;
       if ($('tb-city')) $('tb-city').textContent = city.name;
-      tbTime.textContent = (h > 0 ? h + ':' + two(m) : m) + ':' + two(sec);
+      // One fixed-width box per character, so the centred bar never shifts as the seconds tick.
+      var str = (h > 0 ? h + ':' + two(m) : m) + ':' + two(sec);
+      if (tbTime.getAttribute('data-t') !== str) {
+        tbTime.setAttribute('data-t', str);
+        tbTime.textContent = '';
+        str.split('').forEach(function (c) {
+          var span = document.createElement('span');
+          span.className = c === ':' ? 'tb-colon' : 'tb-digit';
+          span.textContent = c;
+          tbTime.appendChild(span);
+        });
+      }
     }
   }
 

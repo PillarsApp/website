@@ -528,3 +528,12 @@ body.theme-night { --bar-bg: rgba(3, 24, 49, .62); --bar-rule: rgba(255, 255, 25
 .topbar.on { opacity: 1; transform: none; }
 .topbar .tb-time { font-weight: 500; opacity: .5; font-variant-numeric: tabular-nums; }
 .topbar .tb-in { opacity: .5; font-weight: 500; }
+.topbar .tb-time { display: inline-flex; }
+.topbar .tb-digit { display: inline-block; width: .64em; text-align: center; }
+.topbar .tb-colon { display: inline-block; width: .3em; text-align: center; }
+/* Breadcrumb sits inside the first card, above the heading. */
+.seo .card .crumbs { margin: 0 0 20px; }
+.seo .card .crumbs ol, body.theme-night .seo .card .crumbs ol { color: rgba(255, 255, 255, .55); font-size: 14px; }
+.seo .card .crumbs a:hover, .seo .card .crumbs a:focus-visible { color: #FFFFFF; }
+/* Timetable column headings: full white. */
+.seo .card .timetable thead th, .tt-float .timetable thead th { color: #FFFFFF; }
