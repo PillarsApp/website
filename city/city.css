@@ -458,3 +458,7 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 /* Date column stays put while times scroll: header cell sticks too, with a soft edge so times slide under it. */
 .timetable thead th:first-child { position: sticky; left: 0; z-index: 2; background: var(--deep-blue); }
 .timetable thead th:first-child, .timetable th[scope="row"] { box-shadow: 8px 0 8px -6px rgba(0, 0, 0, .45); }
+/* Column headings stay visible while scrolling the month: the table scrolls inside its card (both ways). */
+.table-wrap { max-height: 70svh; overflow: auto; overscroll-behavior: contain; }
+.timetable thead th { position: sticky; top: 0; z-index: 1; background: var(--deep-blue); box-shadow: 0 1px 0 var(--rule); }
+.timetable thead th:first-child { z-index: 3; }
