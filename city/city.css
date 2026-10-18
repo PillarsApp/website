@@ -336,7 +336,7 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .seo .card .mosques li:last-child { border-bottom: 0; padding-bottom: 0; }
 .seo .card .faq { border-bottom: 0; }
 .seo .card .faq-item:first-child { border-top: 0; }
-.seo .card h2 + .faq { margin-top: -18px; }   /* heading to first question text: 28px */
+.seo .card h2 + .faq { margin-top: 0; }   /* heading to first question text: 28px gap + 18px row padding */
 .seo .card .faq-item:last-child .faq-a p { padding-bottom: 4px; }
 .table-wrap { overflow-x: auto; margin: 0 -24px; padding: 0; }
 .timetable th:last-child, .timetable td:last-child { padding-right: 24px; }
@@ -500,3 +500,5 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 
 /* Timetable note: under the card, aligned with the card's inner text edge. */
 .seo > .table-note { margin-top: 16px; margin-bottom: 0; padding: 0 24px; font-size: 13px; line-height: 1.6; color: var(--text); }
+/* FAQ: more room under the heading; questions match the answer size, in solid white. */
+.seo .card .faq-item summary { font-size: 16px; color: #FFFFFF; }
