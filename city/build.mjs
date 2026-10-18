@@ -263,7 +263,7 @@ function monthTable(year, month) {
   }
   const label = monthYear(first);
   const noteId = `tt-note-${year}-${pad(month)}`;
-  return { label, note: `<p class="table-note" id="${noteId}">${esc(city.name)} prayer times for ${label}, in ${country.name} local time (${clock}-hour clock). Asr I is the first mithl (Shafi'i, Maliki, Hanbali); Asr II is the second mithl (Hanafi).${dstNote}</p>`, html: `<div class="table-wrap">
+  return { label, note: `<p class="table-note" id="${noteId}">${country.name} local time. Asr I: Shafi'i, Maliki, Hanbali. Asr II: Hanafi.${dstNote}</p>`, html: `<div class="table-wrap">
       <table class="timetable" aria-describedby="${noteId}">
         <caption class="sr-only">${esc(city.name)} prayer timetable, ${label}</caption>
         <thead><tr><th scope="col"><span class="sr-only">Date</span></th>${NAMES.map((n, i) => `${i === 3 ? '<th scope="col" aria-label="Asr I">Asr<span class="tag">I</span></th><th scope="col" aria-label="Asr II">Asr<span class="tag">II</span></th>' : `<th scope="col">${n}</th>`}`).join('')}</tr></thead>
@@ -363,8 +363,7 @@ const seo = `<section class="seo" id="seo">
 
     <div class="card">
     <h1>${ico('schedule')}Prayer Times in ${esc(city.name)}, ${esc(country.name)}</h1>
-    <p class="answer" id="answer" data-date="${date}">Salah (namaz) times in ${esc(city.name)} today, <span data-today-date>${longDate(date)}</span> (<span data-today-hijri>${hijriLong(date)}</span>): ${todayList}. ${methodName} method · Updated <time datetime="${isoLocal(updatedMs)}">${fmt(updatedMs)} ${tzAbbr(updatedMs)}</time></p>
-    <p>Prayer times for ${esc(city.name)}, ${esc(country.name)} (${tz}, ${nowAbbr}), recalculated every day with the same engine and settings as the ${SITE.name} app. Asr is given twice: the Shafi'i, Maliki and Hanbali time (shadow equal to an object's length) and the later Hanafi time (shadow twice its length).</p>
+    <p class="answer" id="answer" data-date="${date}"><span class="a-lead">Salah (namaz) times in ${esc(city.name)} today</span><span class="sr-only">, </span><span class="a-date"><span data-today-date>${longDate(date)}</span> · <span data-today-hijri>${hijriLong(date)}</span></span><span class="sr-only">: </span><span class="a-times">${todayList.split(', ').join(' · ')}</span><span class="sr-only">. </span><span class="a-meta">${methodName} method · Updated <time datetime="${isoLocal(updatedMs)}">${fmt(updatedMs)} ${tzAbbr(updatedMs)}</time></span></p>
     </div>
 
     <div class="card">
@@ -381,7 +380,6 @@ const seo = `<section class="seo" id="seo">
       <div><dt>Isha angle</dt><dd>${p0.ishaAngle}° below the horizon</dd></div>
       <div><dt>Asr</dt><dd>Both times shown: Shafi'i, Maliki and Hanbali (shadow equal to an object’s length) and Hanafi (shadow twice its length).</dd></div>
       <div><dt>High latitudes</dt><dd>${city.method === 'MoonsightingCommittee' ? 'Moonsighting Committee seasonal limits on Fajr and Isha' : 'Twilight angle rule'}</dd></div>${adj ? `\n      <div><dt>Adjustments</dt><dd>${adj}</dd></div>` : ''}
-      <div><dt>Time zone</dt><dd>${tz} (${country.name} local time)</dd></div>
     </dl>
     </div>
 ${mosquesHtml}

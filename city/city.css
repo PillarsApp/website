@@ -502,3 +502,9 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .seo > .table-note { margin-top: 16px; margin-bottom: 0; padding: 0 24px; font-size: 13px; line-height: 1.6; color: var(--text); }
 /* FAQ: more room under the heading; questions match the answer size, in solid white. */
 .seo .card .faq-item summary { font-size: 16px; color: #FFFFFF; }
+/* Answer line: one quotable sentence, laid out as lead / date / times / meta for easy scanning. */
+.seo .card .answer > span:not(.sr-only) { display: block; }
+.seo .card .answer .a-lead { font-size: 18px; font-weight: 500; color: #FFFFFF; line-height: 1.4; }
+.seo .card .answer .a-date { margin-top: 4px; font-size: 14px; font-weight: 400; color: rgba(255, 255, 255, .6); }
+.seo .card .answer .a-times { margin-top: 16px; font-size: 16px; font-weight: 500; color: #FFFFFF; line-height: 1.8; font-variant-numeric: tabular-nums; }
+.seo .card .answer .a-meta { margin-top: 16px; font-size: 13px; font-weight: 400; color: rgba(255, 255, 255, .6); }
