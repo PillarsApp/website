@@ -202,7 +202,7 @@ if (mosques.length && !mosqueData.sample) {
     })),
   });
 }
-const cityData = { name: city.name, country: country.code, clock, lat: city.lat, lng: city.lng, timezone: tz, method: city.method, madhab: city.madhab, highLatitudeRule: city.highLatitudeRule };
+const cityData = { name: city.name, place: `${city.name}, ${country.short || country.name}`, country: country.code, clock, lat: city.lat, lng: city.lng, timezone: tz, method: city.method, madhab: city.madhab, highLatitudeRule: city.highLatitudeRule };
 const head = `<title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
 <!-- PROVISIONAL URL: /prayer-times/{country}/{city}/ is the SEO report's recommended scheme, not yet a live route. -->

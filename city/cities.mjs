@@ -30,9 +30,9 @@ export const SITE = {
 export const DEFAULT_CLOCK = 12;
 
 export const COUNTRIES = {
-  uk: { name: 'United Kingdom', code: 'GB', lang: 'en-GB', clock: 24 },
-  us: { name: 'United States', code: 'US', lang: 'en-US', clock: 12 },
-  ca: { name: 'Canada', code: 'CA', lang: 'en-CA', clock: 12 },
+  uk: { name: 'United Kingdom', short: 'UK', code: 'GB', lang: 'en-GB', clock: 24 },
+  us: { name: 'United States', short: 'USA', code: 'US', lang: 'en-US', clock: 12 },
+  ca: { name: 'Canada', short: 'Canada', code: 'CA', lang: 'en-CA', clock: 12 },
 };
 
 export const CITIES = {
