@@ -382,7 +382,6 @@ const seo = `<section class="seo" id="seo">
       <div><dt>Asr</dt><dd>Both times shown: Shafi'i, Maliki and Hanbali (shadow equal to an object’s length) and Hanafi (shadow twice its length).</dd></div>
       <div><dt>High latitudes</dt><dd>${city.method === 'MoonsightingCommittee' ? 'Moonsighting Committee seasonal limits on Fajr and Isha' : 'Twilight angle rule'}</dd></div>${adj ? `\n      <div><dt>Adjustments</dt><dd>${adj}</dd></div>` : ''}
       <div><dt>Time zone</dt><dd>${tz} (${country.name} local time)</dd></div>
-      <div><dt>Engine</dt><dd>adhan, the same calculation the ${SITE.name} app uses</dd></div>
     </dl>
     </div>
 ${mosquesHtml}
