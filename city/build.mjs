@@ -250,13 +250,13 @@ function monthTable(year, month) {
     if (d > 1 && tzAbbr(noonUTC(ymd)) !== tzAbbr(noonUTC(addDays(ymd, -1)))) {
       dstNote = ` Clocks change on ${longDate(ymd)}; times from that day are in ${tzAbbr(noonUTC(ymd))}.`;
     }
-    rows += `\n        <tr data-date="${ymd}"${isToday ? ' class="today" aria-current="date"' : ymd < date ? ' class="past"' : ''}><th scope="row">${shortDay(ymd)}<span class="hj" title="${h.d} ${HIJRI_MONTHS[h.m]} ${h.y}">${h.d} ${HIJRI_SHORT[h.m]}</span></th>${t.map((x, i) => (i === 3 ? `<td>${tfmt(x)}<span class="sub">${tfmt(asrHanafi(ymd))}</span></td>` : `<td>${tfmt(x)}</td>`)).join('')}</tr>`;
+    rows += `\n        <tr data-date="${ymd}"${isToday ? ' class="today" aria-current="date"' : ymd < date ? ' class="past"' : ''}><th scope="row">${shortDay(ymd)}<span class="hj" title="${h.d} ${HIJRI_MONTHS[h.m]} ${h.y}">${h.d} ${HIJRI_SHORT[h.m]}</span></th>${t.map((x, i) => `<td>${tfmt(x)}</td>${i === 3 ? `<td>${tfmt(asrHanafi(ymd))}</td>` : ''}`).join('')}</tr>`;
   }
   const label = monthYear(first);
   return { label, html: `<div class="table-wrap">
       <table class="timetable">
-        <caption>${esc(city.name)} prayer times for ${label}, in ${country.name} local time (${clock}-hour clock). Asr shows the Shafi'i, Maliki and Hanbali time with the Hanafi time below it.${dstNote}</caption>
-        <thead><tr><th scope="col"><span class="sr-only">Date</span></th>${NAMES.map((n, i) => `<th scope="col">${n}${i === 3 ? '<span class="sub">Hanafi</span>' : ''}</th>`).join('')}</tr></thead>
+        <caption>${esc(city.name)} prayer times for ${label}, in ${country.name} local time (${clock}-hour clock). Asr is the Shafi'i, Maliki and Hanbali time; Hanafi Asr is the later Hanafi time.${dstNote}</caption>
+        <thead><tr><th scope="col"><span class="sr-only">Date</span></th>${NAMES.map((n, i) => `<th scope="col">${n}</th>${i === 3 ? '<th scope="col">Hanafi Asr</th>' : ''}`).join('')}</tr></thead>
         <tbody>${rows}
         </tbody>
       </table>

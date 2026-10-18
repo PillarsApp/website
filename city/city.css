@@ -35,8 +35,8 @@
      (33% of its height) stays below the countdown (93px under the safe top):
      sky = min(app size, avail / .75, (avail - 93) / (.75 - .333)). */
   --avail: calc(var(--vh) - var(--st) - var(--banner-reserve) - var(--content-h));
-  --sky-h: max(80px, min(calc(var(--S) * 4 / 11), calc(var(--avail) / .75), calc((var(--avail) - 94px) / .4167)));
-  --curve-shift: max(0px, calc(94px - var(--sky-h) * .3333));
+  --sky-h: max(80px, min(calc(var(--S) * 4 / 11), calc(var(--avail) / .75), calc((var(--avail) - 102px) / .4167)));
+  --curve-shift: max(0px, calc(102px - var(--sky-h) * .3333));
 
   /* Day theme (default) */
   --grad-1: #C5DFF1;
@@ -144,7 +144,7 @@ body.theme-night .sun { display: none; }
 .current-name { white-space: nowrap; }
 .current-name .dim { opacity: .5; }
 .countdown {
-  margin: 6px 0 0 -12px;
+  margin: 14px 0 0 -12px;
   display: inline-flex; align-items: center;
   height: 32px;
   padding: 4px 12px;
@@ -329,25 +329,28 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .seo .card .faq-item:first-child summary { padding-top: 4px; }
 .seo .card .faq-item:last-child .faq-a p { padding-bottom: 4px; }
 .seo .card .method div:last-child { border-bottom: 0; padding-bottom: 0; }
-.table-wrap { overflow-x: auto; margin: 0 -16px; padding: 0 16px; }
-.card .timetable th, .card .timetable td { padding-left: 3px; padding-right: 3px; }
+.table-wrap { overflow-x: auto; margin: 0 -16px; padding: 0; }
+.timetable th:last-child, .timetable td:last-child { padding-right: 16px; }
+.timetable thead th:first-child { padding-left: 16px; }
 .timetable {
   width: 100%; border-collapse: collapse;
-  font-size: 13px; line-height: 1.35;
+  font-size: 15px; line-height: 1.4;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 .timetable caption { caption-side: bottom; text-align: left; padding-top: 10px; font-size: 12px; }
-.timetable th, .timetable td { padding: 7px 4px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
-.timetable thead th { font-weight: 600; color: var(--ink); font-size: 12px; }
+.timetable th, .timetable td { padding: 14px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; vertical-align: middle; }
+.timetable { min-width: 600px; }
+.timetable th[scope="row"] { position: sticky; left: 0; background: var(--deep-blue); padding-left: 16px; z-index: 1; }
+.timetable thead th { font-weight: 600; color: #FFFFFF; font-size: 13px; opacity: .7; }
 .timetable th[scope="row"] { text-align: left; font-weight: 500; color: var(--ink); }
 .timetable thead th:first-child { text-align: left; }
-.timetable .hj { display: block; font-size: 11px; font-weight: 400; color: var(--text); }
+.timetable .hj { display: block; font-size: 12px; font-weight: 400; color: var(--text); }
 .timetable .sub { display: block; font-size: 11px; font-weight: 400; color: var(--text); }
 .timetable thead .sub { font-size: 10px; }
 .timetable tbody td, .timetable tbody th { color: #FFFFFF; }
 .timetable tr.past th, .timetable tr.past td { opacity: .35; }
-.timetable tr.today th, .timetable tr.today td { font-weight: 700; font-size: 15px; color: #FFFFFF; }
+.timetable tr.today th, .timetable tr.today td { font-weight: 700; color: #FFFFFF; }
 
 .method div { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
 .method dt { flex: 0 0 112px; color: var(--ink); font-weight: 500; }
@@ -438,4 +441,4 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 @media (prefers-color-scheme: dark) {
   .app-banner { background: rgba(44, 44, 46, .86); color: #FFFFFF; box-shadow: 0 8px 30px rgba(0, 0, 0, .4), 0 0 0 .5px rgba(255, 255, 255, .1); }
 }
-.timetable thead th { vertical-align: top; }
+.timetable thead th { vertical-align: bottom; }
