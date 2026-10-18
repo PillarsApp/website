@@ -413,8 +413,8 @@
     // Hanafi row greys out once its time has passed.
     var rows = [];
     for (var k = 0; k < 6; k++) {
-      rows.push({ name: k === 3 ? 'Asr (Earlier)' : NAMES[k], t: day.t[k], p: k });
-      if (k === 3) rows.push({ name: 'Asr (Later \u00B7 Hanafi)', t: day.asrHanafi, p: 3, hanafi: true });
+      rows.push({ name: k === 3 ? 'Asr <span class="tag">Earlier</span>' : NAMES[k], t: day.t[k], p: k });
+      if (k === 3) rows.push({ name: 'Asr <span class="tag">Later \u00B7 Hanafi</span>', t: day.asrHanafi, p: 3, hanafi: true });
     }
     var curP = isToday ? currentIndex(day, now) : -1;
     var cur = curP < 0 ? -1 : (curP <= 3 ? curP : curP + 1);
