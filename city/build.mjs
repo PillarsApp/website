@@ -233,7 +233,6 @@ NAMES.forEach((n, i) => { replicaRows.push([i === 3 ? 'Asr <span class="tag">Ear
 for (const [n, t] of replicaRows) {
   list += `<li class="row"><span class="name">${n}</span> <span class="t">${fmt(t)}</span></li><li class="sep" aria-hidden="true"></li>`;
 }
-const listCaption = `<p class="list-caption" id="list-caption">${esc(city.listCaption || `Calculated using the ${methodName} method`)}</p>`;
 const chip = `<span class="chip-name" id="chip-name">&nbsp;${esc(city.name)} Prayer Times</span>`;
 const banner = `<div class="ab-title" id="ab-title">${SITE.name} App: ${esc(city.name)} Prayer Times</div>`;
 
@@ -297,6 +296,11 @@ for (let i = 1; i <= 366; i++) {
 const p0 = calc;
 const adj = Object.entries(p0.methodAdjustments || {}).filter(([, v]) => v).map(([k, v]) => `${k[0].toUpperCase() + k.slice(1)} ${v > 0 ? '+' : ''}${v} min`).join(', ');
 const nowAbbr = tzAbbr(today[2]);
+// Grey trust line under the app-replica list: location, method, angles, schools, time zone (abbr kept live by city.js).
+const deg = (v, pos, neg) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? pos : neg}`;
+const angles = p0.fajrAngle === p0.ishaAngle ? `Fajr &amp; Isha ${p0.fajrAngle}°` : `Fajr ${p0.fajrAngle}° · Isha ${p0.ishaAngle}°`;
+const listCaption = `<p class="list-caption" id="list-caption">${city.listCaption ? esc(city.listCaption)
+  : `Central ${esc(city.name)} (${deg(city.lat, 'N', 'S')}, ${deg(city.lng, 'E', 'W')}) · ${methodName} · ${angles} · Asr for both schools · ${esc(country.short || country.name)} time (<span data-tz-abbr>${nowAbbr}</span>)`}</p>`;
 // data-today="6" is the Hanafi Asr; city.js refreshes these if the visitor's day differs.
 const td = (i) => `<span data-today="${i}">${fmt(i === 6 ? todayHanafi : today[i])}</span>`;
 const lt = city.localTimetable;

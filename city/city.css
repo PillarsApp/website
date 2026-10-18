@@ -28,14 +28,14 @@
   --list-gap: 10px;
   --content-pad: 10px;
   --sep: 6px;            /* separator incl. its margins */
-  --caption-h: 31px;     /* source caption: 16px gap + one 11px line (a second line uses the slack) */
+  --caption-h: 46px;     /* trust caption: 16px gap + two 11px lines (line-height 1.35) */
   --content-h: calc(21px + var(--date-gap) + var(--date-h) + var(--list-gap) + 7 * var(--row-h) + 8 * var(--sep) + var(--caption-h) + var(--content-pad));
   /* Space left for the sky. The content overlaps its bottom quarter. When it is
      short, the curve box also moves down (--curve-shift) so the arc's peak
      (33% of its height) stays below the countdown (93px under the safe top):
      sky = min(app size, avail / .75, (avail - 93) / (.75 - .333)). */
   --avail: calc(var(--vh) - var(--st) - var(--banner-reserve) - var(--content-h));
-  --sky-h: max(80px, min(calc(var(--S) * 4 / 11), calc(var(--avail) / .75), calc((var(--avail) - 102px) / .4167)));
+  --sky-h: max(32px, min(calc(var(--S) * 4 / 11), calc(var(--avail) / .75), calc((var(--avail) - 102px) / .4167)));
   --curve-shift: max(0px, calc(102px - var(--sky-h) * .3333));
 
   /* Day theme (default) */
@@ -57,7 +57,8 @@
 }
 @supports (height: 100svh) { :root { --vh: 100svh; } }   /* iOS Safari: toolbar-safe */
 @media (max-height: 700px) {
-  :root { --date-gap: 6px; --date-h: 40px; --list-gap: 6px; --content-pad: 4px; --sep: 4px; --banner-reserve: calc(88px + var(--sb)); }
+  :root { --date-gap: 6px; --date-h: 40px; --list-gap: 6px; --content-pad: 4px; --sep: 4px; --caption-h: 48px; --banner-reserve: calc(88px + var(--sb)); }
+  .list-caption { margin-top: 10px; }
 }
 
 body.theme-night {
@@ -244,7 +245,7 @@ body.theme-night .tree { display: none; }
   text-align: center;
   text-wrap: balance;
   font: 400 11px/1.35 'Poppins', sans-serif;
-  color: var(--quiet);
+  color: var(--ink); opacity: .35;   /* same as the finished rows above it */
 }
 .row.finished > * { opacity: .35; }
 .row.current {
