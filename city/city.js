@@ -10,7 +10,9 @@
   var city = JSON.parse(document.getElementById('city-data').textContent);
   var tz = city.timezone;
   var params = new URLSearchParams(location.search);
-  var use24h = params.get('clock') !== '12';
+  // Clock comes from the country config (build.mjs); ?clock=12|24 overrides it.
+  var clockParam = params.get('clock');
+  var use24h = clockParam === '24' || clockParam === '12' ? clockParam === '24' : city.clock === 24;
   var root = document.documentElement;
   var $ = function (id) { return document.getElementById(id); };
   var body = document.body;
@@ -70,6 +72,10 @@
   var calc = adhan.CalculationMethod[city.method]();  // MSC already carries dhuhr +5, maghrib +3
   calc.madhab = adhan.Madhab[city.madhab];
   calc.highLatitudeRule = adhan.HighLatitudeRule[city.highLatitudeRule];
+  // Second Asr for the SEO content: Hanafi (shadow 2x) next to the Shafi'i/Maliki/Hanbali (1x).
+  var calcHanafi = adhan.CalculationMethod[city.method]();
+  calcHanafi.madhab = adhan.Madhab.Hanafi;
+  calcHanafi.highLatitudeRule = calc.highLatitudeRule;
 
   var dayCache = {};
   function dayFor(ymd) {
@@ -80,6 +86,7 @@
     var day = {
       date: ymd,
       t: KEYS.map(function (k) { return pt[k].getTime(); }),
+      asrHanafi: new adhan.PrayerTimes(coords, new Date(a[0], a[1] - 1, a[2]), calcHanafi).asr.getTime(),
       start: zoned(a[0], a[1], a[2], 0, 0, 0),
       end: zoned(a[0], a[1], a[2], 23, 59, 0)
     };
@@ -87,7 +94,7 @@
     return day;
   }
 
-  // prayer_time_slot.dart formatting: "HH:mm", or "h:mm a" with ?clock=12.
+  // prayer_time_slot.dart formatting: "HH:mm" (24-hour countries) or "h:mm a".
   function formatTime(ms) {
     var p = partsOf(ms);
     if (use24h || (p.h === 12 && p.mi === 0)) return pad(p.h) + ':' + pad(p.mi);
@@ -384,8 +391,6 @@
   }
 
   // ---------- Date row + list ----------
-  var BELL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>';
-
   function renderDay(now) {
     var day = dayFor(selected);
     var isToday = selected === todayYmd;
@@ -395,15 +400,25 @@
     $('date-greg').textContent = gregFmt.format(dateObj(selected)).replace(',', '');
     $('date-hijri').textContent = hijriLabel(selected, isToday && now >= day.t[4]);
 
-    var cur = isToday ? currentIndex(day, now) : -1;
-    var html = cur === 0 ? '' : '<div class="sep"></div>';
-    for (var i = 0; i < 6; i++) {
-      var finished = selected < todayYmd || (isToday && cur > -1 && i < cur);
+    // Seven rows: both Asr times in time order. Asr is current from the early
+    // (Shafi'i) Asr until Maghrib, so the early row carries the highlight; the
+    // Hanafi row greys out once its time has passed.
+    var rows = [];
+    for (var k = 0; k < 6; k++) {
+      rows.push({ name: NAMES[k], t: day.t[k], p: k });
+      if (k === 3) rows.push({ name: 'Asr (Hanafi)', t: day.asrHanafi, p: 3, hanafi: true });
+    }
+    var curP = isToday ? currentIndex(day, now) : -1;
+    var cur = curP < 0 ? -1 : (curP <= 3 ? curP : curP + 1);
+    var SEP = '<li class="sep" aria-hidden="true"></li>';
+    var html = cur === 0 ? '' : SEP;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      var finished = selected < todayYmd || (isToday && (r.hanafi ? now >= r.t && curP >= 3 : cur > -1 && i < cur));
       var cls = 'row' + (i === cur ? ' current' : '') + (finished && i !== cur ? ' finished' : '');
-      html += '<div class="' + cls + '" aria-label="' + NAMES[i] + ', ' + formatTime(day.t[i]) + (i === cur ? ', current prayer' : '') + '">' +
-        '<span class="name">' + NAMES[i] + '</span><span class="t">' + formatTime(day.t[i]) + '</span>' +
-        '<span class="bell">' + BELL + '</span></div>';
-      if (i !== cur && i !== cur - 1) html += '<div class="sep"></div>';
+      html += '<li class="' + cls + '"' + (i === cur ? ' aria-current="time"' : '') + '>' +
+        '<span class="name">' + r.name + '</span> <span class="t">' + formatTime(r.t) + '</span></li>';
+      if (i !== cur && i !== cur - 1) html += SEP;
     }
     $('list').innerHTML = html;
   }
@@ -417,7 +432,7 @@
   function syncSeo() {
     var answer = $('answer');
     if (answer && answer.getAttribute('data-date') !== todayYmd) {
-      var t = dayFor(todayYmd).t;
+      var td = dayFor(todayYmd), t = td.t.concat([td.asrHanafi]);  // data-today="6" = Hanafi Asr
       answer.setAttribute('data-date', todayYmd);
       each('[data-today]', function (n) { n.textContent = formatTime(t[+n.getAttribute('data-today')]); });
       each('[data-today-date]', function (n) { n.textContent = longFmt.format(dateObj(todayYmd)).replace(',', ''); });
@@ -442,28 +457,28 @@
   }
 
   // ---------- Wiring ----------
-  $('prev').addEventListener('click', function () { selected = addDays(selected, -1); render(); });
-  $('next').addEventListener('click', function () { selected = addDays(selected, 1); render(); });
-  $('chip').addEventListener('click', function () { if (selected !== todayYmd) { selected = todayYmd; render(); } });
+  function on(id, ev, fn) { var n = $(id); if (n) n.addEventListener(ev, fn); }
+  on('prev', 'click', function () { selected = addDays(selected, -1); render(); });
+  on('next', 'click', function () { selected = addDays(selected, 1); render(); });
+  on('chip', 'click', function () { if (selected !== todayYmd) { selected = todayYmd; render(); } });
   var resizeTimer;
+  // ResizeObserver also catches viewport changes that fire no resize event.
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () { placeSky(); buildStars(); renderCurve(nowMs()); }, 100);
+    }).observe(document.documentElement);
+  }
   window.addEventListener('resize', function () {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () { placeSky(); buildStars(); renderCurve(nowMs()); }, 100);
   });
 
   // ---------- Floating app banner ----------
-  var banner = $('app-banner');
-  var BANNER_KEY = 'pillars-city-banner-closed';
-  try { if (localStorage.getItem(BANNER_KEY)) banner.hidden = true; } catch (e) {}
-  if (/android/i.test(navigator.userAgent)) {
+  // GET goes to the visitor's store; the banner itself never changes or closes.
+  if ($('ab-get') && /android/i.test(navigator.userAgent)) {
     $('ab-get').href = 'https://play.google.com/store/apps/details?id=com.pillars.pillars';
-    banner.querySelector('.ab-meta').textContent = 'Pillars · Free on Google Play';
   }
-  $('ab-close').addEventListener('click', function () {
-    banner.classList.add('hidden');
-    setTimeout(function () { banner.hidden = true; }, 300);
-    try { localStorage.setItem(BANNER_KEY, '1'); } catch (e) {}
-  });
 
   placeSky();
   render();

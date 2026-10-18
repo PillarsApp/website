@@ -1,0 +1,192 @@
+{
+  "_comment": "SAMPLE DATA for layout only. Real mosque names and addresses; the times are illustrative (mid-October style) and NOT any mosque's real timetable. build.mjs uses this only when MASJID_TIMES_SECRET is unset or the API fails, and the page then says the times are samples.",
+  "sample": true,
+  "mosques": [
+    {
+      "name": "London Central Mosque and The Islamic Cultural Centre",
+      "address": "146 Park Rd",
+      "zipcode": "NW8 7RG",
+      "athan": {
+        "fajr": "05:54",
+        "sunrise": "07:27",
+        "dhuhr": "12:51",
+        "asr": "15:28",
+        "maghrib": "18:04",
+        "isha": "19:27"
+      },
+      "iqamah": {
+        "fajr": "06:10",
+        "dhuhr": "13:30",
+        "asr": "15:45",
+        "maghrib": "18:09",
+        "isha": "19:40"
+      },
+      "jummah": [
+        "13:25"
+      ]
+    },
+    {
+      "name": "East London Mosque",
+      "address": "82-92 Whitechapel Rd",
+      "zipcode": "E1 1JQ",
+      "athan": {
+        "fajr": "05:54",
+        "sunrise": "07:27",
+        "dhuhr": "12:51",
+        "asr": "16:10",
+        "maghrib": "18:04",
+        "isha": "19:27"
+      },
+      "iqamah": {
+        "fajr": "06:15",
+        "dhuhr": "13:05",
+        "asr": "16:30",
+        "maghrib": "18:10",
+        "isha": "19:45"
+      },
+      "jummah": [
+        "13:15",
+        "14:00"
+      ]
+    },
+    {
+      "name": "Finsbury Park Mosque",
+      "address": "7-11 St Thomas's Rd",
+      "zipcode": "N4 2QH",
+      "athan": {
+        "fajr": "05:54",
+        "sunrise": "07:27",
+        "dhuhr": "12:51",
+        "asr": "15:28",
+        "maghrib": "18:04",
+        "isha": "19:27"
+      },
+      "iqamah": {
+        "fajr": "06:20",
+        "dhuhr": "13:10",
+        "asr": "15:45",
+        "maghrib": "18:11",
+        "isha": "19:50"
+      },
+      "jummah": [
+        "13:30"
+      ]
+    },
+    {
+      "name": "Edgware Road Mosque",
+      "address": "245 Old Marylebone Rd",
+      "zipcode": "NW1 5QT",
+      "athan": {
+        "fajr": "05:54",
+        "sunrise": "07:27",
+        "dhuhr": "12:51",
+        "asr": "16:10",
+        "maghrib": "18:04",
+        "isha": "19:27"
+      },
+      "iqamah": {
+        "fajr": "06:10",
+        "dhuhr": "13:30",
+        "asr": "16:30",
+        "maghrib": "18:09",
+        "isha": "19:40"
+      },
+      "jummah": [
+        "13:15",
+        "13:55"
+      ]
+    },
+    {
+      "name": "Muslim Welfare House",
+      "address": "233a Seven Sisters Rd",
+      "zipcode": "N4 2DA",
+      "athan": {
+        "fajr": "05:54",
+        "sunrise": "07:27",
+        "dhuhr": "12:51",
+        "asr": "15:28",
+        "maghrib": "18:04",
+        "isha": "19:27"
+      },
+      "iqamah": {
+        "fajr": "06:15",
+        "dhuhr": "13:05",
+        "asr": "15:45",
+        "maghrib": "18:10",
+        "isha": "19:45"
+      },
+      "jummah": [
+        "13:30"
+      ]
+    },
+    {
+      "name": "Brick Lane Jamme Masjid",
+      "address": "59 Brick Lane",
+      "zipcode": "E1 6QL",
+      "athan": {
+        "fajr": "05:54",
+        "sunrise": "07:27",
+        "dhuhr": "12:51",
+        "asr": "16:10",
+        "maghrib": "18:04",
+        "isha": "19:27"
+      },
+      "iqamah": {
+        "fajr": "06:20",
+        "dhuhr": "13:10",
+        "asr": "16:30",
+        "maghrib": "18:11",
+        "isha": "19:50"
+      },
+      "jummah": [
+        "13:30"
+      ]
+    },
+    {
+      "name": "New Peckham Mosque",
+      "address": "99 Cobourg Rd",
+      "zipcode": "SE5 0HU",
+      "athan": {
+        "fajr": "05:54",
+        "sunrise": "07:27",
+        "dhuhr": "12:51",
+        "asr": "15:28",
+        "maghrib": "18:04",
+        "isha": "19:27"
+      },
+      "iqamah": {
+        "fajr": "06:10",
+        "dhuhr": "13:30",
+        "asr": "15:45",
+        "maghrib": "18:09",
+        "isha": "19:40"
+      },
+      "jummah": [
+        "13:20"
+      ]
+    },
+    {
+      "name": "Holborn Muslim Community Association",
+      "address": "33 Baldwin's Gardens",
+      "zipcode": "EC1N 7RR",
+      "athan": {
+        "fajr": "05:54",
+        "sunrise": "07:27",
+        "dhuhr": "12:51",
+        "asr": "16:10",
+        "maghrib": "18:04",
+        "isha": "19:27"
+      },
+      "iqamah": {
+        "fajr": "06:15",
+        "dhuhr": "13:05",
+        "asr": "16:30",
+        "maghrib": "18:10",
+        "isha": "19:45"
+      },
+      "jummah": [
+        "13:15"
+      ]
+    }
+  ]
+}
