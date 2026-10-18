@@ -21,7 +21,7 @@
      caption sits below the fold). It never drops below --sky-min, so the curve keeps its
      arc; on very small phones the list runs below the fold instead of squashing it. */
   --banner-reserve: calc(96px + var(--sb));
-  --row-h: clamp(44px, calc(var(--S) * .064), 60px);
+  --row-h: clamp(50px, calc(var(--S) * .072), 64px);
   --date-gap: 20px;
   --date-h: 50px;
   --list-gap: 10px;
@@ -30,13 +30,15 @@
   --caption-h: 46px;     /* trust caption: 16px gap + two 11px lines (line-height 1.35) */
   --content-h: calc(21px + var(--date-gap) + var(--date-h) + var(--list-gap) + 7 * var(--row-h) + 8 * var(--sep) + var(--caption-h) + var(--content-pad));
   --to-isha: calc(21px + var(--date-gap) + var(--date-h) + var(--list-gap) + 7 * var(--row-h) + 7 * var(--sep));
-  --sky-min: 230px;
-  /* The content overlaps the sky's bottom quarter, so sky = avail / .75. When the sky is
+  --sky-min: 210px;
+  /* The content overlaps the sky's bottom quarter, so sky = avail / --ov. When the sky is
      short, the curve box moves down (--curve-shift) so the arc's peak (33% of its height)
      stays below the countdown. */
   --avail: calc(var(--vh) - var(--st) - var(--to-isha));
-  --sky-h: max(var(--sky-min), min(calc(var(--S) * .46), calc(var(--avail) / .75), calc((var(--avail) - 102px) / .4167)));
-  --curve-shift: max(0px, calc(102px - var(--sky-h) * .3333));
+  --ov: .66;             /* content starts this far down the sky (TODAY tag sits in the curve's dip) */
+  --lift: 16px;          /* curve raised towards the countdown pill */
+  --sky-h: max(var(--sky-min), min(calc(var(--S) * .36), calc(var(--avail) / var(--ov)), calc((var(--avail) - 102px) / (var(--ov) - .3333))));
+  --curve-shift: calc(max(0px, calc(102px + var(--lift) - var(--sky-h) * .3333)) - var(--lift));
 
   /* Day theme (default) */
   --grad-1: #C5DFF1;
@@ -181,7 +183,7 @@ body.theme-night .tree { display: none; }
 .content {
   position: relative; z-index: 3;
   margin-top: auto;
-  padding: calc(var(--st) + var(--curve-shift) + var(--sky-h) * .75) 0 var(--banner-reserve);
+  padding: calc(var(--st) + var(--curve-shift) + var(--sky-h) * var(--ov)) 0 var(--banner-reserve);
   text-align: center;
 }
 
