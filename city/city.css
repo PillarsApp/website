@@ -370,9 +370,10 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 /* Divider lines between rows (no stripes); none under the last row, where the card ends. */
 .timetable tbody tr:last-child th, .timetable tbody tr:last-child td { border-bottom: 0; }
 
-.method div { padding: 0; }
-.method div + div { margin-top: 20px; }
-.method dt { font-size: 13px; line-height: 1.5; font-weight: 400; letter-spacing: .3px; color: var(--text); }
+.method div { padding: 16px 0; border-bottom: 1px solid var(--rule); }
+.method div:first-child { padding-top: 0; }
+.method div:last-child { padding-bottom: 0; border-bottom: 0; }
+.method dt { font-size: 12px; line-height: 1.5; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: rgba(255, 255, 255, .55); }
 .method dd { margin: 4px 0 0; font-size: 16px; line-height: 1.5; font-weight: 500; color: var(--ink); }
 
 /* Mosques: name, address, athan/jamaat grid */
