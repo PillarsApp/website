@@ -614,22 +614,19 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
   update();
 })();
 
-// Scroll rail: a column of ticks down the right edge, one per heading / question / mosque / table week.
+// Scroll rail: a column of ticks down the left edge, one per section (the app view, then each heading).
 // While scrolling, the tick for where you are grows and turns white (neighbours grow a little);
 // it fades out shortly after scrolling stops.
 (function () {
   var seo = document.getElementById('seo');
   if (!seo) return;
-  var major = 'h1, h2';
-  var els = [document.querySelector('.screen') || document.body].concat([].slice.call(seo.querySelectorAll(
-    'h1, h2, h3, .faq-item, li:has(.addr), .timetable tbody tr:nth-child(4n+1)')));
+  var els = [document.querySelector('.screen') || document.body].concat([].slice.call(seo.querySelectorAll('h1, h2')));
   if (els.length < 3) return;
   var rail = document.createElement('div');
   rail.className = 'rail';
   rail.setAttribute('aria-hidden', 'true');
   var ticks = els.map(function (el, i) {
     var t = document.createElement('i');
-    if (i === 0 || el.matches(major)) t.className = 'major';
     rail.appendChild(t);
     return t;
   });
@@ -646,7 +643,7 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
     active = idx;
     ticks.forEach(function (t, i) {
       var d = Math.abs(i - idx);
-      t.style.width = (d === 0 ? 26 : d === 1 ? 16 : d === 2 ? 11 : t.className.indexOf('major') >= 0 ? 9 : 6) + 'px';
+      t.style.width = (d === 0 ? 26 : d === 1 ? 16 : 10) + 'px';
       t.classList.toggle('on', d === 0);
     });
   }
