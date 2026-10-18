@@ -138,6 +138,9 @@
       theme = next;
       body.classList.toggle('theme-night', theme === 'night');
       buildStars();
+      // Safari paints the status-bar area with theme-color: match the top of the sky.
+      var tc = document.getElementById('theme-color');
+      if (tc) tc.setAttribute('content', getComputedStyle(body).getPropertyValue('--grad-1').trim() || '#031831');
     }
   }
 

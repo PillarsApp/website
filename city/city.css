@@ -16,13 +16,12 @@
   --vh: 100vh;
   --S: calc(var(--vh) - var(--st) - var(--sb));   /* SizeConfig.safeScreenHeight */
 
-  /* First view = exactly one viewport. The column below the sky has a known
-     height (chip + date row + 7 rows + separators); the floating banner gets a
-     reserved strip; the sky/curve takes what is left, up to the app's 4/11 of
-     the safe height. Small phones get a tighter date row and rows, then a
-     shorter sky, never rows pushed under the fold. */
+  /* First view: the sky takes the app's 4/11 of the safe height, shrinking only so the
+     Isha row ends at the bottom of the screen (the floating banner may cover it; the
+     caption sits below the fold). It never drops below --sky-min, so the curve keeps its
+     arc; on very small phones the list runs below the fold instead of squashing it. */
   --banner-reserve: calc(96px + var(--sb));
-  --row-h: clamp(44px, calc(var(--S) * .062), 56px);
+  --row-h: clamp(44px, calc(var(--S) * .064), 60px);
   --date-gap: 20px;
   --date-h: 50px;
   --list-gap: 10px;
@@ -30,12 +29,13 @@
   --sep: 6px;            /* separator incl. its margins */
   --caption-h: 46px;     /* trust caption: 16px gap + two 11px lines (line-height 1.35) */
   --content-h: calc(21px + var(--date-gap) + var(--date-h) + var(--list-gap) + 7 * var(--row-h) + 8 * var(--sep) + var(--caption-h) + var(--content-pad));
-  /* Space left for the sky. The content overlaps its bottom quarter. When it is
-     short, the curve box also moves down (--curve-shift) so the arc's peak
-     (33% of its height) stays below the countdown (93px under the safe top):
-     sky = min(app size, avail / .75, (avail - 93) / (.75 - .333)). */
-  --avail: calc(var(--vh) - var(--st) - var(--banner-reserve) - var(--content-h));
-  --sky-h: max(32px, min(calc(var(--S) * 4 / 11), calc(var(--avail) / .75), calc((var(--avail) - 102px) / .4167)));
+  --to-isha: calc(21px + var(--date-gap) + var(--date-h) + var(--list-gap) + 7 * var(--row-h) + 7 * var(--sep));
+  --sky-min: 230px;
+  /* The content overlaps the sky's bottom quarter, so sky = avail / .75. When the sky is
+     short, the curve box moves down (--curve-shift) so the arc's peak (33% of its height)
+     stays below the countdown. */
+  --avail: calc(var(--vh) - var(--st) - var(--to-isha));
+  --sky-h: max(var(--sky-min), min(calc(var(--S) * .46), calc(var(--avail) / .75), calc((var(--avail) - 102px) / .4167)));
   --curve-shift: max(0px, calc(102px - var(--sky-h) * .3333));
 
   /* Day theme (default) */
@@ -489,8 +489,8 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .timetable thead th:first-child, .timetable th[scope="row"] { box-shadow: 8px 0 8px -6px rgba(0, 0, 0, .45); }
 /* Column headings follow the screen while the month scrolls past: city.js floats a fixed clone of the
    thead (CSS sticky can't, the wrapper scrolls sideways). The clone stays below the app banner (z 1000). */
-.tt-float { position: fixed; top: 0; z-index: 900; overflow: hidden; pointer-events: none; visibility: hidden; will-change: transform; }
-.tt-float.on { visibility: visible; }
+.tt-float { position: fixed; top: 0; z-index: 900; overflow: hidden; pointer-events: none; display: none; will-change: transform; }
+.tt-float.on { display: block; }
 .tt-float .timetable { position: relative; min-width: 0; table-layout: fixed; }
 .tt-float .timetable thead th { background: var(--deep-blue); box-shadow: 0 1px 0 var(--rule); }
 
@@ -521,11 +521,15 @@ body.theme-night { --bar-bg: rgba(3, 24, 49, .62); --bar-rule: rgba(255, 255, 25
   backdrop-filter: saturate(180%) blur(20px);
   font: 600 17px/1 'Poppins', sans-serif;
   color: var(--ink);
-  opacity: 0; transform: translateY(-100%);
+  display: none; opacity: 0; transform: translateY(-100%);
   transition: opacity .25s ease, transform .25s ease;
   pointer-events: none;
 }
-.topbar.on { opacity: 1; transform: none; }
+.topbar.on { display: flex; opacity: 1; transform: none; }
+/* Hidden fixed bars use display:none, not opacity: iOS Safari tints the status bar from fixed
+   elements at the top edge, even invisible ones. */
+@starting-style { .topbar.on { opacity: 0; transform: translateY(-100%); } }
+.topbar { transition: opacity .25s ease, transform .25s ease, display .25s allow-discrete; }
 .topbar .tb-time { font-weight: 500; opacity: .5; font-variant-numeric: tabular-nums; }
 .topbar .tb-in { opacity: .5; font-weight: 500; }
 .topbar .tb-time { display: inline-flex; }
@@ -537,3 +541,6 @@ body.theme-night { --bar-bg: rgba(3, 24, 49, .62); --bar-rule: rgba(255, 255, 25
 .seo .card .crumbs a:hover, .seo .card .crumbs a:focus-visible { color: #FFFFFF; }
 /* Timetable column headings: full white. */
 .seo .card .timetable thead th, .tt-float .timetable thead th { color: #FFFFFF; }
+/* Status-bar / overscroll area takes the top of the sky (Safari samples the root background). */
+html { background-color: #C5DFF1; }
+html:has(body.theme-night) { background-color: #031831; }
