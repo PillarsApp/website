@@ -278,12 +278,12 @@ body.theme-night .seo {
 }
 .seo a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .seo h1 {
-  margin: 8px 0 20px;
+  margin: 8px 0 28px;
   font-size: 28px; line-height: 1.3; font-weight: 500; letter-spacing: -.2px;
   color: var(--ink);
 }
 .seo h2 {
-  margin: 40px 0 20px;
+  margin: 40px 0 28px;
   font-size: 24px; line-height: 1.3; font-weight: 500; letter-spacing: -.2px;
   color: var(--ink);
 }
@@ -336,7 +336,7 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .seo .card .mosques li:last-child { border-bottom: 0; padding-bottom: 0; }
 .seo .card .faq { border-bottom: 0; }
 .seo .card .faq-item:first-child { border-top: 0; }
-.seo .card h2 + .faq { margin-top: -18px; }   /* heading to first question text: 20px */
+.seo .card h2 + .faq { margin-top: -18px; }   /* heading to first question text: 28px */
 .seo .card .faq-item:last-child .faq-a p { padding-bottom: 4px; }
 .seo .card .method div:last-child { border-bottom: 0; padding-bottom: 0; }
 .table-wrap { overflow-x: auto; margin: 0 -24px; padding: 0; }
@@ -368,6 +368,11 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .timetable tbody td, .timetable tbody th { color: #FFFFFF; }
 .timetable tr.past th, .timetable tr.past td, .timetable tr.past .hj { color: rgba(255, 255, 255, .35); }
 .timetable tr.today th, .timetable tr.today td { font-weight: 700; color: #FFFFFF; }
+/* Zebra rows instead of dividers: solid colours so the sticky date cell matches its row exactly.
+   #0A2246 = white at 4% over the card navy #00193E. Only the header keeps a line. */
+.timetable tbody th, .timetable tbody td { border-bottom: 0; }
+.timetable tbody tr { background: var(--deep-blue); }
+.timetable tbody tr:nth-child(odd), .timetable tbody tr:nth-child(odd) th[scope="row"] { background: #0A2246; }
 
 .method div { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--rule); }
 .method div:first-child { padding-top: 0; }
