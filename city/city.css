@@ -519,7 +519,6 @@ body.theme-night { --bar-bg: rgba(3, 24, 49, .62); --bar-rule: rgba(255, 255, 25
   background: var(--bar-bg);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
-  box-shadow: 0 .5px 0 var(--bar-rule);
   font: 600 17px/1 'Poppins', sans-serif;
   color: var(--ink);
   opacity: 0; transform: translateY(-100%);
