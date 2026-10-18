@@ -10,6 +10,7 @@
 // in place. Run daily shortly after local midnight (the "Updated" stamp, the
 // meta description and dateModified all come from the run).
 import { readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -435,10 +436,14 @@ function region(name, content) {
   if (!re.test(html)) throw new Error('Missing region ' + name);
   html = html.replace(re, (_, a, b) => `${a}\n${content}\n${b}`);
 }
-// Cache-bust the page's own CSS/JS so a rebuilt page never runs against a stale script.
+// Speed: the CSS is inlined (no render-blocking request) and lightly minified; city.js is minified
+// to city.min.js with esbuild and cache-busted by content hash so a rebuilt page never runs a stale script.
 const ver = (f) => createHash('sha1').update(readFileSync(resolve(here, f))).digest('hex').slice(0, 8);
-html = html.replace(/href="city\.css(\?v=[^"]*)?"/, `href="city.css?v=${ver('city.css')}"`)
-  .replace(/src="city\.js(\?v=[^"]*)?"/, `src="city.js?v=${ver('city.js')}"`);
+const minCss = readFileSync(resolve(here, 'city.css'), 'utf8')
+  .replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s+/g, ' ').replace(/\s*([{}:;,>])\s*/g, '$1').replace(/;}/g, '}').trim();
+execFileSync('npx', ['--yes', 'esbuild@0.24.0', resolve(here, 'city.js'), '--minify', '--target=es2017', `--outfile=${resolve(here, 'city.min.js')}`, '--log-level=warning'], { stdio: 'inherit' });
+html = html.replace(/<link rel="stylesheet" href="city\.css[^"]*">|<style id="city-css">[\s\S]*?<\/style>/, () => `<style id="city-css">${minCss}</style>`)
+  .replace(/src="city(\.min)?\.js(\?v=[^"]*)?"/, `src="city.min.js?v=${ver('city.min.js')}"`);
 html = html.replace(/<ul class="list" id="list"[^>]*>/, `<ul class="list" id="list" aria-label="${esc(city.name)} prayer times today">`);
 html = html.replace(/<html lang="[^"]*">/, `<html lang="${country.lang}">`);
 region('head', head.replace('__LD__', () => JSON.stringify(ld, null, 2)));

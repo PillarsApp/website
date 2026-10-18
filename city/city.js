@@ -526,6 +526,30 @@
   render();
   requestAnimationFrame(frame);
 
+  // WebMCP: lets an AI agent in the browser ask for this city's times on any date (where supported).
+  var mc = document.modelContext || navigator.modelContext;
+  if (mc && typeof mc.registerTool === 'function') {
+    try {
+      mc.registerTool({
+        name: 'get_prayer_times',
+        description: 'Prayer (salah) times for ' + city.place + ' on a given date: Fajr, Sunrise, Dhuhr, Asr (Shafi\'i and Hanafi), Maghrib, Isha, in local time.',
+        inputSchema: {
+          type: 'object',
+          properties: { date: { type: 'string', description: 'Date as YYYY-MM-DD. Defaults to today in ' + city.name + '.', pattern: '^\\d{4}-\\d{2}-\\d{2}$' } },
+          additionalProperties: false
+        },
+        annotations: { readOnlyHint: true },
+        execute: async function (args) {
+          var ymd = args && /^\d{4}-\d{2}-\d{2}$/.test(args.date || '') ? args.date : todayYmd;
+          var d = dayFor(ymd), out = { city: city.place, date: ymd, timezone: city.timezone, method: city.method };
+          NAMES.forEach(function (n, i) { out[n.toLowerCase()] = formatTime(d.t[i]); });
+          out.asr_hanafi = formatTime(d.asrHanafi);
+          return JSON.stringify(out);
+        }
+      });
+    } catch (e) { /* tool registration is optional */ }
+  }
+
   // Countdown every second; everything else when the minute rolls over.
   var lastMinute = Math.floor(nowMs() / 60000);
   setInterval(function () {

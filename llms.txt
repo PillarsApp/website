@@ -1,0 +1,16 @@
+# Pillars
+
+> Pillars is a free Muslim prayer app for iOS and Android: accurate daily prayer (salah) times, athan notifications, Qibla, mosque jamaat times and a prayer tracker. This site hosts city prayer-time pages with today's times, a monthly timetable and nearby mosques.
+
+Times are calculated with the adhan library using each city's standard method (UK: Moonsighting Committee, Fajr and Isha at 18°), with both Asr times (Shafi'i and Hanafi). Mosque jamaat times come from the Pillars mosque database.
+
+## Prayer times
+
+- [London prayer times](https://thepillarsapp.com/prayer-times/uk/london/): today's Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha, the month's timetable, calculation method and London mosques
+- [United Kingdom prayer times](https://thepillarsapp.com/prayer-times/uk/): all UK cities
+- [All prayer times](https://thepillarsapp.com/prayer-times/): every country and city
+
+## App
+
+- [Pillars on the App Store](https://apps.apple.com/app/id1559086853)
+- [Pillars website](https://thepillarsapp.com/)

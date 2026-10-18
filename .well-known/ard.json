@@ -1,0 +1,24 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Pillars",
+    "documentationUrl": "https://thepillarsapp.com/llms.txt",
+    "logoUrl": "https://thepillarsapp.com/assets/icon-pillars-notification.png"
+  },
+  "entries": [
+    {
+      "identifier": "urn:air:thepillarsapp.com:skills:prayer-times",
+      "displayName": "Pillars prayer times",
+      "description": "How to read daily salah times, monthly timetables and mosque jamaat times from Pillars city prayer-time pages, plus the in-page get_prayer_times tool.",
+      "type": "text/markdown; profile=\"urn:air:agent-skills\"",
+      "url": "https://thepillarsapp.com/skills/prayer-times.md",
+      "representativeQueries": [
+        "prayer times London today",
+        "what time is Fajr in London",
+        "London salah timetable this month",
+        "Hanafi Asr time London",
+        "Isha time London tonight"
+      ]
+    }
+  ]
+}
