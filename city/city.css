@@ -338,7 +338,6 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .seo .card .faq-item:first-child { border-top: 0; }
 .seo .card h2 + .faq { margin-top: -18px; }   /* heading to first question text: 28px */
 .seo .card .faq-item:last-child .faq-a p { padding-bottom: 4px; }
-.seo .card .method div:last-child { border-bottom: 0; padding-bottom: 0; }
 .table-wrap { overflow-x: auto; margin: 0 -24px; padding: 0; }
 .timetable th:last-child, .timetable td:last-child { padding-right: 24px; }
 .timetable thead th:first-child { padding-left: 24px; }
@@ -374,10 +373,10 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .timetable tbody tr { background: var(--deep-blue); }
 .timetable tbody tr:nth-child(odd), .timetable tbody tr:nth-child(odd) th[scope="row"] { background: #0A2246; }
 
-.method div { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--rule); }
-.method div:first-child { padding-top: 0; }
-.method dt { flex: 0 0 104px; color: var(--ink); font-weight: 500; }
-.method dd { margin: 0; flex: 1; }
+.method div { padding: 0; }
+.method div + div { margin-top: 20px; }
+.method dt { font-size: 13px; line-height: 1.5; font-weight: 400; letter-spacing: .3px; color: var(--text); }
+.method dd { margin: 4px 0 0; font-size: 16px; line-height: 1.5; font-weight: 500; color: var(--ink); }
 
 /* Mosques: name, address, athan/jamaat grid */
 .mosques { list-style: none; margin: 0; padding: 0; }
