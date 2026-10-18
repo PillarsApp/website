@@ -151,7 +151,7 @@
     else name = NAMES[idx];
     var el = $('current-name');
     el.textContent = '';
-    [['It\u2019s now ', 0], [name, 1], null, ['in ', 0], [city.place || city.name, 1]].forEach(function (part) {
+    [['It\u2019s ', 0], [name, 1], null, ['in ', 0], [city.name, 1]].forEach(function (part) {
       if (!part) { el.appendChild(document.createElement('br')); return; }
       var span = document.createElement('span');
       span.textContent = part[0];
