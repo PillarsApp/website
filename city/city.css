@@ -405,9 +405,19 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 }
 
 .nearby {
-  list-style: none; margin: 0 0 12px; padding: 0;
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px;
+  list-style: none; margin: 0 0 20px; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 10px;
 }
+/* City links as outlined pills: same white and 1px weight as the old underline. */
+.nearby a, .hub-link a {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 1px solid currentColor; border-radius: 999px;
+  color: #FFFFFF; text-decoration: none;
+  font-size: 15px; line-height: 1.4;
+}
+.nearby a:hover, .hub-link a:hover { background: rgba(255, 255, 255, .08); }
+.hub-link { margin: 0; }
 
 /* ---------- Floating app banner (App Store smart-banner style) ---------- */
 .app-banner {
