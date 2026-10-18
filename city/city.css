@@ -35,8 +35,8 @@
      (33% of its height) stays below the countdown (93px under the safe top):
      sky = min(app size, avail / .75, (avail - 93) / (.75 - .333)). */
   --avail: calc(var(--vh) - var(--st) - var(--banner-reserve) - var(--content-h));
-  --sky-h: max(80px, min(calc(var(--S) * 4 / 11), calc(var(--avail) / .75), calc((var(--avail) - 133px) / .4167)));
-  --curve-shift: max(0px, calc(133px - var(--sky-h) * .3333));
+  --sky-h: max(80px, min(calc(var(--S) * 4 / 11), calc(var(--avail) / .75), calc((var(--avail) - 94px) / .4167)));
+  --curve-shift: max(0px, calc(94px - var(--sky-h) * .3333));
 
   /* Day theme (default) */
   --grad-1: #C5DFF1;
@@ -138,7 +138,7 @@ body.theme-night .sun { display: none; }
 }
 .current-name {
   margin: 0;
-  font: 500 30px/1.3 'Poppins', sans-serif;
+  font: 500 min(30px, 7.4vw)/1.3 'Poppins', sans-serif;
   color: var(--ink);
 }
 .current-name { white-space: nowrap; }

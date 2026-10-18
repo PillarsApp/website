@@ -229,7 +229,7 @@ const dateBlock = `<div class="date-greg" id="date-greg">${appDate(date)}</div>
 let list = '<li class="sep" aria-hidden="true"></li>';
 // Seven rows like city.js: both Asr times in time order.
 const replicaRows = [];
-NAMES.forEach((n, i) => { replicaRows.push([n, today[i]]); if (i === 3) replicaRows.push(['Asr (Hanafi)', todayHanafi]); });
+NAMES.forEach((n, i) => { replicaRows.push([i === 3 ? 'Asr (Earlier)' : n, today[i]]); if (i === 3) replicaRows.push(['Asr (Later · Hanafi)', todayHanafi]); });
 for (const [n, t] of replicaRows) {
   list += `<li class="row"><span class="name">${n}</span> <span class="t">${fmt(t)}</span></li><li class="sep" aria-hidden="true"></li>`;
 }

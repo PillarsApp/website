@@ -151,7 +151,7 @@
     else name = NAMES[idx];
     var el = $('current-name');
     el.textContent = '';
-    [['It\u2019s ', 0], [name, 1], null, ['in ', 0], [city.name, 1]].forEach(function (part) {
+    [['It\u2019s ', 0], [name, 1], [' in ', 0], [city.name, 1]].forEach(function (part) {
       if (!part) { el.appendChild(document.createElement('br')); return; }
       var span = document.createElement('span');
       span.textContent = part[0];
@@ -341,7 +341,7 @@
       var k = Math.floor(rnd() * (j + 1));
       var tmp = cells[j]; cells[j] = cells[k]; cells[k] = tmp;
     }
-    var moon = [W - 50, 70];
+    var moon = [W, 10];
     var clamp = function (v, lo, hi) { return Math.min(Math.max(v, lo), hi); };
     var candidates = [];
     cells.forEach(function (cell) {
@@ -371,7 +371,7 @@
   function placeSky() {
     var W = skySize().w;
     ['sun1', 'sun2', 'sun3'].forEach(function (id) { $(id).setAttribute('cx', W); $(id).setAttribute('cy', 0); });
-    ['moon1', 'moon2', 'moon3'].forEach(function (id) { $(id).setAttribute('cx', W - 50); $(id).setAttribute('cy', 70); });
+    ['moon1', 'moon2', 'moon3'].forEach(function (id) { $(id).setAttribute('cx', W); $(id).setAttribute('cy', 10); });
   }
 
   function frame(ms) {
@@ -413,8 +413,8 @@
     // Hanafi row greys out once its time has passed.
     var rows = [];
     for (var k = 0; k < 6; k++) {
-      rows.push({ name: NAMES[k], t: day.t[k], p: k });
-      if (k === 3) rows.push({ name: 'Asr (Hanafi)', t: day.asrHanafi, p: 3, hanafi: true });
+      rows.push({ name: k === 3 ? 'Asr (Earlier)' : NAMES[k], t: day.t[k], p: k });
+      if (k === 3) rows.push({ name: 'Asr (Later \u00B7 Hanafi)', t: day.asrHanafi, p: 3, hanafi: true });
     }
     var curP = isToday ? currentIndex(day, now) : -1;
     var cur = curP < 0 ? -1 : (curP <= 3 ? curP : curP + 1);
