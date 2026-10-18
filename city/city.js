@@ -149,7 +149,14 @@
     if (idx < 0) name = NAMES[5];                                   // before Fajr: still Isha
     else if (idx === 1) name = minutesBetween(today.t[1], now) >= 15 ? 'Duha' : 'Sunrise';
     else name = NAMES[idx];
-    $('current-name').textContent = name;
+    var el = $('current-name');
+    el.textContent = '';
+    [['It\u2019s now ', 0], [name, 1], [' in ', 0], [city.name, 1]].forEach(function (part) {
+      var span = document.createElement('span');
+      span.textContent = part[0];
+      if (!part[1]) span.className = 'dim';
+      el.appendChild(span);
+    });
 
     var nextIdx = idx < 5 ? idx + 1 : 0;
     var nextAt = idx < 5 ? today.t[nextIdx] : dayFor(addDays(todayYmd, 1)).t[0];
@@ -493,3 +500,10 @@
     renderHeader(now);
   }, 1000);
 })();
+
+// FAQ: one question open at a time (native details[name] does this in new browsers; this covers older ones).
+document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
+  d.addEventListener('toggle', function () {
+    if (d.open) all.forEach(function (o) { if (o !== d) o.open = false; });
+  });
+});

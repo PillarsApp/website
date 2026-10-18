@@ -372,7 +372,7 @@ ${mosquesHtml}
     <div class="card">
     <h2>Frequently asked questions</h2>
     <div class="faq">
-      ${faq.map(([q, a, raw], i) => `<details class="faq-item"${i === 0 ? ' open' : ''}>
+      ${faq.map(([q, a, raw], i) => `<details class="faq-item" name="faq"${i === 0 ? ' open' : ''}>
         <summary><h3 class="faq-h">${esc(q)}</h3></summary>
         <div class="faq-a"><p>${raw ? a : esc(a)}</p></div>
       </details>`).join('\n      ')}
