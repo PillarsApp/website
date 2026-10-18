@@ -335,6 +335,8 @@
   }
 
   // ---------- Sky: sun, moon, stars ----------
+  // Moon centre sits above the page's top edge so it reads as tucked behind the status bar.
+  var MOON_Y = -18;
   var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var stars = [];
 
@@ -364,7 +366,7 @@
       var k = Math.floor(rnd() * (j + 1));
       var tmp = cells[j]; cells[j] = cells[k]; cells[k] = tmp;
     }
-    var moon = [W, 10];
+    var moon = [W, MOON_Y];
     var clamp = function (v, lo, hi) { return Math.min(Math.max(v, lo), hi); };
     var candidates = [];
     cells.forEach(function (cell) {
@@ -394,7 +396,7 @@
   function placeSky() {
     var W = skySize().w;
     ['sun1', 'sun2', 'sun3'].forEach(function (id) { $(id).setAttribute('cx', W); $(id).setAttribute('cy', 0); });
-    ['moon1', 'moon2', 'moon3'].forEach(function (id) { $(id).setAttribute('cx', W); $(id).setAttribute('cy', 10); });
+    ['moon1', 'moon2', 'moon3'].forEach(function (id) { $(id).setAttribute('cx', W); $(id).setAttribute('cy', MOON_Y); });
   }
 
   function frame(ms) {
