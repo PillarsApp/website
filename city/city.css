@@ -267,8 +267,8 @@ body.theme-night .tree { display: none; }
   --rule: rgba(0, 25, 62, .10);
   --row-today: rgba(14, 35, 60, .05);
   width: 100vw; margin-left: calc(50% - 50vw);
-  padding: 20px 16px 140px;
-  font-size: 15px; line-height: 1.6;
+  padding: 20px 16px 160px;
+  font-size: 16px; line-height: 1.75;
   color: var(--text);
 }
 body.theme-night .seo {
@@ -278,13 +278,13 @@ body.theme-night .seo {
 }
 .seo a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 .seo h1 {
-  margin: 8px 0 12px;
-  font-size: 28px; line-height: 1.25; font-weight: 500; letter-spacing: -.2px;
+  margin: 8px 0 20px;
+  font-size: 28px; line-height: 1.3; font-weight: 500; letter-spacing: -.2px;
   color: var(--ink);
 }
 .seo h2 {
-  margin: 40px 0 16px;
-  font-size: 24px; line-height: 1.25; font-weight: 500; letter-spacing: -.2px;
+  margin: 40px 0 20px;
+  font-size: 24px; line-height: 1.3; font-weight: 500; letter-spacing: -.2px;
   color: var(--ink);
 }
 .seo h3 {
@@ -292,15 +292,17 @@ body.theme-night .seo {
   font-size: 15px; line-height: 1.45; font-weight: 600;
   color: var(--ink);
 }
-.seo p { margin: 0 0 12px; }
-.seo .answer { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+.seo p { margin: 0 0 1em; }
+.seo .answer { color: var(--ink); font-size: 17px; line-height: 1.7; font-weight: 500; font-variant-numeric: tabular-nums; }
 
 /* Breadcrumb in the blog meta-line style: quiet grey, chevrons, no underline until hover. */
-.crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; font: 400 15px/1.6 'Poppins', sans-serif; color: #8493A4; }
+.crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; font: 400 15px/1.6 'Poppins', sans-serif; color: #5F6F82; }
+body.theme-night .crumbs ol { color: #8493A4; }
 /* Chevron separator; the empty alt text keeps it out of the accessibility tree (aria-hidden). */
 .crumbs li + li::before { content: '\203A'; content: '\203A' / ''; margin: 0 11px; font-size: .85em; }
-.seo .crumbs a { color: inherit; text-decoration: none; }
-.seo .crumbs a:hover { text-decoration: underline; }
+.seo .crumbs a { color: inherit; text-decoration: none; transition: color .15s ease; }
+.seo .crumbs a:hover, .seo .crumbs a:focus-visible { color: var(--deep-blue); text-decoration: none; }
+body.theme-night .seo .crumbs a:hover, body.theme-night .seo .crumbs a:focus-visible { color: #FFFFFF; }
 
 .method { margin: 0; }
 
@@ -308,18 +310,24 @@ body.theme-night .seo {
    both themes; night uses a navy a step lighter than the page so it reads as a card. */
 .seo .card {
   --ink: #FFFFFF;
-  --text: rgba(255, 255, 255, .72);
+  --text: rgba(255, 255, 255, .78);
   --rule: rgba(255, 255, 255, .12);
   --row-today: rgba(255, 255, 255, .10);
   --accent: #FFFFFF;
-  margin: 16px auto 0;
-  padding: 28px 24px;
+  margin: 28px auto 0;
+  padding: 32px 24px;
   border-radius: 20px;
   background: var(--deep-blue);
   color: var(--text);
 }
 body.theme-night .seo .card { background: var(--deep-blue); }
-.seo .card + .card { margin-top: 16px; }
+.seo .card + .card { margin-top: 28px; }
+.seo > .table-note + .card { margin-top: 40px; }
+.seo > nav + .card { margin-top: 24px; }
+/* Comfortable measure on wide screens. */
+.seo .card p, .seo .card .method, .seo .card .faq-a { max-width: 65ch; }
+.seo .card > h3 { margin-top: 24px; }
+.seo .card .table-wrap + h3 { margin-top: 32px; }
 .seo .card > :first-child { margin-top: 0; }
 .seo .card > :last-child { margin-bottom: 0; }
 .seo .card h2 { margin-top: 28px; }
@@ -328,7 +336,7 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .seo .card .mosques li:last-child { border-bottom: 0; padding-bottom: 0; }
 .seo .card .faq { border-bottom: 0; }
 .seo .card .faq-item:first-child { border-top: 0; }
-.seo .card .faq-item:first-child summary { padding-top: 4px; }
+.seo .card h2 + .faq { margin-top: -18px; }   /* heading to first question text: 20px */
 .seo .card .faq-item:last-child .faq-a p { padding-bottom: 4px; }
 .seo .card .method div:last-child { border-bottom: 0; padding-bottom: 0; }
 .table-wrap { overflow-x: auto; margin: 0 -24px; padding: 0; }
@@ -350,53 +358,61 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .timetable .hj { display: block; font-size: 12px; font-weight: 400; color: var(--text); }
 .timetable .sub { display: block; font-size: 11px; font-weight: 400; color: var(--text); }
 .timetable thead .sub { font-size: 10px; }
+.timetable thead .tag {
+  display: inline-block; vertical-align: middle;
+  margin-left: 5px; padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  font-size: 10.5px; font-weight: 500; letter-spacing: .2px; line-height: 1.4;
+}
 .timetable tbody td, .timetable tbody th { color: #FFFFFF; }
 .timetable tr.past th, .timetable tr.past td, .timetable tr.past .hj { color: rgba(255, 255, 255, .35); }
 .timetable tr.today th, .timetable tr.today td { font-weight: 700; color: #FFFFFF; }
 
-.method div { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
-.method dt { flex: 0 0 112px; color: var(--ink); font-weight: 500; }
+.method div { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--rule); }
+.method div:first-child { padding-top: 0; }
+.method dt { flex: 0 0 104px; color: var(--ink); font-weight: 500; }
 .method dd { margin: 0; flex: 1; }
 
 /* Mosques: name, address, athan/jamaat grid */
 .mosques { list-style: none; margin: 0; padding: 0; }
-.mosques li { padding: 16px 0; border-bottom: 1px solid var(--rule); }
+.mosques li { padding: 24px 0; border-bottom: 1px solid var(--rule); }
 .mosques li:first-child { padding-top: 4px; }
-.mosques h3 { margin: 0 0 2px; }
-.mosques h3 a { text-decoration: none; }
-.mosques .addr { margin: 0 0 8px; font-size: 13px; }
+.seo .mosques h3 { margin: 0 0 2px; font-size: 16px; line-height: 1.45; font-weight: 500; }
+.mosques h3 a { text-decoration: none; color: #FFFFFF; }
+.seo .mosques .addr { margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: var(--text); }
 .mtimes {
   width: 100%; border-collapse: collapse; table-layout: fixed;
   font-size: 13px; line-height: 1.4; text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.mtimes th, .mtimes td { padding: 3px 2px; white-space: nowrap; }
+.mtimes th, .mtimes td { padding: 4px 2px; white-space: nowrap; }
 .mtimes thead th { font-size: 11px; font-weight: 500; color: var(--text); }
 .mtimes tbody th { text-align: left; font-weight: 500; font-size: 12px; color: var(--text); width: 60px; }
 .mtimes tbody td { color: var(--ink); }
 .mtimes thead td:first-child { width: 60px; }
-.mosques .jummah { margin: 6px 0 0; font-size: 13px; }
-.seo .note { font-size: 13px; font-style: italic; }
+.seo .mosques .jummah { margin: 8px 0 0; font-size: 13px; }
+.seo .note { font-size: 13px; line-height: 1.6; font-style: italic; }
 
 /* FAQ: the homepage's accordion (thin rules, +/− mark, eased reveal) on native
    <details>, so every answer stays in the HTML. Colours follow the day/night theme. */
 .faq { border-bottom: 1px solid var(--rule); interpolate-size: allow-keywords; }
 .faq-item { border-top: 1px solid var(--rule); }
 .faq-item summary {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
-  min-height: 44px; padding: 16px 0;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+  min-height: 56px; padding: 18px 0;
   list-style: none; cursor: pointer;
   font-size: 15px; line-height: 1.45; font-weight: 500;
 }
 .faq-item summary::-webkit-details-marker { display: none; }
 .faq-item summary::after {
   content: '+'; flex: none;
-  font-size: 20px; line-height: 1; color: var(--text); opacity: .7;
+  font-size: 20px; line-height: 24.65px; color: var(--text); opacity: .8;   /* line box = the question's first line */
 }
 .faq-item[open] summary::after { content: '\2212'; }
 .faq-item summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
 .seo .faq-h { margin: 0; font-size: 17px; line-height: 1.45; font-weight: 500; letter-spacing: -.015em; color: var(--ink); }
-.faq-a p { margin: 0; padding: 0 0 22px; }
+.faq-a p { margin: 0; padding: 4px 0 24px; font-size: 16px; line-height: 1.75; }
 @supports selector(::details-content) {
   .faq-item::details-content {
     block-size: 0; opacity: 0; overflow: hidden;
@@ -406,7 +422,7 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 }
 
 .nearby {
-  list-style: none; margin: 0 0 20px; padding: 0;
+  list-style: none; margin: 0 0 10px; padding: 0;
   display: flex; flex-wrap: wrap; gap: 10px;
 }
 /* City links as outlined pills: same white and 1px weight as the old underline. */
@@ -418,7 +434,7 @@ body.theme-night .seo .card { background: var(--deep-blue); }
   font-size: 15px; line-height: 1.4;
 }
 .nearby a:hover, .hub-link a:hover { background: rgba(255, 255, 255, .08); }
-.hub-link { margin: 0; }
+.seo .hub-link { display: flex; margin: 0; }   /* same 10px as the pill rows above: one group */
 
 /* ---------- Floating app banner (App Store smart-banner style) ---------- */
 .app-banner {
@@ -481,4 +497,4 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .seo .card .h-ico { display: inline-block; width: .85em; height: .85em; margin-left: 8px; vertical-align: -.1em; color: #FFFFFF; }
 
 /* Timetable note: under the card, aligned with the card's inner text edge. */
-.seo > .table-note { margin-top: 12px; margin-bottom: 0; padding: 0 24px; font-size: 13px; line-height: 1.45; color: var(--text); }
+.seo > .table-note { margin-top: 16px; margin-bottom: 0; padding: 0 24px; font-size: 13px; line-height: 1.6; color: var(--text); }

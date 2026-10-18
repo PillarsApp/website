@@ -40,6 +40,7 @@ export const CITIES = {
     slug: 'london',
     country: 'uk',
     name: 'London',
+    area: 'Central London',   // trust caption under the app list: "Based on <area> (...)"
     lat: 51.5072,
     lng: -0.1276,
     timezone: 'Europe/London',

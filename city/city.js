@@ -437,10 +437,16 @@
   // today-values and the timetable highlight; the "Updated" stamp stays true.
   var longFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   function each(sel, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), fn); }
-  var tzNameFmt = new Intl.DateTimeFormat('en-GB', { timeZone: tz, timeZoneName: 'short' });
-  function tzAbbrNow() { var p = tzNameFmt.formatToParts(new Date(nowMs())).filter(function (x) { return x.type === 'timeZoneName'; })[0]; return p ? p.value : ''; }
+  function tzName(style) {
+    var p = new Intl.DateTimeFormat('en-GB', { timeZone: tz, timeZoneName: style }).formatToParts(new Date(nowMs()))
+      .filter(function (x) { return x.type === 'timeZoneName'; })[0];
+    if (!p) return '';
+    // Some browsers give UTC+0 as an offset ("GMT+00:00", "GMT+0"); show it the way Node/CLDR names it.
+    if (/^GMT([+-]0{1,2}(:00)?)?$/.test(p.value)) return style === 'long' ? 'Greenwich Mean Time' : 'GMT';
+    return p.value;
+  }
   function syncSeo() {
-    each('[data-tz-abbr]', function (n) { var a = tzAbbrNow(); if (a && n.textContent !== a) n.textContent = a; });
+    each('[data-tz-name]', function (n) { var l = tzName('long'), a = tzName('short'); if (l && a && n.textContent !== l + ' (' + a + ')') n.textContent = l + ' (' + a + ')'; });
     var answer = $('answer');
     if (answer && answer.getAttribute('data-date') !== todayYmd) {
       var td = dayFor(todayYmd), t = td.t.concat([td.asrHanafi]);  // data-today="6" = Hanafi Asr
