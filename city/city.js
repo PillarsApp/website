@@ -449,6 +449,7 @@
     each('.timetable tr[data-date]', function (r) {
       var on = r.getAttribute('data-date') === todayYmd;
       r.classList.toggle('today', on);
+      r.classList.toggle('past', r.getAttribute('data-date') < todayYmd);
       if (on) r.setAttribute('aria-current', 'date'); else r.removeAttribute('aria-current');
     });
   }

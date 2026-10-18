@@ -250,7 +250,7 @@ function monthTable(year, month) {
     if (d > 1 && tzAbbr(noonUTC(ymd)) !== tzAbbr(noonUTC(addDays(ymd, -1)))) {
       dstNote = ` Clocks change on ${longDate(ymd)}; times from that day are in ${tzAbbr(noonUTC(ymd))}.`;
     }
-    rows += `\n        <tr data-date="${ymd}"${isToday ? ' class="today" aria-current="date"' : ''}><th scope="row">${shortDay(ymd)}<span class="hj" title="${h.d} ${HIJRI_MONTHS[h.m]} ${h.y}">${h.d} ${HIJRI_SHORT[h.m]}</span></th>${t.map((x, i) => (i === 3 ? `<td>${tfmt(x)}<span class="sub">${tfmt(asrHanafi(ymd))}</span></td>` : `<td>${tfmt(x)}</td>`)).join('')}</tr>`;
+    rows += `\n        <tr data-date="${ymd}"${isToday ? ' class="today" aria-current="date"' : ymd < date ? ' class="past"' : ''}><th scope="row">${shortDay(ymd)}<span class="hj" title="${h.d} ${HIJRI_MONTHS[h.m]} ${h.y}">${h.d} ${HIJRI_SHORT[h.m]}</span></th>${t.map((x, i) => (i === 3 ? `<td>${tfmt(x)}<span class="sub">${tfmt(asrHanafi(ymd))}</span></td>` : `<td>${tfmt(x)}</td>`)).join('')}</tr>`;
   }
   const label = monthYear(first);
   return { label, html: `<div class="table-wrap">
@@ -298,6 +298,7 @@ const faq = [
     `Fajr in ${esc(city.name)} today begins at ${td(0)} and lasts until sunrise at ${td(1)}. When fasting, suhoor ends as Fajr begins, and the fast is opened at Maghrib, ${td(4)}.`, true],
   [`Why do ${city.name} prayer times differ between apps and mosques?`,
     `Apps and mosques use different calculation methods. This page uses the ${methodName} method with ${p0.fajrAngle === p0.ishaAngle ? `Fajr and Isha both at ${p0.fajrAngle}°` : `Fajr at ${p0.fajrAngle}° and Isha at ${p0.ishaAngle}°`}${lt ? `, while many ${city.name} mosques follow the ${lt.name}` : ''}. The difference is usually a few minutes for Dhuhr, Asr and Maghrib and larger for Fajr and Isha.`],
+  ...(lt ? [[`Which timetable do ${city.name} mosques follow?`, lt.note]] : []),
   [`What is the Asr time in ${city.name} for Hanafis?`,
     `${city.name} has two Asr times. Today the Hanafi Asr in ${city.name} is at ${fmt(hanafiAsr)}, ${Math.round((hanafiAsr - today[3]) / 60000)} minutes after the Shafi'i Asr at ${fmt(today[3])}. Hanafi Asr starts when an object's shadow is twice its length; the Shafi'i, Maliki and Hanbali time starts at once its length.`],
   [`What time is Jumu'ah in ${city.name}?`,
@@ -364,15 +365,13 @@ ${mosquesHtml}
       <div><dt>High latitudes</dt><dd>${city.method === 'MoonsightingCommittee' ? 'Moonsighting Committee seasonal limits on Fajr and Isha' : 'Twilight angle rule'}</dd></div>${adj ? `\n      <div><dt>Adjustments</dt><dd>${adj}</dd></div>` : ''}
       <div><dt>Time zone</dt><dd>${tz} (${country.name} local time)</dd></div>
       <div><dt>Engine</dt><dd>adhan, the same calculation the ${SITE.name} app uses</dd></div>
-    </dl>${lt ? `
-    <h2>Which timetable do ${esc(city.name)} mosques follow?</h2>
-    <p>${esc(lt.note)}</p>` : ''}
+    </dl>
     </div>
 
     <div class="card">
     <h2>Frequently asked questions</h2>
     <div class="faq">
-      ${faq.map(([q, a, raw], i) => `<details class="faq-item" name="faq"${i === 0 ? ' open' : ''}>
+      ${faq.map(([q, a, raw], i) => `<details class="faq-item" name="faq">
         <summary><h3 class="faq-h">${esc(q)}</h3></summary>
         <div class="faq-a"><p>${raw ? a : esc(a)}</p></div>
       </details>`).join('\n      ')}
