@@ -335,8 +335,7 @@
   }
 
   // ---------- Sky: sun, moon, stars ----------
-  // Moon centre sits above the page's top edge so it reads as tucked behind the status bar.
-  var MOON_Y = -18;
+  var MOON_Y = 10;
   var reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var stars = [];
 
