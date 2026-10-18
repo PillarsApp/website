@@ -343,7 +343,7 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .timetable th, .timetable td { padding: 14px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; vertical-align: middle; }
 .timetable { min-width: 600px; }
 .timetable th[scope="row"] { position: sticky; left: 0; background: var(--deep-blue); padding-left: 24px; z-index: 1; }
-.timetable thead th { font-weight: 600; color: #FFFFFF; font-size: 13px; opacity: .7; }
+.timetable thead th { font-weight: 600; color: rgba(255, 255, 255, .7); font-size: 13px; }
 .timetable th[scope="row"] { text-align: left; font-weight: 500; color: var(--ink); }
 .timetable thead th:first-child { text-align: left; }
 .timetable .hj { display: block; font-size: 12px; font-weight: 400; color: var(--text); }
@@ -455,3 +455,6 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 /* Content column follows the screen width: 16px gutters on phones, capped on wide screens. */
 .seo > * { max-width: 760px; margin-left: auto; margin-right: auto; }
 .seo > nav { padding-left: 11px; }
+/* Date column stays put while times scroll: header cell sticks too, with a soft edge so times slide under it. */
+.timetable thead th:first-child { position: sticky; left: 0; z-index: 2; background: var(--deep-blue); }
+.timetable thead th:first-child, .timetable th[scope="row"] { box-shadow: 8px 0 8px -6px rgba(0, 0, 0, .45); }
