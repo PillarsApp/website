@@ -269,7 +269,7 @@ body.theme-night .tree { display: none; }
   --rule: rgba(0, 25, 62, .10);
   --row-today: rgba(14, 35, 60, .05);
   width: 100vw; margin-left: calc(50% - 50vw);
-  padding: 20px 16px 160px;
+  padding: 72px 16px 160px;   /* clear gap under the app replica's caption */
   font-size: 16px; line-height: 1.75;
   color: var(--text);
 }
@@ -323,8 +323,8 @@ body.theme-night .seo .crumbs a:hover, body.theme-night .seo .crumbs a:focus-vis
   color: var(--text);
 }
 body.theme-night .seo .card { background: var(--deep-blue); }
-.seo .card + .card { margin-top: 28px; }
-.seo > .table-note + .card { margin-top: 40px; }
+.seo .card + .card { margin-top: 48px; }
+.seo > .table-note + .card { margin-top: 56px; }
 .seo > nav + .card { margin-top: 24px; }
 /* Comfortable measure on wide screens. */
 .seo .card p, .seo .card .method, .seo .card .faq-a { max-width: 65ch; }
@@ -498,7 +498,8 @@ body.theme-night .ab-meta { color: rgba(255, 255, 255, .6); }
 
 /* Section-heading icons: decorative, white, after the last word (joined to it so they wrap together). */
 .seo .card .h-end { white-space: nowrap; }
-.seo .card .h-ico { display: inline-block; width: .85em; height: .85em; margin-left: 8px; vertical-align: -.1em; color: #FFFFFF; }
+/* Filled icon above each heading, left-aligned. */
+.seo .card .h-ico { display: block; width: 28px; height: 28px; margin: 0 0 14px; color: #FFFFFF; }
 
 /* Timetable note: under the card, aligned with the card's inner text edge. */
 .seo > .table-note { margin-top: 16px; margin-bottom: 0; padding: 0 24px; font-size: 13px; line-height: 1.6; color: var(--text); }
@@ -547,3 +548,20 @@ body.theme-night { --bar-bg: rgba(3, 24, 49, .94); }
 /* Status-bar / overscroll area takes the top of the sky (Safari samples the root background). */
 html { background-color: #C5DFF1; }
 html:has(body.theme-night) { background-color: #031831; }
+/* Scroll rail (city.js): ticks down the right edge, shown while scrolling, fading out once you stop. */
+.rail {
+  position: fixed; right: 4px; top: 50%; z-index: 960;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; align-items: flex-end; gap: 7px;
+  pointer-events: none;
+  opacity: 0; transition: opacity .4s ease;
+}
+.rail.show { opacity: 1; transition-duration: .15s; }
+.rail i {
+  display: block; width: 6px; height: 2px; border-radius: 1px;
+  background: rgba(0, 25, 62, .28);
+  transition: width .18s ease, background-color .18s ease;
+}
+.rail i.on { height: 3px; background: var(--deep-blue); }
+body.theme-night .rail i { background: rgba(255, 255, 255, .28); }
+body.theme-night .rail i.on { background: #FFFFFF; }
