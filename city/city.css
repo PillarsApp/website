@@ -265,7 +265,8 @@ body.theme-night .tree { display: none; }
   --text: rgba(0, 25, 62, .72);
   --rule: rgba(0, 25, 62, .10);
   --row-today: rgba(14, 35, 60, .05);
-  padding: 20px 27px 140px;
+  width: 100vw; margin-left: calc(50% - 50vw);
+  padding: 20px 16px 140px;
   font-size: 15px; line-height: 1.6;
   color: var(--text);
 }
@@ -310,7 +311,7 @@ body.theme-night .seo {
   --rule: rgba(255, 255, 255, .12);
   --row-today: rgba(255, 255, 255, .10);
   --accent: #FFFFFF;
-  margin: 16px -11px 0;
+  margin: 16px auto 0;
   padding: 28px 24px;
   border-radius: 20px;
   background: var(--deep-blue);
@@ -451,3 +452,6 @@ body.theme-night .seo .card { background: var(--deep-blue); }
   background: color-mix(in srgb, currentColor 14%, transparent);
   font-size: 12px; font-weight: 500; letter-spacing: .2px; line-height: 1.4;
 }
+/* Content column follows the screen width: 16px gutters on phones, capped on wide screens. */
+.seo > * { max-width: 760px; margin-left: auto; margin-right: auto; }
+.seo > nav { padding-left: 11px; }
