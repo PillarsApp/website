@@ -570,3 +570,5 @@ html:has(body.theme-night) { background-color: #031831; }
 .rail i.on { height: 3px; background: var(--deep-blue); }
 body.theme-night .rail i { background: rgba(255, 255, 255, .28); }
 body.theme-night .rail i.on { background: #FFFFFF; }
+/* Verified badge beside the TODAY | City chip. */
+.chip-verified { width: 16px; height: 16px; margin-left: 6px; vertical-align: middle; fill: var(--chip-city); }
