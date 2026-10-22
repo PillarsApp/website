@@ -1,9 +1,4 @@
-// City-local calendar and prayer-time arithmetic. The only module that
-// imports adhan and the only one that creates Intl.DateTimeFormat for a city
-// zone. Per-city, with formatters memoized per isolate and days and zone
-// abbreviations memoized per clock.
-
-import * as adhan from "adhan"; // named exports only: `import adhan from` breaks under a bundler
+import * as adhan from "adhan";
 import type { Calc, City, Country, Instant, LocalDate } from "../types";
 
 export const PRAYERS = [
@@ -15,62 +10,55 @@ export const PRAYERS = [
   { key: "isha", name: "Isha" },
 ] as const;
 
-// Six instants in PRAYERS order plus the Hanafi Asr.
 export interface DayTimes {
   readonly date: LocalDate;
   readonly t: readonly [Instant, Instant, Instant, Instant, Instant, Instant];
   readonly asrHanafi: Instant;
 }
 
-// What the prose and the page's data block need to say about the method,
-// without touching adhan.
 export interface CalcInfo {
-  readonly method: string; // adhan method name, as city.js reads it
+  readonly method: string;
   readonly madhab: string;
   readonly highLatitudeRule: string;
-  readonly methodLabel: string; // "Moonsighting Committee"
+  readonly methodLabel: string;
   readonly fajrAngle: number;
   readonly ishaAngle: number;
-  readonly ishaInterval: number; // 0 when angle-based
+  readonly ishaInterval: number;
   readonly adjustments: readonly { readonly prayer: string; readonly minutes: number }[];
-  readonly seasonalLimits: boolean; // Moonsighting Committee's high-latitude behaviour
+  readonly seasonalLimits: boolean;
 }
 
 export interface HijriDate {
   readonly day: number;
-  readonly month: number; // 0-based
+  readonly month: number;
   readonly year: number;
-  readonly long: string; // "11 Jumada al-Awwal 1448"
-  readonly short: string; // "11 Jum I"
+  readonly long: string;
+  readonly short: string;
 }
 
-// Everything time-shaped the renderer asks for, for one city. Pure given
-// (city, country); `now` is passed in so a render is a function of its inputs.
 export interface CityClock {
   readonly timezone: string;
   readonly calc: CalcInfo;
   today(now: Instant): LocalDate;
-  nextMidnight(now: Instant): Instant; // city-local 00:00 after `now`
-  localInstant(d: LocalDate, h: number, mi: number): Instant; // the instant city-local wall time h:mi on d
+  nextMidnight(now: Instant): Instant;
+  localInstant(d: LocalDate, h: number, mi: number): Instant;
   addDays(d: LocalDate, n: number): LocalDate;
   daysInMonth(year: number, month: number): number;
-  day(d: LocalDate): DayTimes; // memoized per clock instance
-  time(ms: Instant): string; // "06:00" / "6:00 AM"
-  tableTime(ms: Instant): string; // compact "6:00" in 12h tables
-  wallClock(hm: string | undefined, compact?: boolean): string; // mosque "HH:mm", reformatted
-  hm(ms: Instant): string; // "HH:mm" for widget data
-  isoLocal(ms: Instant): string; // "2026-10-22T06:00:00+01:00"
-  longDate(d: LocalDate): string; // "Thursday 22 October 2026"
-  appDate(d: LocalDate): string; // "Thursday 22 October"
-  shortDay(d: LocalDate): string; // "Thu 22"
-  monthYear(d: LocalDate): string; // "October 2026"
-  weekday(d: LocalDate): number; // 0 = Sunday
+  day(d: LocalDate): DayTimes;
+  time(ms: Instant): string;
+  tableTime(ms: Instant): string;
+  wallClock(hm: string | undefined, compact?: boolean): string;
+  hm(ms: Instant): string;
+  isoLocal(ms: Instant): string;
+  longDate(d: LocalDate): string;
+  appDate(d: LocalDate): string;
+  shortDay(d: LocalDate): string;
+  monthYear(d: LocalDate): string;
+  weekday(d: LocalDate): number;
   hijri(d: LocalDate): HijriDate;
-  zoneAbbr(ms: Instant): string; // "BST"
-  zoneLong(ms: Instant): string; // "British Summer Time"
-  zoneAbbrOn(d: LocalDate): string; // abbreviation at noon UTC on that date, memoized
-  // First date after `from` within a year on which the zone abbreviation
-  // changes, or null (no DST).
+  zoneAbbr(ms: Instant): string;
+  zoneLong(ms: Instant): string;
+  zoneAbbrOn(d: LocalDate): string;
   nextClockChange(from: LocalDate): LocalDate | null;
   qibla(): { bearing: number; compass: string };
 }
@@ -89,13 +77,10 @@ const COMPASS = ["north", "north-northeast", "northeast", "east-northeast", "eas
 const KAABA = { lat: 21.4225, lng: 39.8262 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
-// The one place a string is asserted to be a calendar date.
 const ymd = (y: number, m: number, d: number) => `${y}-${pad(m)}-${pad(d)}` as LocalDate;
 const ymdParts = (d: LocalDate) => d.split("-").map(Number) as [number, number, number];
 const noonUTC = (d: LocalDate) => { const [y, m, day] = ymdParts(d); return new Date(Date.UTC(y, m - 1, day, 12)); };
 
-// Formatters are immutable and expensive to create: one per (locale, zone,
-// options) per isolate.
 const formatterCache = new Map<string, Intl.DateTimeFormat>();
 export function formatter(timeZone: string, options: Intl.DateTimeFormatOptions, locale = "en-GB"): Intl.DateTimeFormat {
   const key = `${locale}|${timeZone}|${JSON.stringify(options)}`;
@@ -172,8 +157,6 @@ export function cityClock(city: City, country: Country): CityClock {
     return ymd(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate());
   };
 
-  // fmtHM mirrors city.js formatTime (the app's "HH:mm" / "h:mm a", including
-  // its 12:00 quirk); compact is the 12-hour table form without AM/PM.
   const fmtHM = (h: number, mi: number, compact: boolean) => {
     if (!clock12 || (!compact && h === 12 && mi === 0)) return `${pad(h)}:${pad(mi)}`;
     return `${h % 12 === 0 ? 12 : h % 12}:${pad(mi)}${compact ? "" : h < 12 ? " AM" : " PM"}`;

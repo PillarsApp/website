@@ -2,7 +2,6 @@
 import { describe, expect, it } from "vitest";
 import raw from "../wrangler.jsonc?raw";
 
-// wrangler.jsonc here has only whole-line comments.
 const config = JSON.parse(raw.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n"));
 
 describe("wrangler.jsonc", () => {

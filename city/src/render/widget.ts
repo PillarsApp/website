@@ -1,7 +1,3 @@
-// The embeddable widget for one city: a small noindex page with the next 64
-// days of "HH:mm" times inlined as JSON, so the iframe needs no second request.
-// Keyed by the route (country + slug), never by slug alone.
-
 import template from "../../page/widget.html";
 import type { City, Country, Instant, LocalDate, Rendered } from "../types";
 import { cityClock, PRAYERS } from "./times";
@@ -10,14 +6,14 @@ import { fillRegions, jsonInScript } from "./html";
 export interface WidgetInput {
   readonly city: City;
   readonly country: Country;
-  readonly date: LocalDate; // city-local "today"
+  readonly date: LocalDate;
   readonly now: Instant;
-  readonly pageUrl: string; // absolute city page, for "Powered by Pillars"
+  readonly pageUrl: string;
 }
 
 export interface WidgetData {
   readonly name: string;
-  readonly place: string; // "London, UK"
+  readonly place: string;
   readonly url: string;
   readonly clock: 12 | 24;
   readonly timezone: string;

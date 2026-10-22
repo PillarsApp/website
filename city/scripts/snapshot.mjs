@@ -1,8 +1,3 @@
-// Fetches a page from a running dev server (or any origin) and prints it, for
-// diffing. The page no longer exists as a file on disk.
-//   node scripts/snapshot.mjs uk/london > /tmp/london.html
-//   node scripts/snapshot.mjs uk/london --origin https://city-pages-staging.omar-abb.workers.dev
-//   node scripts/snapshot.mjs uk/london/widget
 const args = process.argv.slice(2);
 const flag = args.indexOf("--origin");
 const origin = flag === -1 ? "http://localhost:8787" : args.splice(flag, 2)[1];

@@ -4,7 +4,6 @@ const mosque = (name: string, address: string, iqamah: Mosque["iqamah"], jummah:
   name, address, postcode: null, athan: {}, iqamah, jummah: jummah as Mosque["jummah"],
 });
 
-// The four layout mosques the old build fell back to; only ever passed through Deps.
 export const FOUR_MOSQUES: MosqueSection = {
   kind: "live",
   date: "2026-10-23",

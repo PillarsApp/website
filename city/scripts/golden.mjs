@@ -1,16 +1,3 @@
-// Parity check: the Worker's London page against what the old Node build
-// produced, for one fixed date.
-//
-//   npm run golden            diff after the listed intended deltas; exit 1 if any hunk remains
-//   npm run golden -- --raw   diff without normalizing
-//
-// Reference: city/build.mjs from the commit before the Worker (git archive into
-// a temp dir, run with --date 2026-10-23 and no MASJID_TIMES_SECRET, so it falls
-// back to its four placeholder mosques). Its esbuild step is skipped: it only
-// refreshes city.min.js, whose hash is normalized away.
-// Candidate: renderCityPage for London, now = 00:05 London on that date (what
-// build.mjs uses for a non-today date), the same four mosques through the
-// MosqueSection a fixture source would return.
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
@@ -19,8 +6,6 @@ import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const REF_COMMIT = "322d125";
-// 10-30 is within ten days of month end, so it also covers the next-month table
-// and the clock-change note.
 const DATES = ["2026-10-23", "2026-10-30"];
 const cityDir = fileURLToPath(new URL("..", import.meta.url));
 const work = mkdtempSync(join(tmpdir(), "city-golden-"));
@@ -65,7 +50,6 @@ async function loadCandidate() {
   return run;
 }
 
-// Each entry is one intended difference between the old output and the Worker's.
 const INTENDED = [
   ["old asset paths were relative; the Worker serves them under /prayer-times/_/",
     [/(?:\.\.\/)?assets\/fonts\//g, "/prayer-times/_/fonts/"],

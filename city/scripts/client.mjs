@@ -1,18 +1,3 @@
-// Builds the browser runtime: page/city.js -> public/prayer-times/_/city.<hash>.js
-// and writes src/generated/client.ts with the path and a BUILD_ID.
-//
-//   node scripts/client.mjs            one build
-//   node scripts/client.mjs --watch    rebuild when page/city.js changes (used by scripts/dev.mjs)
-//
-// The Worker imports CLIENT_SCRIPT from the generated file, so the HTML always
-// names the bundle that is on disk, and `tsc`/`wrangler` fail if this has not
-// run. Previous hashed bundles are deleted so public/ holds exactly one.
-// BUILD_ID changes on every run, so a deploy (which runs this) flushes every
-// cached page, template and CSS edits included.
-//
-// Lint: the template must take every link from src/routes.ts and every asset
-// from the Worker's asset prefix, so a hand-typed relative or root-relative
-// path in page/ fails here instead of 404ing on the route.
 import { build } from "esbuild";
 import { createHash } from "node:crypto";
 import { existsSync, watch } from "node:fs";

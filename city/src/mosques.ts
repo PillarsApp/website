@@ -1,13 +1,3 @@
-// Mosque data for a city page. The only module that knows the masjid-times
-// RPC shapes. Callers get a MosqueSection; they never see a wire object.
-//
-// Protocol (two RPC calls, bounded by one deadline):
-//   1. nearby({ lat, lng, radiusKm, limit: 50 })   (pool + addresses)
-//   2. today({ ids: <up to 15>, date: <city-local> })  (one call, all mosques)
-// Featured ids go first, then the nearest reliable others up to query.max. Any
-// failure, bad shape or the deadline gives "unavailable". Nothing in this
-// module can construct a Mosque that did not come from the directory.
-
 import type { City, LocalDate, MasjidId, Mosque, MosqueQuery, MosqueSection, PrayerKey, WallClock } from "./types";
 import { MASJID_ID_RE } from "./registry";
 
@@ -15,24 +5,20 @@ export interface MosqueSource {
   forCity(city: City, date: LocalDate): Promise<MosqueSection>;
 }
 
-// For cities without a `mosques` query.
 export const noMosques: MosqueSource = {
   async forCity() {
     return { kind: "unavailable", reason: "no-query" };
   },
 };
 
-// The masjid-times `MosqueDirectory` entrypoint, reached through a service
-// binding. Results come from another service, so they are `unknown` until
-// parseNearby / parseToday accept them.
 export interface MosqueDirectory {
   nearby(q: { lat: number; lng: number; radiusKm: number; limit: number }): Promise<unknown>;
   today(q: { ids: readonly string[]; date: string }): Promise<unknown>;
 }
 
 export interface LiveMosqueSourceOptions {
-  readonly directory: MosqueDirectory | undefined; // undefined: every call answers "no-directory"
-  readonly deadlineMs?: number; // the page must not wait on mosques
+  readonly directory: MosqueDirectory | undefined;
+  readonly deadlineMs?: number;
 }
 
 const DEFAULT_DEADLINE_MS = 2500;
@@ -40,8 +26,6 @@ const POOL_SIZE = 50;
 
 class DeadlineError extends Error {}
 
-// Without a directory there is no call and no mosque: there is no code path
-// from "no data" to "some mosques".
 export function liveMosqueSource(opts: LiveMosqueSourceOptions): MosqueSource {
   const { directory } = opts;
   return {
@@ -82,16 +66,11 @@ export function liveMosqueSource(opts: LiveMosqueSourceOptions): MosqueSource {
   };
 }
 
-// ---------- pure parts, unit-tested without a network ----------
-
-// Wire shapes are private. Parsers drop anything unexpected, so one malformed
-// entry loses one mosque, not the section.
 interface NearbyWire { id: string; name: string; address: string | null; zipcode: string | null; active: boolean; reliable: boolean }
 interface TodayWire { id: string; inactive: boolean; reliable: boolean; day: { date: string; athan: Record<string, unknown>; iqamah: Record<string, unknown>; jummah: unknown[] } | null }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const str = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
-// The API sends booleans or 0/1; only an explicit false/0 excludes.
 const flag = (v: unknown) => v !== false && v !== 0;
 
 function masjidList(data: unknown): unknown[] {
@@ -120,8 +99,6 @@ export function parseToday(data: unknown): readonly TodayWire[] {
   });
 }
 
-// Featured first (in the given order), then the nearest others, capped at
-// max, only active and reliable. Pure.
 export function pickIds(pool: readonly NearbyWire[], query: MosqueQuery): readonly MasjidId[] {
   const usable = pool.filter((m) => m.active && m.reliable && MASJID_ID_RE.test(m.id));
   const byId = new Map(usable.map((m) => [m.id, m]));
@@ -142,9 +119,6 @@ function wallClocks(raw: Record<string, unknown>): Partial<Record<PrayerKey, Wal
   return out;
 }
 
-// Join today's row onto the picked mosque; title-case the name; join address
-// and postcode. Null when the day is missing or the mosque is inactive or
-// unreliable.
 export function toMosque(meta: NearbyWire, today: TodayWire, date: LocalDate): Mosque | null {
   if (!meta.active || !meta.reliable || today.inactive || !today.reliable) return null;
   if (!today.day || today.day.date !== date) return null;
@@ -160,7 +134,6 @@ export function toMosque(meta: NearbyWire, today: TodayWire, date: LocalDate): M
   };
 }
 
-// Only all-caps names are changed.
 export function titleCase(name: string): string {
   return name === name.toUpperCase() && name !== name.toLowerCase()
     ? name.toLowerCase().replace(/\p{L}+/gu, (w) => w[0].toUpperCase() + w.slice(1))

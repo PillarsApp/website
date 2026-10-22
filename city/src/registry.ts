@@ -1,7 +1,3 @@
-// What cities exist. The only module that reads cities.ts. Async on purpose:
-// at ~40 cities the backing store is the array in cities.ts; at GeoNames scale
-// it is KV or D1, and no caller's signature changes.
-
 import type { City, CityRef, Country, CountrySlug } from "./types";
 import { CITIES, COUNTRIES } from "./cities";
 
@@ -9,11 +5,7 @@ export interface CityRegistry {
   get(ref: CityRef): Promise<City | null>;
   country(slug: string): Country | null;
   countries(): readonly Country[];
-  // Cities with a page in this country, for the country index. Name order.
   inCountry(country: CountrySlug): Promise<readonly City[]>;
-  // Up to `n` nearest other cities with a page, same country, by great-circle
-  // distance. Empty while a country has one city: the renderer then omits the
-  // "near" section rather than link to pages that do not exist.
   nearby(city: City, n: number): Promise<readonly City[]>;
 }
 
@@ -33,8 +25,6 @@ export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; l
   return 2 * 6371 * Math.asin(Math.sqrt(h));
 }
 
-// "Near" stops here. London to Birmingham (about 163 km) was the farthest pair
-// in the hand-curated list this replaced.
 export const NEARBY_MAX_KM = 170;
 
 const keyOf = (ref: CityRef) => `${ref.country}/${ref.slug}`;
@@ -49,8 +39,6 @@ function validate(city: City): void {
   for (const id of q.featured) if (!MASJID_ID_RE.test(id)) throw new Error(`${where}: bad masjid id ${id}`);
 }
 
-// Built once per isolate from cities.ts. Throws on bad data so a broken
-// registry fails `npm test` and the first request, never a specific city page.
 export function staticRegistry(cities: readonly City[] = CITIES): CityRegistry {
   const byKey = new Map<string, City>();
   for (const city of cities) {

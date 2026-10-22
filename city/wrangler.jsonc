@@ -1,36 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // Top-level config is local dev and vitest only. Deploys go through an env
-  // (`wrangler deploy --env staging|production`); a bare `wrangler deploy`
-  // would create a throwaway "city-pages-dev" worker instead.
   "name": "city-pages-dev",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-01",
-  // observability IS inherited by named envs (unlike vars and assets).
   "observability": { "enabled": true, "head_sampling_rate": 1 },
-  // page/template.html, page/widget.html (wrangler's default Text rule) and
-  // page/city.css are imported as strings by the renderer. fallthrough keeps
-  // the default rule for .html.
+  // fallthrough keeps the default rule for .html.
   "rules": [{ "type": "Text", "globs": ["**/*.css"], "fallthrough": true }],
-  // Fonts, vendored adhan and the hashed client bundle live on disk at the
-  // path they are served from (`public/prayer-times/_/x` is `/prayer-times/_/x`
-  // on staging and on the production route alike). Assets answer before the
-  // Worker; a miss falls through to src/index.ts.
   "assets": { "directory": "./public", "not_found_handling": "none" },
   "vars": {
     "ENVIRONMENT": "dev"
   },
-  // Local dev reaches the deployed entrypoint through a remote binding.
   "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod", "entrypoint": "MosqueDirectory", "remote": true }],
-  // NOTE: vars and assets are NOT inherited into named envs: repeat them per
-  // env or the deployed worker silently has none. test/config.test.ts checks
-  // the three envs agree.
   "env": {
     "staging": {
       "name": "city-pages-staging",
       "workers_dev": true,
-      // Mosques are read over RPC from masjid-times' MosqueDirectory entrypoint.
-      // The binding is the authorization: there is no secret.
       "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod", "entrypoint": "MosqueDirectory" }],
       "assets": { "directory": "./public", "not_found_handling": "none" },
       "vars": {

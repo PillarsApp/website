@@ -1,11 +1,3 @@
-// Entry point. Thin shell: match a route, call its handler. Static files under
-// /prayer-times/_/ are answered by Workers static assets before this code runs.
-//
-// Invariant: every request under /prayer-times/ is answered here. There is no
-// fetch(request) passthrough and no passThroughOnException(): behind
-// Orange-to-Orange either would hand the request to Webflow, which 301s the
-// slash away and 404s.
-
 import { routes, canonicalRedirect, linksFor, type RouteName, type RouteParams } from "./routes";
 import { staticRegistry, type CityRegistry } from "./registry";
 import { liveMosqueSource, noMosques, type MosqueDirectory, type MosqueSource } from "./mosques";
@@ -26,8 +18,6 @@ export interface Deps {
 const defaultDeps: Deps = {
   registry: staticRegistry(),
   mosqueSource: (env) => liveMosqueSource({
-    // `wrangler types` cannot type another Worker's entrypoint (a bare Service),
-    // and tests that inject no binding leave it undefined.
     directory: env.MASJID_TIMES as unknown as MosqueDirectory | undefined,
   }),
   now: Date.now,
@@ -45,8 +35,6 @@ type Handler<P> = (call: Call<P>) => Promise<Response>;
 
 const HTML = "text/html; charset=utf-8";
 
-// The one place that decides who a page is for. Staging, dev and test must
-// never be indexed or send analytics.
 const audienceOf = (env: Env): Audience => (env.ENVIRONMENT === "production" ? "public" : "preview");
 
 const HUB_LINK = { name: "Prayer times", href: routes.hub.href({}) };
@@ -56,8 +44,6 @@ function stubResponse(html: string): Response {
   return new Response(html, { headers: { "Content-Type": HTML, "Cache-Control": "public, max-age=300, s-maxage=3600" } });
 }
 
-// Typed over the route table: a route without a handler is a compile error,
-// and so is a handler for a route that does not exist.
 const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
   hub: async ({ deps, env }) => {
     const countries = await Promise.all(
@@ -100,9 +86,6 @@ interface CityRender {
   readonly now: Instant;
 }
 
-// The shared request path of every per-city page: look the city up (404 if
-// unknown), decide what local day it is, and let the edge cache decide
-// whether to render.
 async function serveCity(call: Call<CityRef>, path: string, render: (c: CityRender) => Promise<Rendered>): Promise<Response> {
   const { url, params, request, env, ctx, deps } = call;
   const city = await deps.registry.get(params);
@@ -113,9 +96,6 @@ async function serveCity(call: Call<CityRef>, path: string, render: (c: CityRend
   return edgeCache(env, ctx).respond({ request, path, date, now, contentType: HTML }, () => render({ city, country, date, now }));
 }
 
-// In dev only, ?now=YYYY-MM-DDTHH:mm (city-local) pins the server's clock the
-// way it pins city.js, so the rendered tables and FAQ match what the browser
-// shows. Ignored everywhere else, so it can never reach a cache key.
 function devNow(url: URL, env: Env, city: City, country: Country): Instant | null {
   if (env.ENVIRONMENT !== "dev") return null;
   const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/.exec(url.searchParams.get("now") ?? "");

@@ -1,10 +1,3 @@
-// The city page. A pure function of PageInput: no fetch, no env, no clock
-// reads, no filesystem. Every URL comes from input.links and every time from
-// a CityClock.
-//
-// Template: page/template.html, imported as text. Its regions are exactly the
-// keys of regions() below; test/page.test.ts asserts the two sets are equal.
-
 import template from "../../page/template.html";
 import cssSource from "../../page/city.css";
 import { SITE } from "../cities";
@@ -14,10 +7,8 @@ import { esc, fillRegions, jsonInScript, minifyCss, plainText, titleHeadings } f
 import { icon } from "./icons";
 import { analyticsFor } from "./analytics";
 
-const CSS = minifyCss(cssSource); // once per isolate
+const CSS = minifyCss(cssSource);
 
-// How long an "unavailable" mosque section may be cached before retrying:
-// short enough that a masjid-times blip does not hide mosques for a day.
 export const UNAVAILABLE_RETRY_MS = 10 * 60 * 1000;
 
 export type TemplateRegion =
@@ -34,7 +25,6 @@ export function renderCityPage(input: PageInput): Rendered {
   return { html, freshUntil };
 }
 
-// Everything the sections share, computed once per render.
 interface View {
   readonly input: PageInput;
   readonly clock: CityClock;
@@ -74,7 +64,6 @@ function timesText(clock: CityClock, today: DayTimes): string {
   return PRAYERS.map((p, i) => `${p.name} ${clock.time(today.t[i])}${i === 3 ? ` (Hanafi ${clock.time(today.asrHanafi)})` : ""}`).join(", ");
 }
 
-// <title>, description, canonical, og/twitter, robots, #city-data and the JSON-LD graph.
 function head(view: View): string {
   const { input, clock, today } = view;
   const { city, country, date, links, mosques } = input;
@@ -130,7 +119,6 @@ function head(view: View): string {
     lat: city.lat, lng: city.lng, timezone: city.timezone,
     method: clock.calc.method, madhab: clock.calc.madhab, highLatitudeRule: clock.calc.highLatitudeRule,
     url, qibla,
-    // Absent when there is no mosque section, so city.js does not offer a mosque tool.
     ...(live ? { mosquesDate: live.date, mosques: live.mosques.map((m) => ({ name: m.name, address: m.address, athan: m.athan, iqamah: m.iqamah, jummah: m.jummah })) } : {}),
   };
   const robots = input.audience === "public" ? "" : `<meta name="robots" content="noindex">\n`;
@@ -161,8 +149,6 @@ function preloadFonts(links: PageLinks): string {
     .join("\n");
 }
 
-// Six rows + Asr toggle, the same markup city.js renders at the render moment.
-// The Asr row shows the earlier (standard) time; its pill toggles to the later.
 const ASR_TOGGLE = '<span class="asr-toggle" role="group" aria-label="Asr time"><span class="asr-thumb" aria-hidden="true"></span><button type="button" class="asr-opt" data-asr="earlier" aria-pressed="true">Earlier</button><button type="button" class="asr-opt" data-asr="later" aria-pressed="false">Later</button></span>';
 
 function replicaList(clock: CityClock, today: DayTimes): string {
@@ -176,7 +162,6 @@ function replicaList(clock: CityClock, today: DayTimes): string {
 
 const deg = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? pos : neg}`;
 
-// Grey trust line under the list: area, method, angles, time zone (kept live by city.js).
 function listCaption({ input, clock, today, methodName }: View): string {
   const { city } = input;
   const c = clock.calc;
@@ -187,7 +172,6 @@ function listCaption({ input, clock, today, methodName }: View): string {
   return `<p class="list-caption" id="list-caption">${text}</p>`;
 }
 
-// data-today="6" is the Hanafi Asr; city.js refreshes these if the visitor's day differs.
 const todaySpan = (clock: CityClock, today: DayTimes, i: number) =>
   `<span data-today="${i}">${clock.time(i === 6 ? today.asrHanafi : today.t[i])}</span>`;
 
@@ -244,7 +228,6 @@ function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly 
 
 interface MonthTable { readonly label: string; readonly note: string; readonly html: string }
 
-// Month table with Hijri column and a clock-change note.
 function monthTable(view: View, year: number, month: number): MonthTable {
   const { input, clock } = view;
   const { city, country, date } = input;
@@ -344,7 +327,6 @@ function ishaCard(view: View): string {
   const tomorrow = clock.addDays(date, 1);
   const lt = city.localTimetable;
   const highLat = c.seasonalLimits ? ` and seasonal limits for ${name}'s high latitude` : "";
-  // At midsummer the sun's lowest point is 90° - latitude - 23.44° below the horizon.
   const maxDepression = 90 - Math.abs(city.lat) - 23.44;
   const week = weekTable(view, `Isha and the next Fajr in ${name}, next 7 days`, [["Isha", (d) => clock.day(d).t[5]], ["Next Fajr", (d) => clock.day(clock.addDays(d, 1)).t[0]]]);
   return `
@@ -359,7 +341,6 @@ function ishaCard(view: View): string {
 const MOSQUE_COLUMNS: readonly { readonly key: PrayerKey; readonly name: string }[] = PRAYERS
   .filter((p): p is (typeof PRAYERS)[number] & { key: PrayerKey } => p.key !== "sunrise");
 
-// Empty for "unavailable": no section, no placeholder note, no comment.
 function mosquesCard(section: MosqueSection, clock: CityClock, cityName: string, date: LocalDate): string {
   if (section.kind !== "live" || !section.mosques.length) return "";
   const hasAthan = section.mosques.some((m) => MOSQUE_COLUMNS.some((p) => m.athan[p.key]));

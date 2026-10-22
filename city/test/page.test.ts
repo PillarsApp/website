@@ -18,7 +18,6 @@ function ldGraph(html: string): Record<string, any>[] {
   return JSON.parse(m[1])["@graph"];
 }
 
-// dev bypasses the edge cache, so each test renders its own mosque section.
 async function render(section: MosqueSection = DOWN) {
   const res = await fetchWith("/prayer-times/uk/london/", deps(section), { ENVIRONMENT: "dev" });
   return { res, html: await res.text() };

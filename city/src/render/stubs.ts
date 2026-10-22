@@ -1,9 +1,3 @@
-// The small pages the Worker must answer so that every link the city page
-// emits resolves: the hub (/prayer-times/), a country index (/prayer-times/uk/)
-// and the 404. They are noindex until the designed hub and country pages
-// replace the two renderers (same routes, same handlers). Links arrive as
-// hrefs built by routes.ts; nothing here spells a path.
-
 import type { Audience } from "../types";
 import { esc } from "./html";
 import { analyticsFor } from "./analytics";
@@ -44,8 +38,6 @@ export function renderCountryStub(country: string, cities: readonly Link[], hub:
   return shell(`Prayer Times in ${country}`, `<p><a href="${hub.href}">${esc(hub.name)}</a></p>\n<h1>Prayer times in ${esc(country)}</h1>\n${list(cities)}`, analyticsFor(audience));
 }
 
-// Worker-owned 404 under /prayer-times/: a link to the hub, nothing else.
-// Served for every unmatched path so Webflow never sees the request.
 export function renderNotFound(hub: Link): string {
   return shell("Page not found", `<h1>Page not found</h1>\n<p><a href="${hub.href}">${esc(hub.name)}</a></p>`);
 }

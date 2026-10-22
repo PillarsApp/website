@@ -17,7 +17,7 @@ const sMaxAge = (res: Response) => Number(/s-maxage=(\d+)/.exec(res.headers.get(
 
 describe("edge cache", () => {
   it("expires at London's next local midnight", async () => {
-    const now = Date.UTC(2026, 10, 3, 11, 0); // 11:00 GMT
+    const now = Date.UTC(2026, 10, 3, 11, 0);
     const { res } = await serve(PAGE, now);
     const untilMidnight = (Date.UTC(2026, 10, 4, 0, 0) - now) / 1000;
     expect(Math.abs(sMaxAge(res) - untilMidnight)).toBeLessThanOrEqual(5);
