@@ -1,13 +1,12 @@
-// Usage: node london-unified.mjs [--api2026 file.json] [--xlsx2027 file.xlsx] [--xlsx2026 file.xlsx]
+// Usage: node london-unified.mjs [--api2026 file.json] [--xlsx2027 file.xlsx] [--xlsx2026 file.xlsx] [--raw dir]
 // Without --api2026 it calls londonprayertimes.com with LONDON_PRAYER_TIMES_KEY. Without the xlsx
 // paths it downloads them from londonsalahtimes.com.
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
-import { finish, scratch } from "./lib.mjs";
+import { download, flag, getJson, rawDir, writeTimetable } from "./lib.mjs";
 
-const args = Object.fromEntries(process.argv.slice(2).reduce((a, v, i, all) => (v.startsWith("--") ? [...a, [v.slice(2), all[i + 1]]] : a), []));
-const LAT = 51.5072, LNG = -0.1276;
+const PLACE = { lat: 51.5072, lng: -0.1276 };
 
 const XLSX_PY = String.raw`
 import sys, zipfile, re
@@ -52,34 +51,30 @@ function parseXlsx(path) {
   return days;
 }
 
-async function xlsxFor(year, given, dir) {
+async function xlsxFor(year, given) {
   if (given) return parseXlsx(given);
-  const res = await fetch(`https://londonsalahtimes.com/downloads/LUPT-${year}.xlsx`);
-  if (!res.ok) throw new Error(`LUPT-${year}.xlsx: ${res.status}`);
-  const p = join(dir, `LUPT-${year}.xlsx`);
-  writeFileSync(p, Buffer.from(await res.arrayBuffer()));
+  const p = join(raw, `LUPT-${year}.xlsx`);
+  await download(`https://londonsalahtimes.com/downloads/LUPT-${year}.xlsx`, p);
   return parseXlsx(p);
 }
 
 async function apiTimes() {
   let j;
-  if (args.api2026) j = JSON.parse(readFileSync(args.api2026, "utf8"));
+  if (flag("api2026")) j = JSON.parse(readFileSync(flag("api2026"), "utf8"));
   else {
     const key = process.env.LONDON_PRAYER_TIMES_KEY;
     if (!key) throw new Error("pass --api2026 <file> or set LONDON_PRAYER_TIMES_KEY");
-    const res = await fetch(`https://www.londonprayertimes.com/api/times/?format=json&24hours=true&year=2026&key=${key}`);
-    if (!res.ok) throw new Error(`api: ${res.status}`);
-    j = await res.json();
+    j = await getJson(`https://www.londonprayertimes.com/api/times/?format=json&24hours=true&year=2026&key=${key}`);
   }
   return Object.fromEntries(
     Object.entries(j.times).map(([d, t]) => [d, [t.fajr, t.sunrise, t.dhuhr, t.asr, t.asr_2, t.magrib, t.isha]]),
   );
 }
 
-const dir = scratch("lupt");
+const raw = rawDir();
 const api = await apiTimes();
-const x2027 = await xlsxFor(2027, args.xlsx2027, dir);
-const x2026 = await xlsxFor(2026, args.xlsx2026, dir);
+const x2027 = await xlsxFor(2027, flag("xlsx2027"));
+const x2026 = await xlsxFor(2026, flag("xlsx2026"));
 
 const same = Object.keys(api).filter((d) => x2026[d] && api[d].every((v, i) => v === x2026[d][i])).length;
 console.log(`2026 API vs LUPT-2026.xlsx: ${same} of ${Object.keys(api).length} days match exactly`);
@@ -93,20 +88,16 @@ const days = {};
 for (const [d, v] of Object.entries(api)) if (d.startsWith("2026-")) days[d] = v;
 for (const [d, v] of Object.entries(x2027)) if (d.startsWith("2027-")) days[d] = v;
 
-finish({
-  lat: LAT,
-  lng: LNG,
+writeTimetable({
+  id: "london-unified",
+  name: "London Unified Prayer Timetable",
+  publisher: "East London Mosque / London Salah Times",
+  sources: [
+    "https://www.londonprayertimes.com/api/times/?format=json&24hours=true&year=2026",
+    "https://londonsalahtimes.com/downloads/LUPT-2027.xlsx",
+  ],
+  zone: "Europe/London",
+  place: PLACE,
+  corrections: [],
   days,
-  meta: {
-    id: "london-unified",
-    name: "London Unified Prayer Timetable",
-    publisher: "East London Mosque / London Salah Times",
-    sources: [
-      "https://www.londonprayertimes.com/api/times/?format=json&24hours=true&year=2026",
-      "https://londonsalahtimes.com/downloads/LUPT-2027.xlsx",
-    ],
-    retrieved: "2026-10-22",
-    zone: "Europe/London",
-    corrections: [],
-  },
 });

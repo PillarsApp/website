@@ -1,9 +1,8 @@
-import { sleep, hhmm, writeTimetable } from "./lib.mjs";
+import { getJson, hhmm, writeTimetable } from "./lib.mjs";
 
 const url = "https://centralmosque.co.uk/?rest_route=/dpt/v1/prayertime&filter=year";
 // The feed ignores year, date and range parameters and serves only 2026.
-const rows = (await (await fetch(url)).json()).flat();
-await sleep(500);
+const rows = (await getJson(url)).flat();
 
 const days = {};
 const corrections = [];
@@ -24,7 +23,7 @@ writeTimetable({
   publisher: "Glasgow Central Mosque",
   sources: [url],
   zone: "Europe/London",
-  site: { lat: 55.861, lng: -4.2488 },
+  place: { lat: 55.861, lng: -4.2488 },
   days,
   corrections,
 });

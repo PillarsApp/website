@@ -1,21 +1,18 @@
-import { sleep, hhmm, toMin, fromMin, writeTimetable } from "./lib.mjs";
+import { COLUMNS, fromMin, getJson, getText, hhmm, isoDate, toMin, writeTimetable } from "./lib.mjs";
 
 const hanfiaUrl = "https://www.jamiamasjidhanfia.co.uk/";
 const jamiyatUrl = "https://www.jamiyat.org/?rest_route=/dpt/v1/prayertime&filter=month";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const COLS = ["fajr", "sunrise", "dhuhr", "asr1", "asr2", "maghrib", "isha"];
 
-const html = await (await fetch(hanfiaUrl)).text();
-await sleep(1000);
-const jamiyat = (await (await fetch(jamiyatUrl)).json()).flat();
+const html = await getText(hanfiaUrl);
+const jamiyat = (await getJson(jamiyatUrl)).flat();
 
 // Hanfia's `ds` is its own dhuhr, 3 minutes after the anchor's feed, and it has no sunrise column; both stay null unless the anchor's feed supplies them.
 const days = {};
 for (const m of html.matchAll(/\{"d":"[^{}]*\}/g)) {
   const o = JSON.parse(m[0]);
   const [dd, mon, yyyy] = o.d.split(" ");
-  const iso = `${yyyy}-${String(MONTHS.indexOf(mon) + 1).padStart(2, "0")}-${dd}`;
-  days[iso] = [o.fs, null, null, null, o.as, o.ms, o.is].map((v) => (v === null ? null : hhmm(v)));
+  days[isoDate(yyyy, MONTHS.indexOf(mon) + 1, dd)] = [o.fs, null, null, null, o.as, o.ms, o.is].map((v) => (v === null ? null : hhmm(v)));
 }
 const hanfiaDays = Object.keys(days).length;
 if (hanfiaDays < 365) throw new Error(`Hanfia homepage gave ${hanfiaDays} days`);
@@ -29,16 +26,16 @@ for (const r of jamiyat) {
 const CLOCK_CHANGE = "2026-10-25";
 const corrections = [];
 const jamiyatDates = new Set(jamiyat.map((r) => r.d_date));
-for (const iso of Object.keys(days)) {
-  if (iso < CLOCK_CHANGE || iso > "2026-10-31") continue;
-  const lateFeed = jamiyatDates.has(iso);
-  const lateHanfia = iso === CLOCK_CHANGE;
+for (const date of Object.keys(days)) {
+  if (date < CLOCK_CHANGE || date > "2026-10-31") continue;
+  const lateFeed = jamiyatDates.has(date);
+  const lateHanfia = date === CLOCK_CHANGE;
   if (!lateFeed && !lateHanfia) continue;
-  const row = days[iso];
+  const row = days[date];
   row.forEach((v, i) => {
     if (v === null) return;
     const to = fromMin(toMin(v) - 60);
-    corrections.push({ date: iso, field: COLS[i], from: v, to, why: lateFeed ? "jamiyat.org feed still in BST after the clock change" : "Hanfia switches to GMT one day late" });
+    corrections.push({ date, field: COLUMNS[i], from: v, to, why: lateFeed ? "jamiyat.org feed still in BST after the clock change" : "Hanfia switches to GMT one day late" });
     row[i] = to;
   });
 }
@@ -50,7 +47,7 @@ writeTimetable({
   publisher: "Bradford Central Mosque (Jamiyat Tabligh-ul-Islam)",
   sources: [hanfiaUrl, jamiyatUrl],
   zone: "Europe/London",
-  site: { lat: 53.7924, lng: -1.7534 },
+  place: { lat: 53.7924, lng: -1.7534 },
   days,
   corrections,
 });

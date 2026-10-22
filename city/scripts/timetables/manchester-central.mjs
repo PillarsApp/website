@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { finish, iso, pad, postForm, rawDir, request, sleep } from "./lib.mjs";
+import { getText, isoDate, pad, postForm, rawDir, writeTimetable } from "./lib.mjs";
 
 const PAGE = "https://manchestercentralmosque.org/prayer-times/";
 const ENDPOINT = "https://manchestercentralmosque.org/wp-admin/admin-ajax.php";
@@ -12,10 +12,10 @@ const YEARS = [2025, 2026, 2027];
 // Labels the page's dropdown does not offer (as of 2026-10-22) but a later run may find populated.
 const PROBES = ["Dec 2025", "December 2025", "Feb 2025", "February 2025", "Dec 2026", "Nov 2026", ...MONTHS.map((m) => `${m[0]}${m.slice(1).toLowerCase()} 2027`)];
 
-const raw = rawDir(process.argv);
+const raw = rawDir();
 const text = (html) => html.replace(/<[^>]*>/g, "").replace(/\ufeff/g, "").trim();
 
-const page = await request(PAGE);
+const page = await getText(PAGE);
 writeFileSync(join(raw, "prayer-times.html"), page);
 const offered = [...page.matchAll(/data-id="([^"]*)"/g)].map((m) => m[1]);
 const wanted = (label) => YEARS.some((y) => label.includes(y)) || /(?:^|\s)(25|26|27)$/.test(label);
@@ -69,7 +69,6 @@ function parse(html) {
 const days = {};
 for (const label of labels) {
   const html = await postForm(ENDPOINT, { action: "mcm_get_month_file", current_file: label });
-  await sleep(1000);
   writeFileSync(join(raw, `${label.replace(/\W+/g, "_")}.html`), html);
   const { heading, rows } = parse(html);
   if (!rows.length) {
@@ -87,7 +86,7 @@ for (const label of labels) {
   if (rows.length !== inMonth) console.log(`${label}: ${rows.length} rows for a ${inMonth}-day month`);
   for (const [d, , row] of rows) {
     if (row.filter((v) => v === null).length > 1) console.log(`${label}: day ${d} has an unreadable time, left out`);
-    else days[iso(years[0], monthIndex + 1, d)] = row;
+    else days[isoDate(years[0], monthIndex + 1, d)] = row;
   }
   console.log(`${label} -> ${MONTHS[monthIndex]} ${years[0]} (${rows.length} rows)`);
 }
@@ -100,7 +99,7 @@ for (const [date, why] of Object.entries(LEFT_OUT)) {
   console.log(`left out ${date}: ${why}`);
 }
 
-finish({
+writeTimetable({
   id: "manchester-central",
   name: "Manchester Central Mosque timetable",
   publisher: "Manchester Central Mosque (Victoria Park)",
