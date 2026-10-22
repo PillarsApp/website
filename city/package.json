@@ -2,6 +2,39 @@
   "name": "pillars-city-pages",
   "private": true,
   "type": "module",
-  "scripts": { "build": "node build.mjs" },
-  "dependencies": { "adhan": "4.4.3" }
+  "scripts": {
+    "client": "node scripts/client.mjs",
+    "dev": "node scripts/dev.mjs",
+    "pretest": "npm run client",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "precheck": "npm run client",
+    "check": "tsc",
+    "types": "wrangler types --strict-vars false",
+    "predeploy:staging": "npm run client && npm test && npm run check",
+    "deploy:staging": "wrangler deploy --env staging",
+    "predeploy:production": "npm run client && npm test && npm run check",
+    "deploy:production": "wrangler deploy --env production",
+    "tail:staging": "wrangler tail --env staging",
+    "tail:production": "wrangler tail --env production",
+    "snapshot": "node scripts/snapshot.mjs",
+    "golden": "node scripts/golden.mjs"
+  },
+  "dependencies": {
+    "adhan": "4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.18.7",
+    "@types/node": "^22.20.1",
+    "esbuild": "0.28.1",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.113.0"
+  },
+  "allowScripts": {
+    "workerd@1.20260722.1": true,
+    "workerd@1.20261019.1": true,
+    "esbuild@0.28.1": true,
+    "esbuild@0.28.2": true
+  }
 }

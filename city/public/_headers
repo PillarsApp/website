@@ -1,0 +1,4 @@
+/prayer-times/_/city.*.js
+  Cache-Control: public, max-age=31536000, immutable
+/prayer-times/_/*
+  Cache-Control: public, max-age=604800

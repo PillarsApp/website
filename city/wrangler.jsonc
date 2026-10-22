@@ -1,0 +1,53 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Top-level config is local dev and vitest only. Deploys go through an env
+  // (`wrangler deploy --env staging|production`); a bare `wrangler deploy`
+  // would create a throwaway "city-pages-dev" worker instead.
+  "name": "city-pages-dev",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  // observability IS inherited by named envs (unlike vars and assets).
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  // page/*.html and page/city.css are imported as strings by the renderer.
+  "rules": [{ "type": "Text", "globs": ["page/**/*.html", "page/**/*.css"] }],
+  // Fonts, vendored adhan and the hashed client bundle live on disk at the
+  // path they are served from (`public/prayer-times/_/x` is `/prayer-times/_/x`
+  // on staging and on the production route alike). Assets answer before the
+  // Worker; a miss falls through to src/index.ts.
+  "assets": { "directory": "./public", "not_found_handling": "none" },
+  "vars": {
+    "ENVIRONMENT": "dev",
+    "MASJID_TIMES_URL": "https://masjid-times-prod.omar-abb.workers.dev"
+  },
+  // NOTE: vars and assets are NOT inherited into named envs: repeat them per
+  // env or the deployed worker silently has none. test/config.test.ts checks
+  // the three envs agree.
+  // Secret (per env): MASJID_TIMES_SECRET. `wrangler secret put MASJID_TIMES_SECRET --env staging`.
+  "env": {
+    "staging": {
+      "name": "city-pages-staging",
+      "workers_dev": true,
+      "assets": { "directory": "./public", "not_found_handling": "none" },
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "MASJID_TIMES_URL": "https://masjid-times-prod.omar-abb.workers.dev"
+      }
+    },
+    "production": {
+      "name": "city-pages-prod",
+      "workers_dev": false,
+      // `/prayer-times/*` also matches `/prayer-times/`; the exact `/prayer-times`
+      // needs its own pattern. Never `/prayer-times*`: it would capture the live
+      // Webflow pages /prayer-times-app and /prayer-times-widget.
+      "routes": [
+        { "pattern": "thepillarsapp.com/prayer-times/*", "zone_id": "50f55a7e891d8e8bdc988d43e6a83a31" },
+        { "pattern": "thepillarsapp.com/prayer-times", "zone_id": "50f55a7e891d8e8bdc988d43e6a83a31" }
+      ],
+      "assets": { "directory": "./public", "not_found_handling": "none" },
+      "vars": {
+        "ENVIRONMENT": "production",
+        "MASJID_TIMES_URL": "https://masjid-times-prod.omar-abb.workers.dev"
+      }
+    }
+  }
+}
