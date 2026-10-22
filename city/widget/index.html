@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Prayer Times Widget | Pillars</title>
+<!-- Embeddable prayer times: ?city={slug} reads data/{slug}.json, written daily by city/build.mjs.
+     Optional ?theme=light|dark (default follows the visitor's system). No third-party requests. -->
+<style>
+:root { --bg: #FFFFFF; --ink: #00193E; --muted: rgba(0, 25, 62, .6); --rule: rgba(0, 25, 62, .1); --hl: rgba(0, 25, 62, .06); color-scheme: light dark; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #00193E; --ink: #FFFFFF; --muted: rgba(255, 255, 255, .65); --rule: rgba(255, 255, 255, .12); --hl: rgba(255, 255, 255, .08); } }
+:root[data-theme="dark"] { --bg: #00193E; --ink: #FFFFFF; --muted: rgba(255, 255, 255, .65); --rule: rgba(255, 255, 255, .12); --hl: rgba(255, 255, 255, .08); }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 400 15px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+.w { padding: 16px 16px 12px; }
+h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.d { margin: 2px 0 10px; font-size: 13px; color: var(--muted); }
+ul { list-style: none; margin: 0; padding: 0; }
+li { display: flex; justify-content: space-between; padding: 7px 10px; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+li:last-child { border-bottom: 0; }
+li.next { background: var(--hl); border-radius: 8px; border-bottom-color: transparent; font-weight: 600; }
+.f { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; font-size: 11px; color: var(--muted); }
+a { color: var(--ink); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="w">
+  <h1 id="t">Prayer Times</h1>
+  <p class="d" id="d">&nbsp;</p>
+  <ul id="l" aria-label="Prayer times today"></ul>
+  <div class="f"><span id="m"></span><a id="p" href="https://thepillarsapp.com/" target="_blank" rel="noopener">Powered by Pillars</a></div>
+</div>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var th = q.get('theme');
+  if (th === 'light' || th === 'dark') document.documentElement.setAttribute('data-theme', th);
+  var slug = q.get('city') || 'london';
+  if (!/^[a-z0-9-]{1,60}$/.test(slug)) slug = 'london';
+  var $ = function (id) { return document.getElementById(id); };
+  function fail() { $('d').textContent = 'Times are unavailable right now.'; }
+  fetch('data/' + slug + '.json').then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (data) {
+    var parts = new Intl.DateTimeFormat('en-GB', { timeZone: data.timezone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    var dateFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' });
+    function fmt(hm) {
+      if (data.clock === 24) return hm;
+      var h = +hm.slice(0, 2);
+      return (h % 12 || 12) + hm.slice(2) + (h < 12 ? ' AM' : ' PM');
+    }
+    $('t').textContent = data.name + ' Prayer Times';
+    $('p').href = data.url;
+    $('m').textContent = data.method + ' method';
+    var key = '';
+    function render() {
+      var p = {};
+      parts.formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; });
+      var ymd = p.year + '-' + p.month + '-' + p.day, now = (p.hour % 24 < 10 ? '0' : '') + (p.hour % 24) + ':' + p.minute;
+      var t = data.days[ymd];
+      if (!t) return fail();
+      var next = 0;
+      while (next < 6 && t[next] <= now) next++;
+      if (key === ymd + next) return;
+      key = ymd + next;
+      var a = ymd.split('-');
+      $('d').textContent = dateFmt.format(new Date(Date.UTC(+a[0], a[1] - 1, +a[2], 12))).replace(',', '');
+      var html = '';
+      data.names.forEach(function (n, i) {
+        html += '<li' + (i === next ? ' class="next" aria-current="time"' : '') + '><span>' + n + '</span><span>' + fmt(t[i]) + '</span></li>';
+      });
+      $('l').innerHTML = html;
+    }
+    render();
+    setInterval(render, 30000);
+  }).catch(fail);
+})();
+</script>
+</body>
+</html>

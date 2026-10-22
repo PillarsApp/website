@@ -22,6 +22,8 @@ export const SITE = {
   masjidTimesApi: 'https://masjid-times-prod.omar-abb.workers.dev',
   // PROVISIONAL mosque page scheme (no route yet): /mosques/{country}/{city}/{slug}/
   mosquePath: (country, city, slug) => `/mosques/${country}/${city}/${slug}/`,
+  // PROVISIONAL embed widget URL (no route yet): /prayer-times/widget/?city={slug}
+  widgetPath: '/prayer-times/widget/',
 };
 
 // clock: 12 or 24, the format most common locally. Applies to the whole page
@@ -57,13 +59,18 @@ export const CITIES = {
     // <method> method". Once the London Unified
     // timetable is wired up this becomes 'Source: London Unified Prayer Timetable'.
     listCaption: null,
+    // "Updated … · Times calculated with the <timesSource>" line under the answer.
+    // Omit to get '<method> method'. Once the London Unified timetable is wired
+    // up this becomes 'London Unified Prayer Timetable'.
+    timesSource: 'Moonsighting Committee method',
     // Mosques section: these masjid-times ids first (well-known London mosques),
     // then the nearest others with reliable times, up to `max`. Without the API
-    // secret the build falls back to data/london-mosques.sample.json.
+    // secret (or if the API fails) the build falls back to `placeholder`, which is
+    // generic dummy data for layout only: never real mosque names with made-up
+    // times. A build with PROD=1 refuses to ship placeholder mosques.
     mosques: {
       radiusKm: 15,
       max: 10,
-      sample: 'data/london-mosques.sample.json',
       featured: [
         'plr_6de9979e3da7f5d5', // London Central Mosque (Regent's Park)
         'plr_50a8ad8349ca78e0', // East London Mosque
@@ -76,6 +83,15 @@ export const CITIES = {
         'plr_97b1aaec78a40a8c', // Al-Negashi Mosque & Centre
         'plr_6049986c2b4dec89', // Markazi Masjid
       ],
+      placeholder: {
+        placeholder: true,
+        mosques: [
+          { name: 'Example Masjid A', address: 'Whitechapel', iqamah: { fajr: '06:20', dhuhr: '13:15', asr: '15:40', maghrib: '18:00', isha: '19:35' }, jummah: ['13:15', '14:00'] },
+          { name: 'Example Masjid B', address: 'Regent\'s Park', iqamah: { fajr: '06:15', dhuhr: '13:30', asr: '15:45', maghrib: '18:00', isha: '19:40' }, jummah: ['13:30'] },
+          { name: 'Example Masjid C', address: 'Finsbury Park', iqamah: { fajr: '06:25', dhuhr: '13:10', asr: '16:15', maghrib: '18:02', isha: '19:45' }, jummah: ['13:00', '13:45'] },
+          { name: 'Example Masjid D', address: 'Peckham', iqamah: { fajr: '06:30', dhuhr: '13:20', asr: '15:50', maghrib: '18:01', isha: '19:30' }, jummah: ['13:20'] },
+        ],
+      },
     },
     nearby: [
       ['Luton', 'luton'], ['Slough', 'slough'], ['Watford', 'watford'], ['Reading', 'reading'],

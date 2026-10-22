@@ -6,7 +6,7 @@ Times are calculated with the adhan library using each city's standard method (U
 
 ## Prayer times
 
-- [London prayer times](https://thepillarsapp.com/prayer-times/uk/london/): today's Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha, a Fajr section with the next 7 days' Fajr and sunrise, the month's timetable, calculation method and London mosques
+- [London prayer times](https://thepillarsapp.com/prayer-times/uk/london/): today's Fajr, Sunrise, Dhuhr, Asr (Shafi'i and Hanafi), Maghrib and Isha with an "Updated" date and the calculation method; Fajr, Maghrib (iftar) and Isha sections with the next 7 days; the month's timetable with the Hijri date on each row; calculation method; London mosques with jama'ah and Jumu'ah times; an embeddable prayer times widget; FAQ
 - [United Kingdom prayer times](https://thepillarsapp.com/prayer-times/uk/): all UK cities
 - [All prayer times](https://thepillarsapp.com/prayer-times/): every country and city
 
@@ -14,3 +14,11 @@ Times are calculated with the adhan library using each city's standard method (U
 
 - [Pillars on the App Store](https://apps.apple.com/app/id1559086853)
 - [Pillars website](https://thepillarsapp.com/)
+
+## Embed widget
+
+- `https://thepillarsapp.com/prayer-times/widget/?city={slug}` (for example `?city=london`): a small iframe-able page with today's six times for the city, light or dark (`&theme=light|dark`). It is marked noindex; link to the city page instead when citing times.
+
+## In-browser tools (WebMCP)
+
+Where WebMCP is available, each city page registers read-only tools: `get_prayer_times` (any date), `get_next_prayer`, `get_monthly_timetable` (YYYY-MM, with Hijri dates and both Asr times), `get_qibla_direction` and `get_jumuah_and_mosques` (listed mosques with jama'ah and Jumu'ah times; a `placeholder` flag marks dummy layout data). See the [prayer times skill](https://thepillarsapp.com/skills/prayer-times.md).

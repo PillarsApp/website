@@ -9,7 +9,7 @@
 // Rewrites the <!-- build:NAME --> ... <!-- /build:NAME --> regions of the page
 // in place. Run daily shortly after local midnight (the "Updated" stamp, the
 // meta description and dateModified all come from the run).
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -111,10 +111,11 @@ const url = `${SITE.origin}/prayer-times/${city.country}/${city.slug}/`;
 const hubUrl = `${SITE.origin}${SITE.hubPath}`;
 const countryUrl = `${SITE.origin}/prayer-times/${city.country}/`;
 const methodName = METHOD_LABEL[city.method] || city.method;
+const timesSource = city.timesSource || `${methodName} method`;
 const todayHanafi = asrHanafi(date);
 const timesText = NAMES.map((n, i) => `${n} ${fmt(today[i])}${i === 3 ? ` (Hanafi ${fmt(todayHanafi)})` : ''}`).join(', ');
 
-// ---------- Mosques in the city (masjid-times API at build time, else sample) ----------
+// ---------- Mosques in the city (masjid-times API at build time, else placeholder) ----------
 const slugify = (s) => s.replace(/\s*\([^)]*\)/g, '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
   .toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const titleCase = (s) => (s === s.toUpperCase() && s !== s.toLowerCase()
@@ -144,18 +145,23 @@ async function loadMosques() {
         if (!day || tt.inactive || tt.times_reliable === false) continue;
         out.push({ name: titleCase(m.name), address: m.address, zipcode: m.zipcode, athan: day.athan || {}, iqamah: day.iqamah || {}, jummah: day.jummah || [] });
       }
-      if (out.length) return { sample: false, mosques: out };
-      console.warn('masjid-times: no mosque times returned; using sample data');
+      if (out.length) return { placeholder: false, mosques: out };
+      console.warn('masjid-times: no mosque times returned; using placeholder mosques');
     } catch (e) {
-      console.warn(`masjid-times: ${e.message}; using sample data`);
+      console.warn(`masjid-times: ${e.message}; using placeholder mosques`);
     }
   } else {
-    console.warn('MASJID_TIMES_SECRET not set; mosque section uses sample data');
+    console.warn('MASJID_TIMES_SECRET not set; mosque section uses placeholder mosques');
   }
-  const sample = JSON.parse(readFileSync(resolve(here, cfg.sample), 'utf8'));
-  return { sample: true, mosques: sample.mosques };
+  if (!cfg.placeholder) return null;
+  return { placeholder: true, mosques: cfg.placeholder.mosques.map((m) => ({ athan: {}, jummah: [], ...m })) };
 }
 const mosqueData = await loadMosques();
+// Placeholder mosques (generic dummy names and times) must never reach the real site.
+if (process.env.PROD === '1' && mosqueData && mosqueData.placeholder) {
+  console.error(`PROD=1: refusing to build ${city.name} with placeholder mosques. Set MASJID_TIMES_SECRET so real mosque times load, or remove the placeholder fallback.`);
+  process.exit(1);
+}
 const mosques = (mosqueData ? mosqueData.mosques : []).map((m) => {
   const slug = slugify(m.name);
   const street = m.address || '';
@@ -191,7 +197,7 @@ const ld = {
     },
   ],
 };
-if (mosques.length && !mosqueData.sample) {
+if (mosques.length && !mosqueData.placeholder) {
   ld['@graph'].push({
     '@type': 'ItemList', '@id': `${url}#mosques`, name: `Mosques in ${city.name}`,
     itemListElement: mosques.map((m, i) => ({
@@ -218,7 +224,7 @@ const head = `<title>${esc(title)}</title>
 <meta name="twitter:title" content="${esc(`${city.name} Prayer Times Today`)}">
 <meta name="twitter:description" content="${esc(description)}">
 <script id="city-data" type="application/json">
-${JSON.stringify(cityData, null, 2)}
+__CITYDATA__
 </script>
 <script type="application/ld+json">
 __LD__
@@ -246,6 +252,9 @@ const ICONS = {
   tune: 'M3 18c0 .55.45 1 1 1h5v-2H4c-.55 0-1 .45-1 1zM3 6c0 .55.45 1 1 1h9V5H4c-.55 0-1 .45-1 1zm10 14v-1h7c.55 0 1-.45 1-1s-.45-1-1-1h-7v-1c0-.55-.45-1-1-1s-1 .45-1 1v4c0 .55.45 1 1 1s1-.45 1-1zM7 10v1H4c-.55 0-1 .45-1 1s.45 1 1 1h3v1c0 .55.45 1 1 1s1-.45 1-1v-4c0-.55-.45-1-1-1s-1 .45-1 1zm14 2c0-.55-.45-1-1-1h-9v2h9c.55 0 1-.45 1-1zm-5-3c.55 0 1-.45 1-1V7h3c.55 0 1-.45 1-1s-.45-1-1-1h-3V4c0-.55-.45-1-1-1s-1 .45-1 1v4c0 .55.45 1 1 1z',
   help: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z',
   wb_twilight: 'M16.955 8.662l2.12-2.122 1.414 1.414-2.121 2.122zM2 18h20v2H2zm9-14h2v3h-2zM3.543 7.925l1.414-1.414 2.121 2.122-1.414 1.414zM5 16h14c0-3.87-3.13-7-7-7s-7 3.13-7 7z',
+  sunset: 'M11 2h2v4h2.5L12 9.5 8.5 6H11zM2 18h20v2H2zm3-2a7 7 0 0 1 14 0z',
+  bedtime: 'M12.34 2.02C6.59 1.82 2 6.42 2 12c0 5.52 4.48 10 10 10 3.71 0 6.93-2.02 8.66-5.02-7.51-.25-12.09-8.43-8.32-14.96z',
+  code: 'M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z',
   location_on: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
 };
 const ico = (n) => `<svg class="h-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="${ICONS[n]}"/></svg>`;
@@ -315,6 +324,10 @@ const faq = [
     `${esc(city.name)} namaz timings today are ${todayList}. The list at the top of this page shows them with the current prayer, and the arrows step to other days.`, true],
   [`What time is Fajr in ${city.name} today?`,
     `Fajr in ${esc(city.name)} today begins at ${td(0)} and lasts until sunrise at ${td(1)}. When fasting, suhoor ends as Fajr begins, and the fast is opened at Maghrib, ${td(4)}.`, true],
+  [`What time is Maghrib (iftar) in ${city.name} today?`,
+    `Maghrib in ${esc(city.name)} today is at ${td(4)}, just after sunset. That is also iftar time, when the fast is opened. Maghrib lasts until Isha begins at ${td(5)}.`, true],
+  [`What time is Isha in ${city.name} today?`,
+    `Isha in ${esc(city.name)} today begins at ${td(5)}. Its time lasts until Fajr the next morning, and it is recommended not to delay it past the middle of the night.`, true],
   [`Why do ${city.name} prayer times differ between apps and mosques?`,
     `Apps and mosques use different calculation methods. This page uses the ${methodName} method with ${p0.fajrAngle === p0.ishaAngle ? `Fajr and Isha both at ${p0.fajrAngle}°` : `Fajr at ${p0.fajrAngle}° and Isha at ${p0.ishaAngle}°`}${lt ? `, while many ${city.name} mosques follow the ${lt.name}` : ''}. The difference is usually a few minutes for Dhuhr, Asr and Maghrib and larger for Fajr and Isha.`],
   ...(lt ? [[`Which timetable do ${city.name} mosques follow?`, lt.note]] : []),
@@ -370,13 +383,41 @@ const fajrHtml = `
     </table>
     </div>`;
 
+// ---------- Maghrib and Isha today (same answer-first pattern as Fajr) ----------
+const mAdj = (p0.methodAdjustments || {}).maghrib || 0;
+const weekTable = (caption, cols) => `
+    <table class="timetable fajr-week">
+      <caption class="sr-only">${caption}</caption>
+      <thead><tr><th scope="col"><span class="sr-only">Date</span></th>${cols.map(([h]) => `<th scope="col">${h}</th>`).join('')}</tr></thead>
+      <tbody>${fajrWeek.map((d) => `
+        <tr data-date="${d}"${d === date ? ' class="today" aria-current="date"' : ''}><th scope="row">${shortDay(d)}</th>${cols.map(([, f]) => `<td>${fmt(f(d))}</td>`).join('')}</tr>`).join('')}
+      </tbody>
+    </table>`;
+const maghribHtml = `
+    <div class="card">
+    <h2 id="maghrib">${ico('sunset')}Maghrib time in ${esc(city.name)} today</h2>
+    <p class="answer">Maghrib in ${esc(city.name)} today, <span data-today-date>${longDate(date)}</span>, is at ${td(4)}. This is also iftar time: when fasting, the fast is opened at Maghrib. Tomorrow, ${longDate(tomorrow)}, Maghrib is at ${fmt(dayFor(tomorrow)[4])}.</p>
+    <p>Maghrib begins once the sun has fully set${mAdj ? `; the ${methodName} method adds ${mAdj} minutes to sunset as a precaution` : ''}. It lasts until Isha begins, at ${td(5)} today. It is recommended to pray it soon after it begins.</p>
+    <p>Because every calculation method works from sunset, Maghrib times for ${esc(city.name)} usually differ by only a few minutes between apps, websites and mosques, mostly from the precaution each one adds.</p>${weekTable(`Maghrib and Isha in ${esc(city.name)}, next 7 days`, [['Maghrib', (d) => dayFor(d)[4]], ['Isha', (d) => dayFor(d)[5]]])}
+    </div>`;
+// At midsummer the sun's lowest point is 90° - latitude - 23.44° below the horizon.
+const maxDepression = 90 - Math.abs(city.lat) - 23.44;
+const ishaHtml = `
+    <div class="card">
+    <h2 id="isha">${ico('bedtime')}Isha time in ${esc(city.name)} today</h2>
+    <p class="answer">Isha in ${esc(city.name)} today, <span data-today-date>${longDate(date)}</span>, is at ${td(5)}. Tomorrow, ${longDate(tomorrow)}, Isha is at ${fmt(dayFor(tomorrow)[5])}.</p>
+    <p>These times use the ${methodName} method, with Isha when the sun is ${p0.ishaAngle}° below the horizon${highLat}. The time for Isha lasts until Fajr, and it is recommended not to delay it past the middle of the night.</p>
+    <p>Isha times for ${esc(city.name)} differ between sites most in summer.${maxDepression < p0.ishaAngle ? ` Around midsummer the sun never sinks ${p0.ishaAngle}° below the horizon in ${esc(city.name)}, so each method falls back on a high-latitude rule, such as the middle of the night or one-seventh of the night.` : ''} Methods also use different Isha angles: the Muslim World League uses 17°, ISNA 15° and Karachi 18°, while Umm al-Qura sets Isha 90 minutes after Maghrib.${lt ? ` Many ${esc(city.name)} mosques follow the ${esc(lt.name)} instead.` : ''}</p>${weekTable(`Isha and the next Fajr in ${esc(city.name)}, next 7 days`, [['Isha', (d) => dayFor(d)[5]], ['Next Fajr', (d) => dayFor(addDays(d, 1))[0]]])}
+    </div>`;
+
 const P5 = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const K5 = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+const hasAthan = mosques.some((m) => K5.some((k) => m.athan && m.athan[k]));
 const mosquesHtml = !mosques.length ? '' : `
     <div class="card">
-    <h2 id="mosques">${ico('mosque')}Mosques in ${esc(city.name)}: prayer and jamaat times today</h2>
-    <p>Start (athan) and jamaat (congregation) times for ${longDate(date)}, as published by each mosque. Mosques set their own times, so check with the mosque before you go.</p>${mosqueData.sample ? `
-    <p class="note">Sample times for layout only. These are not the mosques' real timetables.</p>` : ''}
+    <h2 id="mosques">${ico('mosque')}Mosques in ${esc(city.name)} — Jama'ah times</h2>
+    <p>${hasAthan ? 'Start (athan) and jama\'ah' : 'Jama\'ah'} (congregation) times for ${longDate(date)}, as published by each mosque. Mosques set their own times, so check with the mosque before you go.</p>${mosqueData.placeholder ? `
+    <p class="note">Placeholder mosques and times for layout only. These are not real mosques or timetables.</p>` : ''}
     <!-- PROVISIONAL hrefs: /mosques/{country}/{city}/{slug}/ is not a live route yet. -->
     <ul class="mosques">
       ${mosques.map((m) => `<li>
@@ -384,9 +425,9 @@ const mosquesHtml = !mosques.length ? '' : `
         ${m.address ? `<p class="addr">${esc(m.address)}</p>` : ''}
         <table class="mtimes">
           <thead><tr><td></td>${P5.map((n) => `<th scope="col">${n}</th>`).join('')}</tr></thead>
-          <tbody>
-            <tr><th scope="row">Athan</th>${K5.map((k) => `<td>${sfmt(m.athan[k])}</td>`).join('')}</tr>
-            <tr><th scope="row">Jamaat</th>${K5.map((k) => `<td>${sfmt(m.iqamah[k])}</td>`).join('')}</tr>
+          <tbody>${hasAthan ? `
+            <tr><th scope="row">Athan</th>${K5.map((k) => `<td>${sfmt(m.athan[k])}</td>`).join('')}</tr>` : ''}
+            <tr><th scope="row">Jama'ah</th>${K5.map((k) => `<td>${sfmt(m.iqamah[k])}</td>`).join('')}</tr>
           </tbody>
         </table>${m.jummah && m.jummah.length ? `
         <p class="jummah">Jumu'ah ${m.jummah.map((j) => sfmt(j, false)).join(', ')}</p>` : ''}
@@ -394,6 +435,19 @@ const mosquesHtml = !mosques.length ? '' : `
     </ul>
     </div>
 `;
+
+// ---------- Embed widget (city/widget/, fed by widget/data/{slug}.json written below) ----------
+const widgetUrl = `${SITE.origin}${SITE.widgetPath}?city=${city.slug}`;
+const embedCode = `<iframe src="${widgetUrl}" title="${city.name} prayer times" width="320" height="330" style="border:0;max-width:100%" loading="lazy"></iframe>`;
+const widgetHtml = `
+    <div class="card">
+    <h2 id="widget">${ico('code')}Add ${esc(city.name)} prayer times to your website</h2>
+    <p>Mosques, schools and community websites can show today's ${esc(city.name)} prayer times with this free widget. Paste the code into any page: it updates every day, works in light and dark mode and loads nothing from third parties.</p>
+    <!-- PROVISIONAL: the preview loads the widget relative to this page; the snippet uses the planned ${SITE.widgetPath} URL. -->
+    <iframe class="widget-preview" src="widget/?city=${city.slug}" title="${esc(city.name)} prayer times widget preview" width="320" height="330" loading="lazy"></iframe>
+    <pre class="embed-code"><code id="embed-code">${esc(embedCode)}</code></pre>
+    <p class="copy-row"><button type="button" class="copy-btn" id="copy-embed">Copy code</button> <span class="copy-status" id="copy-status" role="status" aria-live="polite"></span></p>
+    </div>`;
 const seo = `<section class="seo" id="seo">
     <div class="card">
       <nav class="crumbs" aria-label="Breadcrumb">
@@ -404,7 +458,8 @@ const seo = `<section class="seo" id="seo">
         </ol>
       </nav>
     <h1>${ico('schedule')}Prayer Times in ${esc(city.name)}, ${esc(country.name)}</h1>
-    <p class="answer" id="answer" data-date="${date}"><span class="a-lead">Salah (namaz) times in ${esc(city.name)} today</span><span class="sr-only">, </span><span class="a-date"><span data-today-date>${longDate(date)}</span> · <span data-today-hijri>${hijriLong(date)}</span></span><span class="sr-only">: </span><span class="a-times">${todayList.split(', ').join(' · ')}</span><span class="sr-only">. </span><span class="a-meta">${methodName} method · Updated <time datetime="${isoLocal(updatedMs)}">${fmt(updatedMs)} ${tzAbbr(updatedMs)}</time></span></p>
+    <p class="answer" id="answer" data-date="${date}"><span class="a-lead">Salah (namaz) times in ${esc(city.name)} today</span><span class="sr-only">, </span><span class="a-date"><span data-today-date>${longDate(date)}</span> · <span data-today-hijri>${hijriLong(date)}</span></span><span class="sr-only">: </span><span class="a-times">${todayList.split(', ').join(' · ')}</span><span class="sr-only">. </span></p>
+    <p class="source-line">Updated <time datetime="${date}" data-today-date>${longDate(date)}</time> · Times calculated with the ${esc(timesSource)}</p>
     </div>
 
     <div class="card">
@@ -413,6 +468,8 @@ const seo = `<section class="seo" id="seo">
     </div>
     ${thisMonth.note}${nextMonthNote}
 ${fajrHtml}
+${maghribHtml}
+${ishaHtml}
 
     <div class="card">
     <h2>${ico('tune')}How are ${esc(city.name)} prayer times calculated?</h2>
@@ -425,6 +482,7 @@ ${fajrHtml}
     </dl>
     </div>
 ${mosquesHtml}
+${widgetHtml}
 
     <div class="card">
     <h2>${ico('help')}Frequently asked questions</h2>
@@ -453,6 +511,24 @@ const titleHeadings = (h) => h.replace(/<(h[1-3])([^>]*)>([\s\S]*?)<\/\1>/g, (_,
   `<${tag}${attrs}>${inner.split(/(<[^>]+>)/).map((part) => (part.startsWith('<') ? part : titleWords(part.replace(/\s*—\s*/g, ' | ')))).join('')}</${tag}>`);
 
 
+// ---------- data for city.js (WebMCP tools) and the embed widget ----------
+const hm = (ms) => { const p = partsOf(ms); return `${pad(p.h)}:${pad(p.mi)}`; };
+Object.assign(cityData, {
+  url,
+  qibla: { bearing: qibla, compass },
+  mosquesPlaceholder: !!(mosqueData && mosqueData.placeholder),
+  mosquesDate: date,
+  mosques: mosques.map((m) => ({ name: m.name, address: m.address || null, url: m.url, athan: m.athan || {}, iqamah: m.iqamah || {}, jummah: m.jummah || [] })),
+});
+const widgetDays = {};
+for (let i = -1; i <= 62; i++) { const d = addDays(date, i); widgetDays[d] = dayFor(d).map(hm); }
+const widgetDir = resolve(here, 'widget', 'data');
+mkdirSync(widgetDir, { recursive: true });
+writeFileSync(resolve(widgetDir, `${city.slug}.json`), JSON.stringify({
+  name: city.name, place: cityData.place, url, clock, timezone: tz, method: methodName,
+  names: NAMES, days: widgetDays,
+}));
+
 // ---------- write ----------
 let html = readFileSync(outPath, 'utf8');
 function region(name, content) {
@@ -470,7 +546,7 @@ html = html.replace(/<link rel="stylesheet" href="city\.css[^"]*">|<style id="ci
   .replace(/src="city(\.min)?\.js(\?v=[^"]*)?"/, `src="city.min.js?v=${ver('city.min.js')}"`);
 html = html.replace(/<ul class="list" id="list"[^>]*>/, `<ul class="list" id="list" aria-label="${esc(city.name)} prayer times today">`);
 html = html.replace(/<html lang="[^"]*">/, `<html lang="${country.lang}">`);
-region('head', head.replace('__LD__', () => JSON.stringify(ld, null, 2)));
+region('head', head.replace('__LD__', () => JSON.stringify(ld, null, 2)).replace('__CITYDATA__', () => JSON.stringify(cityData, null, 2)));
 region('chip', chip);
 region('date', dateBlock);
 region('list', list);

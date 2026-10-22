@@ -635,7 +635,10 @@
       var td = dayFor(todayYmd), t = td.base.concat([td.asrHanafi]);  // data-today="6" = Hanafi Asr
       answer.setAttribute('data-date', todayYmd);
       each('[data-today]', function (n) { n.textContent = formatTime(t[+n.getAttribute('data-today')]); });
-      each('[data-today-date]', function (n) { n.textContent = longFmt.format(dateObj(todayYmd)).replace(',', ''); });
+      each('[data-today-date]', function (n) {
+        n.textContent = longFmt.format(dateObj(todayYmd)).replace(',', '');
+        if (n.tagName === 'TIME') n.setAttribute('datetime', todayYmd);
+      });
       each('[data-today-hijri]', function (n) { n.textContent = hijriLabel(todayYmd, false); });
     }
     each('.timetable tr[data-date]', function (r) {
@@ -689,28 +692,95 @@
   render();
   requestAnimationFrame(frame);
 
-  // WebMCP: lets an AI agent in the browser ask for this city's times on any date (where supported).
+  // WebMCP: read-only tools that let an AI agent in the browser query this city (where supported).
+  function timesOut(d) {
+    var out = {};
+    NAMES.forEach(function (n, i) { out[n.toLowerCase()] = formatTime(d.base[i]); });
+    out.asr_hanafi = formatTime(d.asrHanafi);
+    return out;
+  }
   var mc = document.modelContext || navigator.modelContext;
+  function tool(def) {
+    try { mc.registerTool(def); } catch (e) { /* tool registration is optional */ }
+  }
   if (mc && typeof mc.registerTool === 'function') {
-    try {
-      mc.registerTool({
-        name: 'get_prayer_times',
-        description: 'Prayer (salah) times for ' + city.place + ' on a given date: Fajr, Sunrise, Dhuhr, Asr (Shafi\'i and Hanafi), Maghrib, Isha, in local time.',
-        inputSchema: {
-          type: 'object',
-          properties: { date: { type: 'string', description: 'Date as YYYY-MM-DD. Defaults to today in ' + city.name + '.', pattern: '^\\d{4}-\\d{2}-\\d{2}$' } },
-          additionalProperties: false
-        },
-        annotations: { readOnlyHint: true },
-        execute: async function (args) {
-          var ymd = args && /^\d{4}-\d{2}-\d{2}$/.test(args.date || '') ? args.date : todayYmd;
-          var d = dayFor(ymd), out = { city: city.place, date: ymd, timezone: city.timezone, method: city.method };
-          NAMES.forEach(function (n, i) { out[n.toLowerCase()] = formatTime(d.base[i]); });
-          out.asr_hanafi = formatTime(d.asrHanafi);
-          return JSON.stringify(out);
+    var noArgs = { type: 'object', properties: {}, additionalProperties: false };
+    tool({
+      name: 'get_prayer_times',
+      description: 'Prayer (salah) times for ' + city.place + ' on a given date: Fajr, Sunrise, Dhuhr, Asr (Shafi\'i and Hanafi), Maghrib, Isha, in local time.',
+      inputSchema: {
+        type: 'object',
+        properties: { date: { type: 'string', description: 'Date as YYYY-MM-DD. Defaults to today in ' + city.name + '.', pattern: '^\\d{4}-\\d{2}-\\d{2}$' } },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true },
+      execute: async function (args) {
+        var ymd = args && /^\d{4}-\d{2}-\d{2}$/.test(args.date || '') ? args.date : todayYmd;
+        var out = { city: city.place, date: ymd, timezone: city.timezone, method: city.method }, t = timesOut(dayFor(ymd));
+        for (var k in t) out[k] = t[k];
+        return JSON.stringify(out);
+      }
+    });
+    tool({
+      name: 'get_next_prayer',
+      description: 'The next prayer in ' + city.place + ' from now: its name, local time and minutes until it begins. Asr follows the Earlier (Shafi\'i) / Later (Hanafi) choice selected on the page.',
+      inputSchema: noArgs,
+      annotations: { readOnlyHint: true },
+      execute: async function () {
+        var now = nowMs(), ymd = todayYmd, d = dayFor(ymd), i = 0;
+        while (i < 6 && d.t[i] <= now) i++;
+        if (i === 6) { ymd = addDays(todayYmd, 1); d = dayFor(ymd); i = 0; }
+        return JSON.stringify({
+          city: city.place, prayer: NAMES[i], date: ymd, time: formatTime(d.t[i]),
+          minutes_until: Math.max(0, Math.ceil((d.t[i] - now) / 60000)),
+          asr: asrLater ? 'hanafi' : 'shafii', timezone: city.timezone
+        });
+      }
+    });
+    tool({
+      name: 'get_monthly_timetable',
+      description: 'Daily prayer timetable for ' + city.place + ' for a whole month: Fajr, Sunrise, Dhuhr, Asr (Shafi\'i and Hanafi), Maghrib, Isha and the Hijri (Umm al-Qura) date for each day.',
+      inputSchema: {
+        type: 'object',
+        properties: { month: { type: 'string', description: 'Month as YYYY-MM. Defaults to the current month in ' + city.name + '.', pattern: '^\\d{4}-\\d{2}$' } },
+        additionalProperties: false
+      },
+      annotations: { readOnlyHint: true },
+      execute: async function (args) {
+        var m = args && /^\d{4}-(0[1-9]|1[0-2])$/.test(args.month || '') ? args.month : todayYmd.slice(0, 7);
+        var a = m.split('-'), n = new Date(Date.UTC(+a[0], +a[1], 0)).getUTCDate(), days = [];
+        for (var i = 1; i <= n; i++) {
+          var ymd = m + '-' + pad(i), row = { date: ymd, hijri: hijriLabel(ymd, false) }, t = timesOut(dayFor(ymd));
+          for (var k in t) row[k] = t[k];
+          days.push(row);
         }
-      });
-    } catch (e) { /* tool registration is optional */ }
+        return JSON.stringify({ city: city.place, month: m, timezone: city.timezone, method: city.method, days: days });
+      }
+    });
+    if (city.qibla) tool({
+      name: 'get_qibla_direction',
+      description: 'Qibla direction from ' + city.place + ': the great-circle bearing to the Kaaba in degrees from true north, with a compass word.',
+      inputSchema: noArgs,
+      annotations: { readOnlyHint: true },
+      execute: async function () {
+        return JSON.stringify({ city: city.place, bearing_degrees: city.qibla.bearing, compass: city.qibla.compass, reference: 'true north' });
+      }
+    });
+    if (city.mosques) tool({
+      name: 'get_jumuah_and_mosques',
+      description: 'Mosques in ' + city.place + ' listed on this page with their jama\'ah (iqamah) times and Jumu\'ah times, plus the next Friday\'s Dhuhr start time. If placeholder is true the mosques and times are dummy layout data, not real.',
+      inputSchema: noArgs,
+      annotations: { readOnlyHint: true },
+      execute: async function () {
+        var fri = todayYmd;
+        while (dateObj(fri).getUTCDay() !== 5) fri = addDays(fri, 1);
+        return JSON.stringify({
+          city: city.place, placeholder: !!city.mosquesPlaceholder, mosque_times_date: city.mosquesDate,
+          next_friday: { date: fri, dhuhr_starts: formatTime(dayFor(fri).base[2]) },
+          mosques: city.mosques
+        });
+      }
+    });
   }
 
   // Countdown every second; everything else when the minute rolls over.
@@ -799,4 +869,37 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
   window.addEventListener('scroll', queue, { passive: true });
   window.addEventListener('resize', queue, { passive: true });
   update();
+})();
+
+// Embed widget card: copy the iframe snippet, with a spoken status for screen readers.
+(function () {
+  var btn = document.getElementById('copy-embed'), code = document.getElementById('embed-code'), status = document.getElementById('copy-status');
+  if (!btn || !code) return;
+  var timer;
+  function say(msg) {
+    if (!status) return;
+    status.textContent = msg;
+    clearTimeout(timer);
+    timer = setTimeout(function () { status.textContent = ''; }, 4000);
+  }
+  function fallback(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { /* unsupported */ }
+    ta.remove();
+    return ok;
+  }
+  btn.addEventListener('click', function () {
+    var text = code.textContent;
+    var done = function () { say('Copied to clipboard'); };
+    var fail = function () { say(fallback(text) ? 'Copied to clipboard' : 'Copy failed, select the code and copy it'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fail);
+    else fail();
+  });
 })();

@@ -9,7 +9,7 @@
     {
       "identifier": "urn:air:thepillarsapp.com:skills:prayer-times",
       "displayName": "Pillars prayer times",
-      "description": "How to read daily salah times, monthly timetables and mosque jamaat times from Pillars city prayer-time pages, plus the in-page get_prayer_times tool.",
+      "description": "How to read daily salah times, Fajr, Maghrib (iftar) and Isha sections, monthly timetables with Hijri dates, Qibla direction and mosque jama'ah and Jumu'ah times from Pillars city prayer-time pages, plus the in-page WebMCP tools (get_prayer_times, get_next_prayer, get_monthly_timetable, get_qibla_direction, get_jumuah_and_mosques) and the embeddable widget.",
       "type": "text/markdown; profile=\"urn:air:agent-skills\"",
       "url": "https://thepillarsapp.com/skills/prayer-times.md",
       "representativeQueries": [
@@ -17,7 +17,11 @@
         "what time is Fajr in London",
         "London salah timetable this month",
         "Hanafi Asr time London",
-        "Isha time London tonight"
+        "Isha time London tonight",
+        "next prayer time London",
+        "iftar time London today",
+        "Qibla direction London",
+        "Jumu'ah times London mosques"
       ]
     }
   ]
