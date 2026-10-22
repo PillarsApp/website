@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { CITIES } from "../src/cities";
 import { TIMETABLE_FILES, timetableFor, timetableId } from "../src/timetables";
 
-// Runs against whatever data/timetables/*.json files the build found: none, some or all.
 describe("the bundled timetable files", () => {
   it("belong to a city of the registry and share its zone", () => {
     for (const [id, t] of Object.entries(TIMETABLE_FILES)) {
@@ -12,6 +11,11 @@ describe("the bundled timetable files", () => {
       expect(t.id, id).toBe(id);
       expect(timetableFor(city!)).toBe(t);
     }
+  });
+
+  it("exist for every city whose standard names a timetable", () => {
+    const missing = CITIES.filter((c) => timetableId(c.standard) && !timetableFor(c)).map((c) => `${c.slug}: ${timetableId(c.standard)}`);
+    expect(missing).toEqual([]);
   });
 
   it("list every day with seven HH:MM or null columns in ascending order", () => {
