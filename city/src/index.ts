@@ -10,9 +10,11 @@ import { routes, canonicalRedirect, linksFor, type RouteName, type RouteParams }
 import { staticRegistry, type CityRegistry } from "./registry";
 import { liveMosqueSource, noMosques, type MosqueSource } from "./mosques";
 import { renderCityPage } from "./render/page";
+import { renderWidget } from "./render/widget";
 import { cityClock } from "./render/times";
+import { SITE } from "./cities";
 import { edgeCache } from "./cache";
-import type { City, Country, Instant, LocalDate } from "./types";
+import type { City, CityRef, Country, Instant, LocalDate, Rendered } from "./types";
 
 export interface Deps {
   registry: CityRegistry;
@@ -45,14 +47,9 @@ const notImplemented: Handler<unknown> = async () => new Response("not implement
 const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
   hub: notImplemented,
   country: notImplemented,
-  city: async ({ url, params, request, env, ctx, deps }) => {
-    const city = await deps.registry.get(params);
-    if (!city) return notFound();
-    const country = deps.registry.country(city.country)!;
-    const clock = cityClock(city, country);
-    const now = devNow(url, env, city, country) ?? deps.now();
-    const date = clock.today(now);
-    return edgeCache(env, ctx).respond({ request, path: routes.city.href(city), date, now, contentType: HTML }, async () => {
+  city: (call) =>
+    serveCity(call, routes.city.href(call.params), async ({ city, country, date, now }) => {
+      const { env, deps } = call;
       const [mosques, nearby] = await Promise.all([
         (city.mosques ? deps.mosqueSource(env) : noMosques).forCity(city, date),
         deps.registry.nearby(city, 10),
@@ -62,10 +59,31 @@ const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
         links: linksFor(city, nearby),
         indexable: env.ENVIRONMENT === "production",
       });
-    });
-  },
-  widget: notImplemented,
+    }),
+  widget: (call) =>
+    serveCity(call, routes.widget.href(call.params), async ({ city, country, date, now }) =>
+      renderWidget({ city, country, date, now, pageUrl: SITE.origin + routes.city.href(city) })),
 };
+
+interface CityRender {
+  readonly city: City;
+  readonly country: Country;
+  readonly date: LocalDate;
+  readonly now: Instant;
+}
+
+// The shared request path of every per-city page: look the city up (404 if
+// unknown), decide what local day it is, and let the edge cache decide
+// whether to render.
+async function serveCity(call: Call<CityRef>, path: string, render: (c: CityRender) => Promise<Rendered>): Promise<Response> {
+  const { url, params, request, env, ctx, deps } = call;
+  const city = await deps.registry.get(params);
+  if (!city) return notFound();
+  const country = deps.registry.country(city.country)!;
+  const now = devNow(url, env, city, country) ?? deps.now();
+  const date = cityClock(city, country).today(now);
+  return edgeCache(env, ctx).respond({ request, path, date, now, contentType: HTML }, () => render({ city, country, date, now }));
+}
 
 // In dev only, ?now=YYYY-MM-DDTHH:mm (city-local) pins the server's clock the
 // way it pins city.js, so the rendered tables and FAQ match what the browser

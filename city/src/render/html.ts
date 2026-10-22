@@ -7,8 +7,8 @@ export function esc(s: string): string {
 
 // JSON inside <script>: a mosque called "</script><script>..." must not end
 // the block. `<` becomes \u003c, and U+2028/2029 are escaped for old parsers.
-export function jsonInScript(value: unknown): string {
-  return JSON.stringify(value, null, 2)
+export function jsonInScript(value: unknown, indent = 2): string {
+  return JSON.stringify(value, null, indent)
     .replace(/</g, "\\u003c")
     .replace(/\u2028/g, "\\u2028")
     .replace(/\u2029/g, "\\u2029");

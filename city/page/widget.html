@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Prayer Times Widget | Pillars</title>
-<!-- Embeddable prayer times: ?city={slug} reads data/{slug}.json, written daily by city/build.mjs.
+<!-- Embeddable prayer times for one city: the Worker fills the data region with the next 64 days.
      Optional ?theme=light|dark (default follows the visitor's system). No third-party requests. -->
 <style>
 :root { --bg: #FFFFFF; --ink: #00193E; --muted: rgba(0, 25, 62, .6); --rule: rgba(0, 25, 62, .1); --hl: rgba(0, 25, 62, .06); color-scheme: light dark; }
@@ -32,16 +32,17 @@ a { color: var(--ink); font-weight: 500; }
   <ul id="l" aria-label="Prayer times today"></ul>
   <div class="f"><span id="m"></span><a id="p" href="https://thepillarsapp.com/" target="_blank" rel="noopener">Powered by Pillars</a></div>
 </div>
+<!-- build:data -->
+<!-- /build:data -->
 <script>
 (function () {
   var q = new URLSearchParams(location.search);
   var th = q.get('theme');
   if (th === 'light' || th === 'dark') document.documentElement.setAttribute('data-theme', th);
-  var slug = q.get('city') || 'london';
-  if (!/^[a-z0-9-]{1,60}$/.test(slug)) slug = 'london';
   var $ = function (id) { return document.getElementById(id); };
   function fail() { $('d').textContent = 'Times are unavailable right now.'; }
-  fetch('data/' + slug + '.json').then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (data) {
+  try {
+    var data = JSON.parse($('widget-data').textContent);
     var parts = new Intl.DateTimeFormat('en-GB', { timeZone: data.timezone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
     var dateFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long' });
     function fmt(hm) {
@@ -73,7 +74,7 @@ a { color: var(--ink); font-weight: 500; }
     }
     render();
     setInterval(render, 30000);
-  }).catch(fail);
+  } catch (e) { fail(); }
 })();
 </script>
 </body>

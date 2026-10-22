@@ -1,0 +1,53 @@
+// The embeddable widget for one city: a small noindex page with the next 64
+// days of "HH:mm" times inlined as JSON, so the iframe needs no second request.
+// Port of build.mjs 514-530 and city/widget/index.html. Keyed by the route
+// (country + slug), never by slug alone.
+
+import template from "../../page/widget.html";
+import type { City, Country, Instant, LocalDate, Rendered } from "../types";
+import { cityClock, PRAYERS } from "./times";
+import { fillRegions, jsonInScript } from "./html";
+
+export interface WidgetInput {
+  readonly city: City;
+  readonly country: Country;
+  readonly date: LocalDate; // city-local "today"
+  readonly now: Instant;
+  readonly pageUrl: string; // absolute city page, for "Powered by Pillars"
+}
+
+export interface WidgetData {
+  readonly name: string;
+  readonly place: string; // "London, UK"
+  readonly url: string;
+  readonly clock: 12 | 24;
+  readonly timezone: string;
+  readonly method: string;
+  readonly names: readonly string[];
+  readonly days: Readonly<Record<LocalDate, readonly string[]>>;
+}
+
+export function widgetData({ city, country, date, pageUrl }: WidgetInput): WidgetData {
+  const clock = cityClock(city, country);
+  const days: Record<LocalDate, readonly string[]> = {};
+  for (let i = -1; i <= 62; i++) {
+    const d = clock.addDays(date, i);
+    days[d] = clock.day(d).t.map((ms) => clock.hm(ms));
+  }
+  return {
+    name: city.name,
+    place: `${city.name}, ${country.short}`,
+    url: pageUrl,
+    clock: country.clock,
+    timezone: city.timezone,
+    method: clock.calc.methodLabel,
+    names: PRAYERS.map((p) => p.name),
+    days,
+  };
+}
+
+export function renderWidget(input: WidgetInput): Rendered {
+  const clock = cityClock(input.city, input.country);
+  const data = `<script id="widget-data" type="application/json">\n${jsonInScript(widgetData(input), 0)}\n</script>`;
+  return { html: fillRegions(template, { data }), freshUntil: clock.nextMidnight(input.now) };
+}
