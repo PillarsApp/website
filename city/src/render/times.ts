@@ -57,6 +57,7 @@ export interface CityClock {
   zoneAbbr(ms: Instant): string;
   zoneLong(ms: Instant): string;
   zoneAbbrOn(d: LocalDate): string;
+  standardAndDaylightAbbr(year: number): { standard: string; daylight: string } | null;
   nextClockChange(from: LocalDate): LocalDate | null;
   qibla(): { bearing: number; compass: string };
 }
@@ -160,7 +161,7 @@ export function cityClock(city: City, country: Country): CityClock {
   };
 
   const zoneName = (style: "short" | "long") => (ms: Instant) =>
-    formatter(tz, { timeZoneName: style }).formatToParts(new Date(ms)).find((x) => x.type === "timeZoneName")!.value;
+    formatter(tz, { timeZoneName: style }, country.lang).formatToParts(new Date(ms)).find((x) => x.type === "timeZoneName")!.value;
   const zoneAbbr = zoneName("short");
   const zoneLong = zoneName("long");
 
@@ -231,6 +232,12 @@ export function cityClock(city: City, country: Country): CityClock {
     zoneAbbr,
     zoneLong,
     zoneAbbrOn: abbrAt,
+    standardAndDaylightAbbr(year) {
+      const jan = noonUTC(ymd(year, 1, 15)).getTime(), jul = noonUTC(ymd(year, 7, 15)).getTime();
+      const [a, b] = [zoneAbbr(jan), zoneAbbr(jul)];
+      if (a === b) return null;
+      return offsetMin(jan) < offsetMin(jul) ? { standard: a, daylight: b } : { standard: b, daylight: a };
+    },
     nextClockChange(from) {
       if (clockChanges.has(from)) return clockChanges.get(from)!;
       let found: LocalDate | null = null;

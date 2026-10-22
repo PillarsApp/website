@@ -109,6 +109,12 @@ const INTENDED = [
       return open + JSON.stringify(ld, null, 2) + close;
     }],
   ],
+  ["time-zone copy says \"London local time\", not \"United Kingdom local time\", because a country can span several time zones",
+    [/United Kingdom local time/g, "London local time"],
+  ],
+  ["#city-data carries the country's lang so the client names the zone in the same locale as the server",
+    [/^\s*"lang": "[^"]*",\n/gm, ""],
+  ],
   ["whitespace between regions",
     [/[ \t]+$/gm, ""],
     [/\n{2,}/g, "\n"],
