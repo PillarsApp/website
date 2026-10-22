@@ -50,7 +50,7 @@ export interface City extends CityRef {
   readonly lng: number;
   readonly timezone: string;
   readonly datePublished: LocalDate;
-  readonly area?: string;
+  readonly coordinatesLabel?: string;
   readonly calc?: Calc;
   readonly localTimetable?: { readonly name: string; readonly note: string };
   readonly listCaption?: string;
@@ -61,7 +61,7 @@ export interface City extends CityRef {
 export interface MosqueQuery {
   readonly radiusKm: number;
   readonly max: number;
-  readonly featured: readonly MasjidId[];
+  readonly featured: readonly { readonly id: MasjidId; readonly name: string }[];
 }
 
 export type MasjidId = `plr_${string}`;

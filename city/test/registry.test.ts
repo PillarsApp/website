@@ -20,7 +20,7 @@ describe("registry", () => {
   });
 
   it("rejects a bad masjid id, an unknown country and a bad slug", () => {
-    const badId = { ...london, mosques: { radiusKm: 5, max: 3, featured: ["plr_xyz" as const] } };
+    const badId = { ...london, mosques: { radiusKm: 5, max: 3, featured: [{ id: "plr_xyz" as const, name: "Bad" }] } };
     expect(() => staticRegistry([badId])).toThrow(/masjid id/);
     expect(() => staticRegistry([{ ...london, country: "zz" as never }])).toThrow(/unknown country/);
     expect(() => staticRegistry([{ ...london, slug: "London" }])).toThrow(/bad slug/);

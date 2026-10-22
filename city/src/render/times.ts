@@ -23,14 +23,12 @@ export interface CalcInfo {
   readonly methodLabel: string;
   readonly fajrAngle: number;
   readonly ishaAngle: number;
-  readonly ishaInterval: number;
   readonly adjustments: readonly { readonly prayer: string; readonly minutes: number }[];
   readonly seasonalLimits: boolean;
 }
 
 export interface HijriDate {
   readonly day: number;
-  readonly month: number;
   readonly year: number;
   readonly long: string;
   readonly short: string;
@@ -103,7 +101,6 @@ export function calcInfo(calc: Calc): CalcInfo {
     methodLabel: METHOD_LABEL[calc.method] ?? calc.method,
     fajrAngle: p.fajrAngle,
     ishaAngle: p.ishaAngle,
-    ishaInterval: p.ishaInterval,
     adjustments: Object.entries(p.methodAdjustments)
       .filter(([, minutes]) => minutes)
       .map(([prayer, minutes]) => ({ prayer: prayer[0].toUpperCase() + prayer.slice(1), minutes })),
@@ -196,7 +193,7 @@ export function cityClock(city: City, country: Country): CityClock {
     const p: Record<string, string> = {};
     for (const x of formatter("UTC", { day: "numeric", month: "numeric", year: "numeric" }, "en-GB-u-ca-islamic-umalqura-nu-latn").formatToParts(noonUTC(d))) p[x.type] = x.value;
     const day = parseInt(p.day, 10), month = parseInt(p.month, 10) - 1, year = parseInt(p.year, 10);
-    return { day, month, year, long: `${day} ${HIJRI_MONTHS[month]} ${year}`, short: `${day} ${HIJRI_SHORT[month]}` };
+    return { day, year, long: `${day} ${HIJRI_MONTHS[month]} ${year}`, short: `${day} ${HIJRI_SHORT[month]}` };
   };
 
   return {

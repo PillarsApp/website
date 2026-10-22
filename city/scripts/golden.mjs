@@ -6,7 +6,11 @@ import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const REF_COMMIT = "322d125";
-const DATES = ["2026-10-23", "2026-10-30"];
+const OLD_BUILD_INSTANT = { hour: 0, minute: 5 };
+const DATES = [
+  "2026-10-23",
+  "2026-10-30", // after the 2026-10-25 clock change, near month end: GMT today, next-month table
+];
 const cityDir = fileURLToPath(new URL("..", import.meta.url));
 const work = mkdtempSync(join(tmpdir(), "city-golden-"));
 
@@ -35,7 +39,7 @@ async function loadCandidate() {
         import { FOUR_MOSQUES } from "./test/mosque-fixtures.ts";
         export function run(date) {
           const city = CITIES[0], country = COUNTRIES[city.country];
-          const now = cityClock(city, country).localInstant(date, 0, 5);
+          const now = cityClock(city, country).localInstant(date, ${OLD_BUILD_INSTANT.hour}, ${OLD_BUILD_INSTANT.minute});
           return renderCityPage({ city, country, date, now, mosques: { ...FOUR_MOSQUES, date }, links: linksFor(city, []), audience: "public" }).html;
         }`,
       resolveDir: cityDir,

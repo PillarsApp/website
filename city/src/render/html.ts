@@ -6,9 +6,7 @@ export function esc(s: string): string {
 // the block.
 export function jsonInScript(value: unknown, indent = 2): string {
   return JSON.stringify(value, null, indent)
-    .replace(/</g, "\\u003c")
-    .replace(/\u2028/g, "\\u2028")
-    .replace(/\u2029/g, "\\u2029");
+    .replace(/</g, "\\u003c");
 }
 
 export function plainText(html: string): string {

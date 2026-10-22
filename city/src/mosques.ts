@@ -71,7 +71,7 @@ interface TodayWire { id: string; inactive: boolean; reliable: boolean; day: { d
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 const str = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
-const flag = (v: unknown) => v !== false && v !== 0;
+const notExplicitlyFalse = (v: unknown) => v !== false && v !== 0;
 
 function masjidList(data: unknown): unknown[] {
   if (!isRecord(data) || !Array.isArray(data.masjids)) throw new Error("unexpected response shape");
@@ -82,7 +82,7 @@ export function parseNearby(data: unknown): readonly NearbyWire[] {
   return masjidList(data).flatMap((m): NearbyWire[] => {
     if (!isRecord(m)) return [];
     const id = str(m.id), name = str(m.name);
-    return id && name ? [{ id, name, address: str(m.address), zipcode: str(m.zipcode), active: flag(m.active), reliable: flag(m.times_reliable) }] : [];
+    return id && name ? [{ id, name, address: str(m.address), zipcode: str(m.zipcode), active: notExplicitlyFalse(m.active), reliable: notExplicitlyFalse(m.times_reliable) }] : [];
   });
 }
 
@@ -95,14 +95,14 @@ export function parseToday(data: unknown): readonly TodayWire[] {
     const day = isRecord(d) && str(d.date)
       ? { date: d.date as string, athan: isRecord(d.athan) ? d.athan : {}, iqamah: isRecord(d.iqamah) ? d.iqamah : {}, jummah: Array.isArray(d.jummah) ? d.jummah : [] }
       : null;
-    return [{ id, inactive: m.inactive === true || m.inactive === 1, reliable: flag(m.times_reliable), day }];
+    return [{ id, inactive: m.inactive === true || m.inactive === 1, reliable: notExplicitlyFalse(m.times_reliable), day }];
   });
 }
 
 export function pickIds(pool: readonly NearbyWire[], query: MosqueQuery): readonly MasjidId[] {
   const usable = pool.filter((m) => m.active && m.reliable && MASJID_ID_RE.test(m.id));
   const byId = new Map(usable.map((m) => [m.id, m]));
-  const picked = query.featured.flatMap((id) => byId.get(id) ?? []);
+  const picked = query.featured.flatMap(({ id }) => byId.get(id) ?? []);
   for (const m of usable) if (picked.length < query.max && !picked.includes(m)) picked.push(m);
   return picked.slice(0, query.max).map((m) => m.id as MasjidId);
 }
@@ -125,7 +125,7 @@ export function toMosque(meta: NearbyWire, today: TodayWire, date: LocalDate): M
   const street = meta.address ?? "";
   const address = meta.zipcode && !street.includes(meta.zipcode) ? `${street}, ${meta.zipcode}` : street;
   return {
-    name: titleCase(meta.name),
+    name: capitalizeIfAllCaps(meta.name),
     address: address || null,
     postcode: meta.zipcode,
     athan: wallClocks(today.day.athan),
@@ -134,7 +134,7 @@ export function toMosque(meta: NearbyWire, today: TodayWire, date: LocalDate): M
   };
 }
 
-export function titleCase(name: string): string {
+export function capitalizeIfAllCaps(name: string): string {
   return name === name.toUpperCase() && name !== name.toLowerCase()
     ? name.toLowerCase().replace(/\p{L}+/gu, (w) => w[0].toUpperCase() + w.slice(1))
     : name;

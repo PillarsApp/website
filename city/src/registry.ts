@@ -36,7 +36,7 @@ function validate(city: City): void {
   const q = city.mosques;
   if (!q) return;
   if (!Number.isInteger(q.max) || q.max < 1 || q.max > MAX_MOSQUES) throw new Error(`${where}: mosques.max must be 1..${MAX_MOSQUES}`);
-  for (const id of q.featured) if (!MASJID_ID_RE.test(id)) throw new Error(`${where}: bad masjid id ${id}`);
+  for (const { id } of q.featured) if (!MASJID_ID_RE.test(id)) throw new Error(`${where}: bad masjid id ${id}`);
 }
 
 export function staticRegistry(cities: readonly City[] = CITIES): CityRegistry {

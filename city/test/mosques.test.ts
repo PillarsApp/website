@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { describe, expect, it } from "vitest";
-import { liveMosqueSource, type MosqueDirectory, pickIds, titleCase, toMosque, parseNearby } from "../src/mosques";
+import { liveMosqueSource, type MosqueDirectory, pickIds, capitalizeIfAllCaps, toMosque, parseNearby } from "../src/mosques";
 import { createExecutionContext } from "cloudflare:test";
 import { handleFetch } from "../src/index";
 import { get, testEnv } from "./fixtures";
@@ -8,7 +8,7 @@ import { CITIES } from "../src/cities";
 import type { MasjidId } from "../src/types";
 
 const london = CITIES[0];
-const FEATURED = london.mosques!.featured;
+const FEATURED = london.mosques!.featured.map((f) => f.id);
 const OTHER = (n: number) => `plr_${n.toString(16).padStart(16, "0")}`;
 
 const nearbyRow = (id: string, extra: Record<string, unknown> = {}) => ({ id, name: `Mosque ${id.slice(-4)}`, address: "1 High St", zipcode: "E1 1AA", active: true, times_reliable: true, ...extra });
@@ -130,7 +130,7 @@ describe("pure parts", () => {
 
   it("puts featured first, fills the nearest others to max, never beyond max", () => {
     const others = [OTHER(1), OTHER(2), OTHER(3)];
-    const ids = pickIds(pool([others[0], FEATURED[1], others[1], FEATURED[0], others[2]]), { radiusKm: 5, max: 4, featured: [FEATURED[0], FEATURED[1]] });
+    const ids = pickIds(pool([others[0], FEATURED[1], others[1], FEATURED[0], others[2]]), { radiusKm: 5, max: 4, featured: london.mosques!.featured.slice(0, 2) });
     expect(ids).toEqual([FEATURED[0], FEATURED[1], others[0], others[1]] as MasjidId[]);
   });
 
@@ -145,8 +145,8 @@ describe("pure parts", () => {
     expect(toMosque(meta, row, "2026-10-22")).toMatchObject({ name: "East London Mosque", address: "1 High St, E1 1AA" });
     const [withPostcode] = pool([OTHER(1)], { address: "1 High St, E1 1AA" });
     expect(toMosque(withPostcode, row, "2026-10-22")?.address).toBe("1 High St, E1 1AA");
-    expect(titleCase("Al-Negashi Mosque & Centre")).toBe("Al-Negashi Mosque & Centre");
-    expect(titleCase("MUSLIM WELFARE HOUSE")).toBe("Muslim Welfare House");
+    expect(capitalizeIfAllCaps("Al-Negashi Mosque & Centre")).toBe("Al-Negashi Mosque & Centre");
+    expect(capitalizeIfAllCaps("MUSLIM WELFARE HOUSE")).toBe("Muslim Welfare House");
   });
 
   it("drops a mosque whose row is for another date", () => {

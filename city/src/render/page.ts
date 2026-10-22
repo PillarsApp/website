@@ -168,12 +168,15 @@ function listCaption({ input, clock, today, methodName }: View): string {
   const angles = c.fajrAngle === c.ishaAngle ? `Fajr &amp; Isha ${c.fajrAngle}°` : `Fajr ${c.fajrAngle}° · Isha ${c.ishaAngle}°`;
   const text = city.listCaption
     ? esc(city.listCaption)
-    : `Based on ${esc(city.area ?? city.name)} (${deg(city.lat, "N", "S")}, ${deg(city.lng, "E", "W")}) · ${methodName} · ${angles} · <span data-tz-name>${clock.zoneLong(today.t[2])} (${clock.zoneAbbr(today.t[2])})</span>`;
+    : `Based on ${esc(city.coordinatesLabel ?? city.name)} (${deg(city.lat, "N", "S")}, ${deg(city.lng, "E", "W")}) · ${methodName} · ${angles} · <span data-tz-name>${clock.zoneLong(today.t[2])} (${clock.zoneAbbr(today.t[2])})</span>`;
   return `<p class="list-caption" id="list-caption">${text}</p>`;
 }
 
+const HANAFI_ASR = 6;
+const EARTH_AXIAL_TILT_DEG = 23.44;
+
 const todaySpan = (clock: CityClock, today: DayTimes, i: number) =>
-  `<span data-today="${i}">${clock.time(i === 6 ? today.asrHanafi : today.t[i])}</span>`;
+  `<span data-today="${i}">${clock.time(i === HANAFI_ASR ? today.asrHanafi : today.t[i])}</span>`;
 
 function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly Faq[] {
   const { city, country, date } = input;
@@ -186,7 +189,7 @@ function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly 
   const raw = (question: string, answerHtml: string): Faq => ({ question, answerHtml });
   const text = (question: string, answer: string): Faq => ({ question, answerHtml: esc(answer) });
 
-  const todayList = PRAYERS.map((p, i) => `${p.name} ${td(i)}${i === 3 ? ` (Hanafi ${td(6)})` : ""}`).join(", ");
+  const todayList = PRAYERS.map((p, i) => `${p.name} ${td(i)}${i === 3 ? ` (Hanafi ${td(HANAFI_ASR)})` : ""}`).join(", ");
   let fri = date;
   while (clock.weekday(fri) !== 5) fri = clock.addDays(fri, 1);
   const friDhuhr = clock.day(fri).t[2];
@@ -327,7 +330,7 @@ function ishaCard(view: View): string {
   const tomorrow = clock.addDays(date, 1);
   const lt = city.localTimetable;
   const highLat = c.seasonalLimits ? ` and seasonal limits for ${name}'s high latitude` : "";
-  const maxDepression = 90 - Math.abs(city.lat) - 23.44;
+  const maxDepression = 90 - Math.abs(city.lat) - EARTH_AXIAL_TILT_DEG;
   const week = weekTable(view, `Isha and the next Fajr in ${name}, next 7 days`, [["Isha", (d) => clock.day(d).t[5]], ["Next Fajr", (d) => clock.day(clock.addDays(d, 1)).t[0]]]);
   return `
     <div class="card">
@@ -411,7 +414,7 @@ function seoSection(view: View): string {
     nextMonthNote = `\n    ${t.note}`;
     nextMonthHtml = `\n    <h3>${name} prayer timetable | ${t.label}</h3>\n    ${t.html}`;
   }
-  const todayList = PRAYERS.map((p, i) => `${p.name} ${todaySpan(clock, today, i)}${i === 3 ? ` (Hanafi ${todaySpan(clock, today, 6)})` : ""}`).join(", ");
+  const todayList = PRAYERS.map((p, i) => `${p.name} ${todaySpan(clock, today, i)}${i === 3 ? ` (Hanafi ${todaySpan(clock, today, HANAFI_ASR)})` : ""}`).join(", ");
   const adj = c.adjustments.map((a) => `${a.prayer} ${a.minutes > 0 ? "+" : ""}${a.minutes} min`).join(", ");
   const timesSource = city.timesSource ?? `${methodName} method`;
 

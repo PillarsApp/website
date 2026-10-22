@@ -7,7 +7,7 @@ const config = JSON.parse(raw.split("\n").filter((l) => !l.trim().startsWith("//
 describe("wrangler.jsonc", () => {
   const envs = { dev: config, staging: config.env.staging, production: config.env.production };
 
-  it("repeats vars and assets in every env, because named envs do not inherit them", () => {
+  it("declares the same var keys and the same assets in every env", () => {
     const keys = Object.keys(config.vars).sort();
     for (const [name, env] of Object.entries(envs)) {
       expect(Object.keys(env.vars).sort(), name).toEqual(keys);
