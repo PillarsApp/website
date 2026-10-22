@@ -25,6 +25,13 @@ describe("wrangler.jsonc", () => {
     expect(envs.staging.routes).toBeUndefined();
   });
 
+  it("binds masjid-times in every deployed env, since a workers.dev fetch between the account's Workers fails with 1042", () => {
+    for (const name of ["staging", "production"] as const) {
+      expect(envs[name].services, name).toEqual([{ binding: "MASJID_TIMES", service: "masjid-times-prod" }]);
+    }
+    expect(config.services).toBeUndefined();
+  });
+
   it("deploys to named workers, never the dev one", () => {
     expect(envs.staging.name).toBe("city-pages-staging");
     expect(envs.production.name).toBe("city-pages-prod");

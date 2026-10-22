@@ -67,7 +67,9 @@ export function liveMosqueSource(opts: LiveMosqueSourceOptions): MosqueSource {
         return mosques.length ? { kind: "live", date, mosques } : { kind: "unavailable", reason: "empty" };
       } catch (e) {
         const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
-        return { kind: "unavailable", reason: timedOut ? "timeout" : "error" };
+        const reason = timedOut ? "timeout" : "error";
+        console.log(JSON.stringify({ event: "mosques", city: `${city.country}/${city.slug}`, outcome: reason, detail: e instanceof Error ? e.message : String(e) }));
+        return { kind: "unavailable", reason };
       }
     },
   };

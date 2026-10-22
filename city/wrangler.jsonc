@@ -29,6 +29,9 @@
     "staging": {
       "name": "city-pages-staging",
       "workers_dev": true,
+      // A deployed Worker cannot fetch another Worker's workers.dev URL in the
+      // same account (error 1042), so masjid-times is reached through a binding.
+      "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod" }],
       "assets": { "directory": "./public", "not_found_handling": "none" },
       "vars": {
         "ENVIRONMENT": "staging",
@@ -45,6 +48,7 @@
         { "pattern": "thepillarsapp.com/prayer-times/*", "zone_id": "50f55a7e891d8e8bdc988d43e6a83a31" },
         { "pattern": "thepillarsapp.com/prayer-times", "zone_id": "50f55a7e891d8e8bdc988d43e6a83a31" }
       ],
+      "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod" }],
       "assets": { "directory": "./public", "not_found_handling": "none" },
       "vars": {
         "ENVIRONMENT": "production",

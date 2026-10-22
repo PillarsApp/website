@@ -25,7 +25,11 @@ export interface Deps {
 
 const defaultDeps: Deps = {
   registry: staticRegistry(),
-  mosqueSource: (env) => liveMosqueSource({ baseUrl: env.MASJID_TIMES_URL, secret: env.MASJID_TIMES_SECRET }),
+  mosqueSource: (env) => liveMosqueSource({
+    baseUrl: env.MASJID_TIMES_URL,
+    secret: env.MASJID_TIMES_SECRET,
+    fetch: env.MASJID_TIMES ? (input, init) => env.MASJID_TIMES!.fetch(input, init) : undefined,
+  }),
   now: Date.now,
 };
 
