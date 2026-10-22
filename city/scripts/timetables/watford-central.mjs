@@ -1,5 +1,5 @@
 // Usage: node watford-central.mjs
-// Expands data/timetables/watford-central.blocks.json (hand transcription of the mosque's perpetual
+// Expands watford-central.blocks.json (hand transcription of the mosque's perpetual
 // 3-day-block timetable) into every day of 2026 and 2027.
 //
 // The sheet is in local clock time with BST from the 28-31 March block to the 22-24 October block. The
@@ -8,12 +8,11 @@
 // 2026, 28 Mar and 31 Oct 2027), so days where the sheet's offset differs from the real one are shifted
 // by the difference and recorded as corrections.
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
-import { COLUMNS, calculated, dataDir, fromMin, isoDate, toMin, writeTimetable } from "./lib.mjs";
+import { COLUMNS, calculated, fromMin, isoDate, toMin, writeTimetable } from "./lib.mjs";
 
 const PLACE = { lat: 51.6696, lng: -0.4106 };
 const ZONE = "Europe/London";
-const blocks = JSON.parse(readFileSync(join(dataDir, "watford-central.blocks.json"), "utf8")).months;
+const blocks = JSON.parse(readFileSync(new URL("./watford-central.blocks.json", import.meta.url), "utf8")).months;
 
 // Printed times have no am/pm: Fajr and Sunrise are morning, Zuhr is 11.xx or 12.xx (noon) before the
 // clocks go forward and 1.xx after, Asr, Maghrib and Isha are afternoon or evening.
