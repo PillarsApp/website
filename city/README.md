@@ -39,7 +39,9 @@ To get a page as a file for diffing, run `npm run snapshot -- uk/london > /tmp/l
 |---|---|
 | `page/template.html`, `page/city.css`, `page/city.js` | the page the owner designs. `template.html` has `<!-- build:NAME -->` regions that `src/render/page.ts` fills |
 | `page/widget.html` | the widget template |
-| `src/cities.ts` | the cities and countries (data) |
+| `src/cities.ts` | the cities and countries (data), each city with the prayer-time standard it follows |
+| `data/timetables/<id>.json` | published timetables, one per standard, in the shape `scripts/timetable-data.mjs` checks |
+| `scripts/timetable-data.mjs` | runs inside `npm run client`: validates every timetable file and writes `src/generated/timetables.ts` (gitignored). A malformed file fails the build; a missing one means that city calculates |
 | `src/routes.ts` | every URL the Worker serves, and the only place the page's links are built |
 | `src/render/` | the renderers: page, widget, index stubs, prayer-time arithmetic |
 | `src/mosques.ts` | the masjid-times `MosqueDirectory` client |
@@ -49,15 +51,22 @@ To get a page as a file for diffing, run `npm run snapshot -- uk/london > /tmp/l
 
 ## Add a city
 
-Add one entry to `CITIES` in `src/cities.ts`:
+Add one entry to `CITIES` in `src/cities.ts`, with the standard its times follow:
 
 ```ts
-{ country: "uk", slug: "birmingham", name: "Birmingham", lat: 52.4862, lng: -1.8904,
+{ country: "uk", slug: "leeds", name: "Leeds", lat: 53.8008, lng: -1.5491,
   timezone: "Europe/London", datePublished: "2026-11-02",
-  mosques: { radiusKm: 12, max: 10, featured: [] } },
+  mosques: { radiusKm: 12, max: 10, featured: [] },
+  standard: { kind: "gps", name: "Moonsighting Committee method", asrFirst: "Hanafi",
+    badge: "Calculated with the Moonsighting Committee method, within 2 minutes of …",
+    isha: "… lists Isha about 4 minutes later than this page." } },
 ```
 
-`npm test` rejects a duplicate `(country, slug)`, a malformed masjid id and an unknown country. The "Prayer times near" card on each page is derived from the registry by distance, so it appears once a country has a second city.
+A standard is `gps` (calculated), `city-timetable` or `mosque`; the last two name a `timetable` id (a file under `data/timetables/`) or `null` when the standard's own times match the calculation. `asrFirst` is the Asr the list shows by default; `badge` and `isha` are the copy in the badge dialog and at the end of the Isha card. The dialog, the source line, the trust caption, the method card and the FAQ all follow the standard, so a city needs no copy change beyond those two lines.
+
+For a published standard the clock reads the day's row from the timetable, fills any null column from the calculation, falls back to last year's row carried forward by whole days (so a clock change that moved between years lands right), and calculates when neither year is published. Every day that is not published is marked as an estimate. The client (`page/city.js`) applies the same rules to the rows the page inlines.
+
+`npm test` rejects a duplicate `(country, slug)`, a malformed masjid id and an unknown country, and checks every bundled timetable belongs to a city and shares its zone. The "Prayer times near" card on each page is derived from the registry by distance, so it appears once a country has a second city.
 
 The clock-change FAQ, the Isha summer answer and the Fajr/Isha method comparisons are derived from the city's zone, latitude and method, so a new city needs no copy change. A country with custom angles (France, Morocco, Indonesia and others) can be written in the data (`calc: { method: "Custom", … }`), but `page/city.js` reads `CalculationMethod[city.method]` and needs a matching change first.
 
@@ -69,7 +78,7 @@ npm test          # vitest in workerd (@cloudflare/vitest-pool-workers)
 npm run golden    # London page against the old Node build, for two dates
 ```
 
-`npm run golden` builds the output of the last commit before the Worker (`322d125`) in a temp directory and diffs it with the Worker's London page. It lists the intended differences it ignores and exits 1 if any other line differs. It needs the git history.
+`npm run golden` builds the output of the last commit before the Worker (`322d125`) in a temp directory and diffs it with the Worker's London page rendered with the calculated standard that build had. It lists the intended differences it ignores and exits 1 if any other line differs. It needs the git history.
 
 ## Deploy
 
