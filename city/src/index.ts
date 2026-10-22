@@ -8,7 +8,7 @@
 
 import { routes, canonicalRedirect, linksFor, type RouteName, type RouteParams } from "./routes";
 import { staticRegistry, type CityRegistry } from "./registry";
-import { noMosques, type MosqueSource } from "./mosques";
+import { liveMosqueSource, noMosques, type MosqueSource } from "./mosques";
 import { renderCityPage } from "./render/page";
 import { cityClock } from "./render/times";
 import type { City, Country, Instant, LocalDate, Rendered } from "./types";
@@ -21,7 +21,7 @@ export interface Deps {
 
 const defaultDeps: Deps = {
   registry: staticRegistry(),
-  mosqueSource: () => noMosques,
+  mosqueSource: (env) => liveMosqueSource({ baseUrl: env.MASJID_TIMES_URL, secret: env.MASJID_TIMES_SECRET }),
   now: Date.now,
 };
 
