@@ -210,7 +210,8 @@ body.theme-night .tree { display: none; }
   cursor: default;
 }
 .chip-today { color: var(--chip-today); white-space: pre; }
-.chip-icon { width: 15px; height: 10px; fill: var(--chip-city); flex: none; }
+/* Verified badge in the app's 15px location-icon slot, in the city colour (navy by day, gold at night). */
+.chip-badge { width: 12px; height: 12px; margin: 0 1.5px; fill: var(--chip-city); flex: none; }
 .chip-name { color: var(--chip-city); white-space: pre; }
 
 /* Date row (same as the mosque page) */
@@ -600,8 +601,6 @@ body.theme-night { --bar-bg: rgba(0, 25, 62, .72); }   /* night: the cards' --de
 /* Status-bar / overscroll area takes the top of the sky (Safari samples the root background). */
 html { background-color: #C5DFF1; }
 html:has(body.theme-night) { background-color: #031831; }
-/* Verified badge beside the TODAY | City chip. */
-.chip-verified { width: 14px; height: 14px; margin-left: 6px; vertical-align: middle; fill: var(--chip-city); }
 /* TikTok-style hand-off: the app section and the content below are the only two snap points. The content
    is one tall snap area, so it scrolls freely inside (no snapping in the SEO sections); between the two
    the page settles on one or the other. Anchors clear the glass top bar with scroll-margin, not
