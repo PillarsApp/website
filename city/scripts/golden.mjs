@@ -51,7 +51,7 @@ async function loadCandidate() {
         export function run(date) {
           const city = CITIES[0], country = COUNTRIES[city.country];
           const now = cityClock(city, country).localInstant(date, 0, 5);
-          return renderCityPage({ city, country, date, now, mosques: { ...FOUR_MOSQUES, date }, links: linksFor(city, []), indexable: true }).html;
+          return renderCityPage({ city, country, date, now, mosques: { ...FOUR_MOSQUES, date }, links: linksFor(city, []), audience: "public" }).html;
         }`,
       resolveDir: cityDir,
       loader: "ts",
@@ -110,6 +110,9 @@ const INTENDED = [
     [/^[ \t]*<!-- \/?build:(?:html|preload|css|list-open|scripts) -->\n/gm, ""],
     [/^[ \t]+(<ul class="list")/gm, "$1"],
     [/^<!-- (?:Generated regions|Regions) \(build:NAME\)[^\n]*\n/gm, ""],
+  ],
+  ["the production Worker page carries the homepage's analytics snippet (page/analytics.html), which the old build never did",
+    [/<!-- build:analytics -->[\s\S]*?<!-- \/build:analytics -->\n/, ""],
   ],
   ["the old build emitted the mosque ItemList only for real mosques, and its reference run had placeholders; the Worker's ItemList for fixture mosques is asserted in test/page.test.ts",
     [/(<script type="application\/ld\+json">\n)([\s\S]*?)(\n<\/script>)/, (_, open, json, close) => {

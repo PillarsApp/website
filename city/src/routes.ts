@@ -12,6 +12,11 @@ import type { City, CityRef, CountrySlug, PageLinks } from "./types";
 import { SITE } from "./cities";
 import { CLIENT_SCRIPT } from "./generated/client";
 
+// Same-origin paths Webflow serves that Worker pages link to: the homepage and
+// the privacy page named by the analytics consent banner. The link walk
+// accepts exactly these outside the Worker's prefix.
+export const WEBFLOW_PATHS: ReadonlySet<string> = new Set(["/", "/privacy"]);
+
 // Production routes are `thepillarsapp.com/prayer-times/*` plus the exact
 // `thepillarsapp.com/prayer-times`.
 export const PREFIX = "/prayer-times";

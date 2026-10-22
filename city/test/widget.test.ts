@@ -20,6 +20,12 @@ describe("embed widget", () => {
     expect(html).toContain('<meta name="robots" content="noindex">');
   });
 
+  it("never carries analytics, even in production", async () => {
+    const { html } = await widget({ ENVIRONMENT: "production" }, LONDON_NOON_OCT_22 + 5 * 86_400_000);
+    expect(html).not.toContain("plausible");
+    expect(html).not.toContain("posthog");
+  });
+
   it("is served by the real Worker with no framing headers", async () => {
     const res = await SELF.fetch(`https://thepillarsapp.com${WIDGET}`);
     await res.arrayBuffer();

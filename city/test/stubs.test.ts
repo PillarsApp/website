@@ -1,7 +1,10 @@
 import { SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { DOWN, deps, fetchWith } from "./fixtures";
 
 const get = (path: string) => SELF.fetch(`https://thepillarsapp.com${path}`);
+const inProduction = (path: string) => fetchWith(path, deps(DOWN), { ENVIRONMENT: "production" });
+const POSTHOG_KEY = "phc_qHqhPXTDi7US4eoZ8iS5rg4mvjgxjFPM5QVFDHqBKvGn";
 
 describe("hub and country stubs", () => {
   it("list the cities that have a page, link to them, and stay out of search", async () => {
@@ -21,10 +24,23 @@ describe("hub and country stubs", () => {
     expect((await get("/prayer-times/zz/")).status).toBe(404);
   });
 
+  it("send analytics only to the public audience", async () => {
+    for (const path of ["/prayer-times/", "/prayer-times/uk/"]) {
+      const publicHtml = await (await inProduction(path)).text();
+      expect(publicHtml, path).toContain("plausible.io/js/pa-Xhisz5hgVg6bE5rUMU2-j.js");
+      expect(publicHtml, path).toContain(POSTHOG_KEY);
+      const previewHtml = await (await get(path)).text();
+      expect(previewHtml, path).not.toContain("plausible");
+      expect(previewHtml, path).not.toContain(POSTHOG_KEY);
+    }
+  });
+
   it("renders the 404 with a way back to the hub and no indexing", async () => {
     const res = await get("/prayer-times/uk/narnia/");
     expect(res.status).toBe(404);
     expect(res.headers.get("x-robots-tag")).toBe("noindex");
-    expect(await res.text()).toContain('<a href="/prayer-times/">Prayer times</a>');
+    const html = await res.text();
+    expect(html).toContain('<a href="/prayer-times/">Prayer times</a>');
+    expect(html).not.toContain("plausible");
   });
 });

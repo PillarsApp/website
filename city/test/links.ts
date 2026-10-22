@@ -1,13 +1,12 @@
 /// <reference types="vite/client" />
 import { SELF } from "cloudflare:test";
+import { WEBFLOW_PATHS } from "../src/routes";
 
 const ORIGIN = "https://thepillarsapp.com";
 // Static files answer before the Worker in production and in wrangler dev; the
 // test Worker has no assets binding, so existence on disk stands in for them.
 const STATIC_FILES = new Set(Object.keys(import.meta.glob("../public/**/*", { query: "?url" })).map((p) => p.replace("../public", "")));
 const ASSET_PREFIX = "/prayer-times/_/";
-// Same-origin paths outside the Worker's prefix that Webflow serves.
-const WEBFLOW_PATHS = new Set(["/"]);
 
 function collectStrings(value: unknown, out: string[]): void {
   if (typeof value === "string") out.push(value);

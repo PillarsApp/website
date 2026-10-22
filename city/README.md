@@ -13,6 +13,10 @@ A Cloudflare Worker that serves `https://thepillarsapp.com/prayer-times/{country
 
 The Worker answers every request under its prefix itself. It never passes a request through, because behind Webflow's Orange-to-Orange proxy a passthrough would reach Webflow, which strips the slash and 404s.
 
+## Analytics
+
+Production pages (`ENVIRONMENT=production`) carry the homepage's Plausible and PostHog snippet from `page/analytics.html`, copied verbatim so consent state is shared with the Webflow site. The city page and the hub and country stubs include it. The widget and the 404 never do. Dev and staging send no analytics and are noindex.
+
 ## Preview while designing
 
 ```

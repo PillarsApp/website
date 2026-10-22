@@ -1,5 +1,6 @@
 import { SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { DOWN, LONDON_NOON_OCT_22, deps, fetchWith } from "./fixtures";
 import { sameOriginPaths, unservedPaths, urlsIn } from "./links";
 
 const ORIGIN = "https://thepillarsapp.com";
@@ -20,6 +21,18 @@ describe("every URL the Worker's pages emit is served", () => {
     expect(paths.some((p) => p.startsWith("/prayer-times/_/city."))).toBe(true);
     expect(paths.some((p) => p.startsWith("/prayer-times/_/fonts/"))).toBe(true);
     expect(await unservedPaths(`${ORIGIN}/prayer-times/uk/london/`, html)).toEqual([]);
+  });
+
+  it("on a public page, including the consent banner's privacy link", async () => {
+    const url = `${ORIGIN}/prayer-times/uk/london/`;
+    const res = await fetchWith("/prayer-times/uk/london/", deps(DOWN, LONDON_NOON_OCT_22 + 7 * 86_400_000), { ENVIRONMENT: "production" });
+    const html = await res.text();
+    expect(sameOriginPaths(url, urlsIn(html))).toContain("/privacy");
+    expect(await unservedPaths(url, html)).toEqual([]);
+  });
+
+  it("flags a same-origin path that neither the Worker nor Webflow serves", async () => {
+    expect(await unservedPaths(`${ORIGIN}/prayer-times/uk/london/`, '<a href="/not-a-page">x</a>')).toEqual(["/not-a-page -> 404"]);
   });
 
   it("on the London widget", async () => {

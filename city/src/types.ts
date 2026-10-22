@@ -145,6 +145,10 @@ export interface PageLinks {
   readonly logo: string; // absolute (Webflow CDN copy)
 }
 
+// Who the page is for. "public" is production: indexable, with analytics.
+// "preview" is dev, staging and test: noindex, no analytics. Decided once, in index.ts.
+export type Audience = "public" | "preview";
+
 export interface PageInput {
   readonly city: City;
   readonly country: Country;
@@ -152,7 +156,7 @@ export interface PageInput {
   readonly now: Instant; // render instant, for "Updated" and dateModified
   readonly mosques: MosqueSection;
   readonly links: PageLinks;
-  readonly indexable: boolean; // false on staging and dev: <meta name=robots content=noindex>
+  readonly audience: Audience;
 }
 
 // Output of a page render. `freshUntil` is the instant after which this HTML

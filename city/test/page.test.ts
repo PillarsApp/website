@@ -49,15 +49,31 @@ describe("London page", () => {
 
   it("takes every region from the renderer and none from elsewhere", () => {
     const expected: Record<TemplateRegion, true> = {
-      html: true, head: true, css: true, preload: true, chip: true, date: true, "list-open": true, list: true, caption: true, seo: true, banner: true, scripts: true,
+      html: true, head: true, css: true, preload: true, chip: true, date: true, "list-open": true, list: true, caption: true, seo: true, banner: true, scripts: true, analytics: true,
     };
     expect([...regionNames(template)].sort()).toEqual(Object.keys(expected).sort());
   });
 
   it("is noindex outside production and indexable in production", async () => {
     expect((await render()).html).toContain('<meta name="robots" content="noindex">');
-    const input = { city: london, country: COUNTRIES.uk, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, []), indexable: true };
+    const input = { city: london, country: COUNTRIES.uk, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, []), audience: "public" as const };
     expect(renderCityPage(input).html).not.toContain('name="robots"');
+  });
+
+  it("sends analytics only to the public audience, and keeps the preview noindex", async () => {
+    const PLAUSIBLE = "plausible.io/js/pa-Xhisz5hgVg6bE5rUMU2-j.js";
+    const POSTHOG_KEY = "phc_qHqhPXTDi7US4eoZ8iS5rg4mvjgxjFPM5QVFDHqBKvGn";
+    const otherDay = deps(DOWN, LONDON_NOON_OCT_22 + 3 * 86_400_000);
+    const prod = await (await fetchWith("/prayer-times/uk/london/", otherDay, { ENVIRONMENT: "production" })).text();
+    expect(prod).toContain(PLAUSIBLE);
+    expect(prod).toContain(POSTHOG_KEY);
+    expect(prod).not.toContain('name="robots"');
+    for (const environment of ["dev", "staging"]) {
+      const html = await (await fetchWith("/prayer-times/uk/london/", deps(DOWN), { ENVIRONMENT: environment })).text();
+      expect(html, environment).not.toContain("plausible");
+      expect(html, environment).not.toContain(POSTHOG_KEY);
+      expect(html, environment).toContain('<meta name="robots" content="noindex">');
+    }
   });
 
   it("answers an unknown city or country with the Worker's 404", async () => {
@@ -72,7 +88,7 @@ describe("London page", () => {
 
   it("lists nearby cities from the registry when the country has more", () => {
     const luton = { ...london, slug: "luton", name: "Luton", lat: 51.88, lng: -0.42 };
-    const input = { city: london, country: COUNTRIES.uk, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, [luton]), indexable: true };
+    const input = { city: london, country: COUNTRIES.uk, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, [luton]), audience: "public" as const };
     const html = renderCityPage(input).html;
     expect(html).toContain('<li><a href="/prayer-times/uk/luton/">Luton</a></li>');
   });
@@ -109,7 +125,7 @@ describe("the registry's cities all render", () => {
     const reg = staticRegistry();
     for (const c of CITIES) {
       const country = reg.country(c.country)!;
-      const input = { city: c, country, date: cityClock(c, country).today(Date.now()), now: Date.now(), mosques: DOWN, links: linksFor(c, []), indexable: false };
+      const input = { city: c, country, date: cityClock(c, country).today(Date.now()), now: Date.now(), mosques: DOWN, links: linksFor(c, []), audience: "preview" as const };
       expect(renderCityPage(input).html).toContain(`${c.name} Prayer Times`);
     }
   });

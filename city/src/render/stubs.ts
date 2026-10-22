@@ -4,14 +4,16 @@
 // replace the two renderers (same routes, same handlers). Links arrive as
 // hrefs built by routes.ts; nothing here spells a path.
 
+import type { Audience } from "../types";
 import { esc } from "./html";
+import { analyticsFor } from "./analytics";
 
 export interface Link {
   readonly name: string;
   readonly href: string;
 }
 
-function shell(title: string, body: string): string {
+function shell(title: string, body: string, analytics = ""): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -25,6 +27,7 @@ function shell(title: string, body: string): string {
 <main>
 ${body}
 </main>
+${analytics}
 </body>
 </html>
 `;
@@ -32,13 +35,13 @@ ${body}
 
 const list = (links: readonly Link[]) => `<ul>\n${links.map((l) => `<li><a href="${l.href}">${esc(l.name)}</a></li>`).join("\n")}\n</ul>`;
 
-export function renderHubStub(countries: readonly (Link & { readonly cities: readonly Link[] })[]): string {
+export function renderHubStub(countries: readonly (Link & { readonly cities: readonly Link[] })[], audience: Audience): string {
   const sections = countries.map((c) => `<h2><a href="${c.href}">${esc(c.name)}</a></h2>\n${list(c.cities)}`).join("\n");
-  return shell("Prayer Times", `<h1>Prayer times</h1>\n${sections}`);
+  return shell("Prayer Times", `<h1>Prayer times</h1>\n${sections}`, analyticsFor(audience));
 }
 
-export function renderCountryStub(country: string, cities: readonly Link[], hub: Link): string {
-  return shell(`Prayer Times in ${country}`, `<p><a href="${hub.href}">${esc(hub.name)}</a></p>\n<h1>Prayer times in ${esc(country)}</h1>\n${list(cities)}`);
+export function renderCountryStub(country: string, cities: readonly Link[], hub: Link, audience: Audience): string {
+  return shell(`Prayer Times in ${country}`, `<p><a href="${hub.href}">${esc(hub.name)}</a></p>\n<h1>Prayer times in ${esc(country)}</h1>\n${list(cities)}`, analyticsFor(audience));
 }
 
 // Worker-owned 404 under /prayer-times/: a link to the hub, nothing else.

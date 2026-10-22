@@ -12,6 +12,7 @@ import type { LocalDate, Mosque, MosqueSection, PageInput, PageLinks, PrayerKey,
 import { cityClock, PRAYERS, type CityClock, type DayTimes } from "./times";
 import { esc, fillRegions, jsonInScript, minifyCss, plainText, titleHeadings } from "./html";
 import { icon } from "./icons";
+import { analyticsFor } from "./analytics";
 
 const CSS = minifyCss(cssSource); // once per isolate
 
@@ -20,7 +21,7 @@ const CSS = minifyCss(cssSource); // once per isolate
 export const UNAVAILABLE_RETRY_MS = 10 * 60 * 1000;
 
 export type TemplateRegion =
-  | "html" | "head" | "css" | "preload" | "chip" | "date" | "list-open" | "list" | "caption" | "seo" | "banner" | "scripts";
+  | "html" | "head" | "css" | "preload" | "chip" | "date" | "list-open" | "list" | "caption" | "seo" | "banner" | "scripts" | "analytics";
 
 export function renderCityPage(input: PageInput): Rendered {
   const clock = cityClock(input.city, input.country);
@@ -65,6 +66,7 @@ function regions(input: PageInput, clock: CityClock): Record<TemplateRegion, str
     seo: titleHeadings(seoSection(view)),
     banner: `<span class="ab-title" id="ab-title">${SITE.name} App: ${esc(city.name)} Prayer Times</span>`,
     scripts: `<script src="${links.assets}/adhan-4.4.3.umd.min.js"></script>\n<script src="${links.clientScript}"></script>`,
+    analytics: analyticsFor(input.audience),
   };
 }
 
@@ -131,7 +133,7 @@ function head(view: View): string {
     // Absent when there is no mosque section, so city.js does not offer a mosque tool.
     ...(live ? { mosquesDate: live.date, mosques: live.mosques.map((m) => ({ name: m.name, address: m.address, athan: m.athan, iqamah: m.iqamah, jummah: m.jummah })) } : {}),
   };
-  const robots = input.indexable ? "" : `<meta name="robots" content="noindex">\n`;
+  const robots = input.audience === "public" ? "" : `<meta name="robots" content="noindex">\n`;
 
   return `<title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">

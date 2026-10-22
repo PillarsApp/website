@@ -15,7 +15,7 @@ import { renderHubStub, renderCountryStub, renderNotFound } from "./render/stubs
 import { cityClock } from "./render/times";
 import { SITE } from "./cities";
 import { edgeCache } from "./cache";
-import type { City, CityRef, Country, Instant, LocalDate, Rendered } from "./types";
+import type { Audience, City, CityRef, Country, Instant, LocalDate, Rendered } from "./types";
 
 export interface Deps {
   registry: CityRegistry;
@@ -45,6 +45,10 @@ type Handler<P> = (call: Call<P>) => Promise<Response>;
 
 const HTML = "text/html; charset=utf-8";
 
+// The one place that decides who a page is for. Staging, dev and test must
+// never be indexed or send analytics.
+const audienceOf = (env: Env): Audience => (env.ENVIRONMENT === "production" ? "public" : "preview");
+
 const HUB_LINK = { name: "Prayer times", href: routes.hub.href({}) };
 const cityLink = (c: City) => ({ name: c.name, href: routes.city.href(c) });
 
@@ -55,7 +59,7 @@ function stubResponse(html: string): Response {
 // Typed over the route table: a route without a handler is a compile error,
 // and so is a handler for a route that does not exist.
 const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
-  hub: async ({ deps }) => {
+  hub: async ({ deps, env }) => {
     const countries = await Promise.all(
       deps.registry.countries().map(async (c) => ({
         name: c.name,
@@ -63,13 +67,13 @@ const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
         cities: (await deps.registry.inCountry(c.slug)).map(cityLink),
       })),
     );
-    return stubResponse(renderHubStub(countries.filter((c) => c.cities.length)));
+    return stubResponse(renderHubStub(countries.filter((c) => c.cities.length), audienceOf(env)));
   },
-  country: async ({ params, deps }) => {
+  country: async ({ params, deps, env }) => {
     const country = deps.registry.country(params.country);
     if (!country) return notFound();
     const cities = await deps.registry.inCountry(country.slug);
-    return stubResponse(renderCountryStub(country.name, cities.map(cityLink), HUB_LINK));
+    return stubResponse(renderCountryStub(country.name, cities.map(cityLink), HUB_LINK, audienceOf(env)));
   },
   city: (call) =>
     serveCity(call, routes.city.href(call.params), async ({ city, country, date, now }) => {
@@ -81,7 +85,7 @@ const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
       return renderCityPage({
         city, country, date, now, mosques,
         links: linksFor(city, nearby),
-        indexable: env.ENVIRONMENT === "production",
+        audience: audienceOf(env),
       });
     }),
   widget: (call) =>
