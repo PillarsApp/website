@@ -234,7 +234,7 @@ const replicaRows = NAMES.map((n, i) => [i === 3 ? `Asr ${asrToggle}` : n, today
 for (const [n, t] of replicaRows) {
   list += `<li class="row"><span class="name">${n}</span> <span class="t">${fmt(t)}</span></li><li class="sep" aria-hidden="true"></li>`;
 }
-const chip = `<span class="chip-name" id="chip-name">&nbsp;${esc(city.name)} Prayer Times</span>`;
+const chip = `<span class="chip-name" id="chip-name">${esc(city.name)} Prayer Times</span>`;
 const banner = `<span class="ab-title" id="ab-title">${SITE.name} App: ${esc(city.name)} Prayer Times</span>`;
 
 // ---------- below the replica ----------
