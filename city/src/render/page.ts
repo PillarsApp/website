@@ -224,7 +224,7 @@ function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly 
   ];
   if (clockChange) {
     items.push(text(`Are these times in GMT or BST?`,
-      `All times are ${country.name} local time, currently ${clock.zoneAbbr(today.t[2])}. The clocks change on ${clock.longDate(clockChange)}; from that day the times are in ${clock.zoneAbbrOn(clockChange)}, and the timetable already accounts for it.`));
+      `All times are ${name} local time, currently ${clock.zoneAbbr(today.t[2])}. The clocks change on ${clock.longDate(clockChange)}; from that day the times are in ${clock.zoneAbbrOn(clockChange)}, and the timetable already accounts for it.`));
   }
   return items;
 }
@@ -233,8 +233,8 @@ interface MonthTable { readonly label: string; readonly note: string; readonly h
 
 function monthTable(view: View, year: number, month: number): MonthTable {
   const { input, clock } = view;
-  const { city, country, date } = input;
-  const pad = (n: number) => String(n).padStart(2, "0");
+  const { city, date } = input;
+  const pad =(n: number) => String(n).padStart(2, "0");
   const at = (d: number) => `${year}-${pad(month)}-${pad(d)}` as LocalDate;
   const first = at(1);
   let rows = "";
@@ -257,7 +257,7 @@ function monthTable(view: View, year: number, month: number): MonthTable {
     : `<th scope="col">${p.name}</th>`)).join("");
   return {
     label,
-    note: `<p class="table-note" id="${noteId}">${country.name} local time. Asr I: Shafi'i, Maliki, Hanbali. Asr II: Hanafi.${dstNote}</p>`,
+    note: `<p class="table-note" id="${noteId}">${esc(city.name)} local time. Asr I: Shafi'i, Maliki, Hanbali. Asr II: Hanafi.${dstNote}</p>`,
     html: `<div class="table-wrap">
       <table class="timetable" aria-describedby="${noteId}">
         <caption class="sr-only">${esc(city.name)} prayer timetable, ${label}</caption>
