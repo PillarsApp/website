@@ -59,7 +59,7 @@ Add one entry to `CITIES` in `src/cities.ts`:
 
 `npm test` rejects a duplicate `(country, slug)`, a malformed masjid id and an unknown country. The "Prayer times near" card on each page is derived from the registry by distance, so it appears once a country has a second city.
 
-Two parts of the copy are still written for London: the "GMT or BST" FAQ and the "far enough north" midsummer answer. Check them before the next city. A country with custom angles (France, Morocco, Indonesia and others) can be written in the data (`calc: { method: "Custom", … }`), but `page/city.js` reads `CalculationMethod[city.method]` and needs a matching change first.
+The clock-change FAQ, the Isha summer answer and the Fajr/Isha method comparisons are derived from the city's zone, latitude and method, so a new city needs no copy change. A country with custom angles (France, Morocco, Indonesia and others) can be written in the data (`calc: { method: "Custom", … }`), but `page/city.js` reads `CalculationMethod[city.method]` and needs a matching change first.
 
 ## Checks
 
