@@ -10,34 +10,6 @@
   "zone": "Europe/London",
   "corrections": [
     {
-      "date": "2026-03-29",
-      "field": "fajr",
-      "from": "05:17",
-      "to": "05:17",
-      "why": "kept BCM's Fajr; OpenFajr is exactly one hour earlier and is the one off the UTC trend of the days either side (the feed did not follow the clock change)"
-    },
-    {
-      "date": "2026-03-30",
-      "field": "fajr",
-      "from": "05:15",
-      "to": "05:15",
-      "why": "kept BCM's Fajr; OpenFajr is exactly one hour earlier and is the one off the UTC trend of the days either side (the feed did not follow the clock change)"
-    },
-    {
-      "date": "2026-10-25",
-      "field": "fajr",
-      "from": "05:24",
-      "to": "05:24",
-      "why": "kept BCM's Fajr; OpenFajr is exactly one hour later and is the one off the UTC trend of the days either side (the feed did not follow the clock change)"
-    },
-    {
-      "date": "2026-10-26",
-      "field": "fajr",
-      "from": "05:26",
-      "to": "05:26",
-      "why": "kept BCM's Fajr; OpenFajr is exactly one hour later and is the one off the UTC trend of the days either side (the feed did not follow the clock change)"
-    },
-    {
       "date": "2025-03-19",
       "field": "dhuhr",
       "from": "13:20",
