@@ -8,6 +8,7 @@ import { CITIES, COUNTRIES } from "./cities";
 export interface CityRegistry {
   get(ref: CityRef): Promise<City | null>;
   country(slug: string): Country | null;
+  countries(): readonly Country[];
   // Cities with a page in this country, for the country index. Name order.
   inCountry(country: CountrySlug): Promise<readonly City[]>;
   // Up to `n` nearest other cities with a page, same country, by great-circle
@@ -59,6 +60,9 @@ export function staticRegistry(cities: readonly City[] = CITIES): CityRegistry {
     },
     country(slug) {
       return isCountrySlug(slug) ? COUNTRIES[slug] : null;
+    },
+    countries() {
+      return Object.values(COUNTRIES);
     },
     async inCountry(country) {
       return cities.filter((c) => c.country === country).sort((a, b) => a.name.localeCompare(b.name));

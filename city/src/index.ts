@@ -11,6 +11,7 @@ import { staticRegistry, type CityRegistry } from "./registry";
 import { liveMosqueSource, noMosques, type MosqueSource } from "./mosques";
 import { renderCityPage } from "./render/page";
 import { renderWidget } from "./render/widget";
+import { renderHubStub, renderCountryStub, renderNotFound } from "./render/stubs";
 import { cityClock } from "./render/times";
 import { SITE } from "./cities";
 import { edgeCache } from "./cache";
@@ -40,13 +41,32 @@ type Handler<P> = (call: Call<P>) => Promise<Response>;
 
 const HTML = "text/html; charset=utf-8";
 
-const notImplemented: Handler<unknown> = async () => new Response("not implemented", { status: 501 });
+const HUB_LINK = { name: "Prayer times", href: routes.hub.href({}) };
+const cityLink = (c: City) => ({ name: c.name, href: routes.city.href(c) });
+
+function stubResponse(html: string): Response {
+  return new Response(html, { headers: { "Content-Type": HTML, "Cache-Control": "public, max-age=300, s-maxage=3600" } });
+}
 
 // Typed over the route table: a route without a handler is a compile error,
 // and so is a handler for a route that does not exist.
 const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
-  hub: notImplemented,
-  country: notImplemented,
+  hub: async ({ deps }) => {
+    const countries = await Promise.all(
+      deps.registry.countries().map(async (c) => ({
+        name: c.name,
+        href: routes.country.href({ country: c.slug }),
+        cities: (await deps.registry.inCountry(c.slug)).map(cityLink),
+      })),
+    );
+    return stubResponse(renderHubStub(countries.filter((c) => c.cities.length)));
+  },
+  country: async ({ params, deps }) => {
+    const country = deps.registry.country(params.country);
+    if (!country) return notFound();
+    const cities = await deps.registry.inCountry(country.slug);
+    return stubResponse(renderCountryStub(country.name, cities.map(cityLink), HUB_LINK));
+  },
   city: (call) =>
     serveCity(call, routes.city.href(call.params), async ({ city, country, date, now }) => {
       const { env, deps } = call;
@@ -110,7 +130,10 @@ export async function handleFetch(request: Request, env: Env, ctx: ExecutionCont
 }
 
 function notFound(): Response {
-  return new Response("Not found", { status: 404, headers: { "X-Robots-Tag": "noindex" } });
+  return new Response(renderNotFound(HUB_LINK), {
+    status: 404,
+    headers: { "Content-Type": HTML, "Cache-Control": "public, max-age=60", "X-Robots-Tag": "noindex" },
+  });
 }
 
 export default { fetch: handleFetch } satisfies ExportedHandler<Env>;

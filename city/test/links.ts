@@ -1,6 +1,11 @@
+/// <reference types="vite/client" />
 import { SELF } from "cloudflare:test";
 
 const ORIGIN = "https://thepillarsapp.com";
+// Static files answer before the Worker in production and in wrangler dev; the
+// test Worker has no assets binding, so existence on disk stands in for them.
+const STATIC_FILES = new Set(Object.keys(import.meta.glob("../public/**/*", { query: "?url" })).map((p) => p.replace("../public", "")));
+const ASSET_PREFIX = "/prayer-times/_/";
 // Same-origin paths outside the Worker's prefix that Webflow serves.
 const WEBFLOW_PATHS = new Set(["/"]);
 
@@ -35,12 +40,17 @@ export function sameOriginPaths(pageUrl: string, urls: string[]): string[] {
   return [...paths].sort();
 }
 
-// Asserts every same-origin path under the Worker's prefix is answered with
-// 200 by the real Worker (code or assets), and the rest are Webflow's.
+// Same-origin paths that nothing serves: routes the Worker answers with
+// something other than 200, and asset paths with no file under public/.
+// Webflow's own pages are skipped.
 export async function unservedPaths(pageUrl: string, html: string): Promise<string[]> {
   const bad: string[] = [];
   for (const path of sameOriginPaths(pageUrl, urlsIn(html))) {
     if (WEBFLOW_PATHS.has(path)) continue;
+    if (path.startsWith(ASSET_PREFIX)) {
+      if (!STATIC_FILES.has(path)) bad.push(`${path} -> no file`);
+      continue;
+    }
     const res = await SELF.fetch(`${ORIGIN}${path}`, { redirect: "manual" });
     await res.arrayBuffer();
     if (res.status !== 200) bad.push(`${path} -> ${res.status}`);
