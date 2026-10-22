@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { finish, iso, rawDir, request, sleep } from "./lib.mjs";
+import { getText, isoDate, rawDir, writeTimetable } from "./lib.mjs";
 
 const ENDPOINT = "https://www.coms.org.uk/wp-admin/admin-ajax.php";
 const PAGE = "https://www.coms.org.uk/salah-times/";
@@ -8,7 +8,7 @@ const ZONE = "Europe/London";
 const PLACE = { lat: 51.752, lng: -1.2578, zone: ZONE };
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-const raw = rawDir(process.argv);
+const raw = rawDir();
 const text = (html) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
 // The endpoint ignores a year parameter (year, yr, y, Year all return the current year), so only this year is available.
@@ -22,22 +22,21 @@ function parse(html, expectMonth) {
     const month = MONTHS.indexOf(date[2]) + 1;
     if (month !== expectMonth) throw new Error(`month ${expectMonth} returned ${cells[0]}`);
     const [fajr, sunrise, dhuhr, asr2, maghrib, isha] = [2, 4, 5, 7, 9, 11].map((i) => cells[i]);
-    out[iso(+date[3], month, +date[1])] = [fajr, sunrise, dhuhr, null, asr2, maghrib, isha];
+    out[isoDate(+date[3], month, +date[1])] = [fajr, sunrise, dhuhr, null, asr2, maghrib, isha];
   }
   return out;
 }
 
-const header = await request(PAGE);
+const header = await getText(PAGE);
 writeFileSync(join(raw, "salah-times.html"), header);
 
 const days = {};
 for (let month = 1; month <= 12; month++) {
-  const html = await request(`${ENDPOINT}?action=get_monthly_timetable&month=${month}`);
+  const html = await getText(`${ENDPOINT}?action=get_monthly_timetable&month=${month}`);
   writeFileSync(join(raw, `month-${month}.html`), html);
   const rows = parse(html, month);
   console.log(`month ${month}: ${Object.keys(rows).length} days`);
   Object.assign(days, rows);
-  await sleep(1000);
 }
 
 // Left out because the printed value is a typo and the intended minute is not recoverable from the neighbouring days.
@@ -48,7 +47,7 @@ for (const [date, why] of Object.entries(LEFT_OUT)) {
   console.log(`left out ${date}: ${why}`);
 }
 
-finish({
+writeTimetable({
   id: "oxford-coms",
   name: "Central Oxford Mosque timetable",
   publisher: "Central Oxford Mosque Society",

@@ -1,51 +1,39 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { sleep, hhmm, toMin, fromMin, writeTimetable } from "./lib.mjs";
+import { download, fetchPolite, getText, hhmm, isoDate, pad, rawDir, toMin, writeTimetable } from "./lib.mjs";
 
-// Usage: node leicester-masjid-umar.mjs <empty-download-dir>
-// Downloads go into the given directory, never the repo. Re-running with files already there skips the fetch.
-const dir = process.argv[2];
-if (!dir) throw new Error("pass an empty directory for the downloaded PDFs");
-const umarDir = join(dir, "umar");
-const madaniDir = join(dir, "madani");
-mkdirSync(umarDir, { recursive: true });
-mkdirSync(madaniDir, { recursive: true });
+// Usage: node leicester-masjid-umar.mjs [--raw <empty-dir>]
+const raw = rawDir();
+const umarDir = join(raw, "umar");
+const madaniDir = join(raw, "madani");
+mkdirSync(umarDir);
+mkdirSync(madaniDir);
 
 const MONTH_NAMES = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
 const YEARS = [2025, 2026];
 const mediaApi = "https://masjid-umar.org/wp-json/wp/v2/media?mime_type=application/pdf&per_page=100&page=";
 const madaniUrl = (ym) => `https://madanihigh.leicester.sch.uk/data/prayer/${ym}.pdf`;
 
-async function download(url, path) {
-  if (existsSync(path)) return true;
-  const res = await fetch(url);
-  await sleep(1000);
-  if (!res.ok) return false;
-  writeFileSync(path, Buffer.from(await res.arrayBuffer()));
-  return true;
-}
-
 const umarFiles = [];
 for (let page = 1; ; page++) {
-  const res = await fetch(mediaApi + page);
-  await sleep(1000);
-  if (!res.ok) break;
+  const res = await fetchPolite(mediaApi + page, {}, { optional: true });
+  if (!res) break;
   for (const m of await res.json()) umarFiles.push({ url: m.source_url, uploaded: m.date.slice(0, 10) });
 }
 // File names are unreliable (two "Ramadan" files, a "-1" copy); the PDF header decides the month.
 const umarPdfs = [];
 for (const f of umarFiles) {
   const name = f.url.split("/").slice(-3).join("_");
-  if (!(await download(f.url, join(umarDir, name)))) continue;
+  if (!(await download(f.url, join(umarDir, name), { optional: true }))) continue;
   umarPdfs.push({ ...f, path: join(umarDir, name) });
 }
 
 // Beginning-time columns print as 12-hour clock times with no am/pm.
 const to24 = (col, h, m) => {
-  if (col === "fajr" || col === "sunrise") return `${String(h).padStart(2, "0")}:${m}`;
-  if (col === "dhuhr") return `${String(h <= 6 ? h + 12 : h).padStart(2, "0")}:${m}`;
-  return `${String(h === 12 ? 0 : h < 12 ? h + 12 : h).padStart(2, "0")}:${m}`;
+  if (col === "fajr" || col === "sunrise") return `${pad(h)}:${m}`;
+  if (col === "dhuhr") return `${pad(h <= 6 ? h + 12 : h)}:${m}`;
+  return `${pad(h === 12 ? 0 : h < 12 ? h + 12 : h)}:${m}`;
 };
 const TIME = String.raw`(\d{1,2})[.:](\d{2})`;
 const ROW = new RegExp(String.raw`^\s*([A-Z]{3,5})\s+(\d{1,2})\s+\d{1,2}\*?\s+${TIME}\s+${TIME}\s+${TIME}\s+${TIME}\s+${TIME}\b`);
@@ -95,11 +83,11 @@ function parse(text, startYear, startMonth) {
       }
     }
     prevDay = day;
-    const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    if (WEEKDAYS[new Date(`${iso}T12:00:00Z`).getUTCDay()] !== m[1].slice(0, 3)) throw new Error(`${iso} is not a ${m[1]}`);
+    const date = isoDate(year, month, day);
+    if (WEEKDAYS[new Date(`${date}T12:00:00Z`).getUTCDay()] !== m[1].slice(0, 3)) throw new Error(`${date} is not a ${m[1]}`);
     const t = (i) => [Number(m[3 + 2 * i]), m[4 + 2 * i]];
     const [fajr, sunrise, noon, asr, esha] = [0, 1, 2, 3, 4].map(t);
-    out[iso] = {
+    out[date] = {
       fajr: to24("fajr", ...fajr),
       sunrise: to24("sunrise", ...sunrise),
       noon: to24("dhuhr", ...noon),
@@ -133,9 +121,9 @@ for (const f of umarPdfs.sort((a, b) => a.uploaded.localeCompare(b.uploaded))) {
 const madani = {};
 for (const y of YEARS) {
   for (let mo = 1; mo <= 12; mo++) {
-    const ym = `${y}-${String(mo).padStart(2, "0")}`;
+    const ym = `${y}-${pad(mo)}`;
     const path = join(madaniDir, `${ym}.pdf`);
-    if (!(await download(madaniUrl(ym), path))) continue;
+    if (!(await download(madaniUrl(ym), path, { optional: true }))) continue;
     Object.assign(madani, parse(pdftotext(path), y, mo));
   }
 }
@@ -170,7 +158,7 @@ for (const c of conflicts) console.log("  duplicate:", c);
 console.log("madani-only dates:", fromMadaniOnly.join(" ") || "none");
 
 // salaahtimes.co.uk: today's begin times for Masjid Umar as a third check.
-const st = await (await fetch("https://www.salaahtimes.co.uk/BeginningTimes/Today")).text();
+const st = await getText("https://www.salaahtimes.co.uk/BeginningTimes/Today");
 const block = st.replace(/<script[\s\S]*?<\/script>/g, "").replace(/<[^>]+>/g, "\n").split("\n").map((s) => s.trim()).filter(Boolean);
 const at = block.indexOf("Masjid Umar");
 const stTimes = block.slice(at + 1, at + 6).map(hhmm);
@@ -187,7 +175,7 @@ writeTimetable({
   publisher: "Masjid Umar, Leicester",
   sources: ["https://masjid-umar.org/wp-json/wp/v2/media?mime_type=application/pdf", "https://madanihigh.leicester.sch.uk/data/prayer/YYYY-MM.pdf", "https://www.salaahtimes.co.uk/BeginningTimes/Today"],
   zone: "Europe/London",
-  site: { lat: 52.6334, lng: -1.133 },
+  place: { lat: 52.6334, lng: -1.133 },
   days,
   corrections: [],
 });

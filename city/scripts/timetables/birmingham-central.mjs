@@ -1,6 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { finish, iso, localHHMM, pad, postForm, rawDir, request, sleep, to24, toMin } from "./lib.mjs";
+import { getText, isoDate, localHHMM, pad, postForm, rawDir, toMin, writeTimetable } from "./lib.mjs";
 
 const ENDPOINT = "https://centralmosque.org.uk/wp-admin/admin-ajax.php";
 const OPENFAJR = "https://calendar.google.com/calendar/ical/qmho4v5896ki2mc5supv0ikgfs%40group.calendar.google.com/public/basic.ics";
@@ -9,10 +9,10 @@ const YEARS = [2025, 2026, 2027];
 const ZONE = "Europe/London";
 const PLACE = { lat: 52.4798, lng: -1.9031, zone: ZONE };
 
-const raw = rawDir(process.argv);
+const raw = rawDir();
 const clock = (s) => {
   const m = s.match(/(\d{1,2}):(\d\d)\s*([AP]M)/i);
-  return m ? to24(m[1], m[2], m[3]) : null;
+  return m ? `${pad((Number(m[1]) % 12) + (/^p/i.test(m[3]) ? 12 : 0))}:${m[2]}` : null;
 };
 
 // Columns: date, day, fajr begins, fajr jamat, sunrise, zawal, zuhr begins, zuhr jamat, asr begins, asr jamat, maghrib begins, jamat, isha begins, jamat.
@@ -22,7 +22,7 @@ function parseMonth(html) {
     const cells = [...tr.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((c) => c[1].replace(/<[^>]*>/g, "").trim());
     const date = cells[0]?.match(/^(\d{1,2})(?:st|nd|rd|th)\s+(\w+)\s+(\d{4})/);
     if (!date || cells.length < 13) continue;
-    const key = iso(+date[3], MONTHS.indexOf(date[2]) + 1, +date[1]);
+    const key = isoDate(+date[3], MONTHS.indexOf(date[2]) + 1, +date[1]);
     const [fajr, sunrise, dhuhr, asr2, maghrib, isha] = [2, 4, 6, 8, 10, 12].map((i) => clock(cells[i]));
     out[key] = [fajr, sunrise, dhuhr, null, asr2, maghrib, isha];
   }
@@ -40,11 +40,10 @@ for (const year of YEARS) {
     const wrong = Object.keys(rows).filter((d) => !d.startsWith(`${year}-${pad(MONTHS.indexOf(month) + 1)}-`));
     if (wrong.length) throw new Error(`${year} ${month} returned other dates: ${wrong.slice(0, 3)}`);
     Object.assign(days, rows);
-    await sleep(1000);
   }
 }
 
-const ics = await request(OPENFAJR);
+const ics = await getText(OPENFAJR);
 writeFileSync(join(raw, "openfajr.ics"), ics);
 const openFajr = {};
 for (const [, ev] of ics.matchAll(/BEGIN:VEVENT([\s\S]*?)END:VEVENT/g)) {
@@ -86,9 +85,7 @@ for (const date of Object.keys(days).sort()) {
   const useBcm = bcmErr <= openErr;
   console.log(`Fajr differs ${date}: BCM ${theirs} (${bcmErr.toFixed(1)} min off trend), OpenFajr ${ours} (${openErr.toFixed(1)} off) -> ${useBcm ? "keep BCM" : "use OpenFajr"}`);
   if (Math.abs(toMin(theirs) - toMin(ours)) !== 60) throw new Error(`${date}: gap is not one hour`);
-  if (useBcm) {
-    corrections.push({ date, field: "fajr", from: theirs, to: theirs, why: `kept BCM's Fajr; OpenFajr is exactly one hour ${toMin(ours) < toMin(theirs) ? "earlier" : "later"} and is the one off the UTC trend of the days either side (the feed did not follow the clock change)` });
-  } else {
+  if (!useBcm) {
     corrections.push({ date, field: "fajr", from: theirs, to: ours, why: "BCM Fajr is an hour off the UTC trend of the days either side; OpenFajr, which BCM otherwise matches, is on it" });
     days[date][0] = ours;
   }
@@ -101,7 +98,7 @@ for (const [date, to] of Object.entries(ZUHR_TYPOS)) {
 }
 console.log(`compared ${compared} days with OpenFajr`);
 
-finish({
+writeTimetable({
   id: "birmingham-central",
   name: "Birmingham Central Mosque timetable",
   publisher: "Birmingham Central Mosque",

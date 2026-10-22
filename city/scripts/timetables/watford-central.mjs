@@ -9,14 +9,11 @@
 // by the difference and recorded as corrections.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { dataDir, finish, calcTimes } from "./lib.mjs";
+import { COLUMNS, calculated, dataDir, fromMin, isoDate, toMin, writeTimetable } from "./lib.mjs";
 
-const LAT = 51.6696, LNG = -0.4106, ZONE = "Europe/London";
-const FIELDS = ["fajr", "sunrise", "dhuhr", "asr1", "asr2", "maghrib", "isha"];
+const PLACE = { lat: 51.6696, lng: -0.4106 };
+const ZONE = "Europe/London";
 const blocks = JSON.parse(readFileSync(join(dataDir, "watford-central.blocks.json"), "utf8")).months;
-
-const pad = (n) => String(n).padStart(2, "0");
-const hhmm = (m) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
 
 // Printed times have no am/pm: Fajr and Sunrise are morning, Zuhr is 11.xx or 12.xx (noon) before the
 // clocks go forward and 1.xx after, Asr, Maghrib and Isha are afternoon or evening.
@@ -52,10 +49,9 @@ for (const [mm, rows] of Object.entries(blocks)) {
 // The sheet's offset claim must agree with calculation: sunrise within 20 min of the adhan sunrise on the
 // sheet's own clock for a non-leap year's days.
 for (const [key, { m, offset }] of rowsByMonthDay) {
-  const iso = `2026-${pad(Math.floor(key / 100))}-${pad(key % 100)}`;
-  const calc = calcTimes(iso, LAT, LNG, ZONE);
-  const calcSunrise = Number(calc.sunrise.slice(0, 2)) * 60 + Number(calc.sunrise.slice(3)) - zoneOffsetMin(iso) + offset;
-  if (Math.abs(m[1] - calcSunrise) > 20) throw new Error(`${iso}: sheet sunrise ${hhmm(m[1])} does not fit offset ${offset}`);
+  const iso = isoDate(2026, Math.floor(key / 100), key % 100);
+  const calcSunrise = toMin(calculated(iso, { ...PLACE, zone: ZONE }).sunrise) - zoneOffsetMin(iso) + offset;
+  if (Math.abs(m[1] - calcSunrise) > 20) throw new Error(`${iso}: sheet sunrise ${fromMin(m[1])} does not fit offset ${offset}`);
 }
 
 const days = {};
@@ -67,10 +63,11 @@ for (const year of [2026, 2027]) {
     const row = rowsByMonthDay.get(key);
     if (!row) { console.log("no sheet row for", iso); continue; }
     const shift = zoneOffsetMin(iso) - row.offset;
-    const out = [row.m[0], row.m[1], row.m[2], null, row.m[3], row.m[4], row.m[5]].map((v) => (v === null ? null : hhmm(v + shift)));
-    const published = [row.m[0], row.m[1], row.m[2], null, row.m[3], row.m[4], row.m[5]].map((v) => (v === null ? null : hhmm(v)));
+    const sheet = [row.m[0], row.m[1], row.m[2], null, row.m[3], row.m[4], row.m[5]];
+    const out = sheet.map((v) => (v === null ? null : fromMin(v + shift)));
+    const published = sheet.map((v) => (v === null ? null : fromMin(v)));
     if (shift !== 0) {
-      FIELDS.forEach((field, i) => {
+      COLUMNS.forEach((field, i) => {
         if (out[i] !== null) corrections.push({ date: iso, field, from: published[i], to: out[i], why: `sheet block ${row.range} is on ${row.offset ? "BST" : "GMT"} but the clocks ${shift > 0 ? "had gone forward" : "had not yet gone forward"} on this date; shifted ${shift > 0 ? "+" : ""}${shift} minutes` });
       });
     }
@@ -78,20 +75,16 @@ for (const year of [2026, 2027]) {
   }
 }
 
-finish({
-  lat: LAT,
-  lng: LNG,
+writeTimetable({
+  id: "watford-central",
+  name: "Watford Permanent Prayer Timetable",
+  publisher: "Watford Central Mosque",
+  sources: [
+    "https://static.wixstatic.com/media/37c74e_03e68708aa73459eb815b8fb75dd8f54~mv2.jpeg",
+    "https://www.watfordmosque.org.uk/prayer-timetable",
+  ],
+  zone: ZONE,
+  place: PLACE,
+  corrections,
   days,
-  meta: {
-    id: "watford-central",
-    name: "Watford Permanent Prayer Timetable",
-    publisher: "Watford Central Mosque",
-    sources: [
-      "https://static.wixstatic.com/media/37c74e_03e68708aa73459eb815b8fb75dd8f54~mv2.jpeg",
-      "https://www.watfordmosque.org.uk/prayer-timetable",
-    ],
-    retrieved: "2026-10-22",
-    zone: ZONE,
-    corrections,
-  },
 });
