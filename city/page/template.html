@@ -1,0 +1,99 @@
+<!doctype html>
+<!-- build:html -->
+<!-- /build:html -->
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- WebMCP origin trial (public token, valid for thepillarsapp.com and subdomains only). -->
+<meta http-equiv="origin-trial" content="AnJO3LA25fa4hU+jZ1XjHzvtBpx3IIvfBoPMr/yycheAmdDDhGH8VdpeosOD3wHZVKA2CYeO/x86MRz49DoghAAAAABkeyJvcmlnaW4iOiJodHRwczovL3RoZXBpbGxhcnNhcHAuY29tOjQ0MyIsImZlYXR1cmUiOiJXZWJNQ1AiLCJleHBpcnkiOjE4MDYzNjQ4MDAsImlzU3ViZG9tYWluIjp0cnVlfQ==">
+<!-- Regions (build:NAME) are filled by src/render/page.ts; edit the markup around them here. -->
+<!-- build:head -->
+<!-- /build:head -->
+<link rel="icon" type="image/png" href="https://cdn.prod.website-files.com/604d480efd2aff6558953436/6acd3e69afe51db7d1364753_icon-pillars-notification.png">
+<!-- build:preload -->
+<!-- /build:preload -->
+<!-- build:css -->
+<!-- /build:css -->
+
+</head>
+<body>
+<div class="page-gradient" aria-hidden="true"></div>
+
+<div class="sky" id="sky" aria-hidden="true">
+  <svg class="sun" id="sun" xmlns="http://www.w3.org/2000/svg">
+    <circle id="sun3" r="140" fill="#EDC798" fill-opacity=".3"/>
+    <circle id="sun2" r="90" fill="#F0A852" fill-opacity=".5626"/>
+    <circle id="sun1" r="80" fill="#F1A853"/>
+  </svg>
+  <svg class="moon" id="moon" xmlns="http://www.w3.org/2000/svg">
+    <g id="stars"></g>
+    <circle id="moon3" r="90" fill="#FFFFFF" fill-opacity=".3"/>
+    <circle id="moon2" r="60" fill="#FFFFFF" fill-opacity=".56"/>
+    <circle id="moon1" r="40" fill="#FFFFFF"/>
+  </svg>
+</div>
+
+<main class="page" id="page">
+  <div class="screen">
+  <header class="now" id="now">
+    <p class="current-name" id="current-name">&nbsp;</p>
+    <p class="countdown" id="countdown" aria-live="off">&nbsp;</p>
+  </header>
+
+  <div class="curve-box" aria-hidden="true">
+    <img class="tree" id="tree" src="/prayer-times/_/tree_two.png" alt="" width="24" height="63">
+    <svg class="curve" id="curve" xmlns="http://www.w3.org/2000/svg"></svg>
+  </div>
+
+  <section class="content">
+    <div class="chip" id="chip">
+      <span class="chip-today">TODAY | </span>
+      <!-- build:chip -->
+<!-- /build:chip -->
+      <svg class="chip-badge" viewBox="0 0 24 24" role="img" aria-label="Verified prayer times"><path d="m23 12-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82L8.6 22.5l3.4-1.47 3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z"/></svg>
+    </div>
+
+    <div class="date-row">
+      <button class="arrow" id="prev" aria-label="Previous day">
+        <svg viewBox="0 0 12 17" aria-hidden="true"><path d="M9.5 2 3 8.5 9.5 15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/></svg>
+      </button>
+      <div class="date-col">
+        <!-- build:date -->
+<!-- /build:date -->
+      </div>
+      <button class="arrow" id="next" aria-label="Next day">
+        <svg viewBox="0 0 12 17" aria-hidden="true" style="transform:scaleX(-1)"><path d="M9.5 2 3 8.5 9.5 15" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"/></svg>
+      </button>
+    </div>
+
+    <!-- build:list-open -->
+<!-- /build:list-open -->
+<!-- build:list -->
+<!-- /build:list -->
+    </ul>
+    <!-- build:caption -->
+<!-- /build:caption -->
+  </section>
+  </div>
+
+  <!-- build:seo -->
+<!-- /build:seo --></main>
+
+<div class="topbar" id="topbar" aria-hidden="true"><span class="tb-place"><span id="tb-name"></span> <span class="tb-in">in</span> <span id="tb-city"></span></span><span class="tb-time" id="tb-time"></span></div>
+<a class="app-banner" id="app-banner" href="https://pillars.app.link/city" aria-label="Get the Pillars app, free on iOS and Android">
+  <img class="ab-icon" src="https://cdn.prod.website-files.com/604d480efd2aff6558953436/6ad6a2db7af75e47ac7fd18f_pillars-app-icon-156.png" alt="" width="52" height="52" decoding="async">
+  <span class="ab-text">
+    <span class="ab-stars"><b aria-hidden="true">★★★★★</b>23,819 Ratings</span>
+    <!-- build:banner -->
+<!-- /build:banner -->
+    <span class="ab-meta">iOS &amp; Android · Free</span>
+  </span>
+  <span class="ab-get" aria-hidden="true">GET</span>
+</a>
+
+<!-- build:scripts -->
+<!-- /build:scripts -->
+<!-- build:analytics -->
+<!-- /build:analytics -->
+</body>
+</html>

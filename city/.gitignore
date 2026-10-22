@@ -1,1 +1,5 @@
 node_modules/
+.wrangler/
+.dev.vars
+src/generated/
+public/prayer-times/_/city.*.js

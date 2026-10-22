@@ -1,0 +1,41 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "city-pages-dev",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  // fallthrough keeps the default rule for .html.
+  "rules": [{ "type": "Text", "globs": ["**/*.css"], "fallthrough": true }],
+  "assets": { "directory": "./public", "not_found_handling": "none" },
+  "vars": {
+    "ENVIRONMENT": "dev"
+  },
+  "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod", "entrypoint": "MosqueDirectory", "remote": true }],
+  "env": {
+    "staging": {
+      "name": "city-pages-staging",
+      "workers_dev": true,
+      "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod", "entrypoint": "MosqueDirectory" }],
+      "assets": { "directory": "./public", "not_found_handling": "none" },
+      "vars": {
+        "ENVIRONMENT": "staging"
+      }
+    },
+    "production": {
+      "name": "city-pages-prod",
+      "workers_dev": false,
+      // `/prayer-times/*` also matches `/prayer-times/`; the exact `/prayer-times`
+      // needs its own pattern. Never `/prayer-times*`: it would capture the live
+      // Webflow pages /prayer-times-app and /prayer-times-widget.
+      "routes": [
+        { "pattern": "thepillarsapp.com/prayer-times/*", "zone_id": "50f55a7e891d8e8bdc988d43e6a83a31" },
+        { "pattern": "thepillarsapp.com/prayer-times", "zone_id": "50f55a7e891d8e8bdc988d43e6a83a31" }
+      ],
+      "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod", "entrypoint": "MosqueDirectory" }],
+      "assets": { "directory": "./public", "not_found_handling": "none" },
+      "vars": {
+        "ENVIRONMENT": "production"
+      }
+    }
+  }
+}

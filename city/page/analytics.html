@@ -1,0 +1,104 @@
+<script async src="https://plausible.io/js/pa-Xhisz5hgVg6bE5rUMU2-j.js"></script>
+<script>
+  window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+  plausible.init()
+</script>
+<script>
+(function () {
+  var KEY = 'phc_qHqhPXTDi7US4eoZ8iS5rg4mvjgxjFPM5QVFDHqBKvGn';
+  if (KEY.indexOf('phc_') !== 0) return;
+  if (!/^(www\.)?thepillarsapp\.com$/.test(location.hostname)) return;
+  var n = navigator;
+  if (n.globalPrivacyControl === true || n.doNotTrack === '1' || window.doNotTrack === '1') return;
+
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  window.pillarsAnalyticsOff = function () {
+    set('pillars_analytics_off', '1');
+    try { Object.keys(localStorage).forEach(function (k) { if (k.indexOf('ph_') === 0) localStorage.removeItem(k); }); } catch (e) {}
+    if (window.posthog && posthog.opt_out_capturing) { posthog.opt_out_capturing(); if (posthog.stopSessionRecording) posthog.stopSessionRecording(); }
+  };
+  if (get('pillars_analytics_off') === '1') return;
+
+  // EU/EEA by device time zone (no IP lookup). UK and non-EU Europe are excluded.
+  var EU = /^(Europe\/(Amsterdam|Athens|Berlin|Bratislava|Brussels|Bucharest|Budapest|Busingen|Copenhagen|Dublin|Helsinki|Lisbon|Ljubljana|Luxembourg|Madrid|Malta|Mariehamn|Oslo|Paris|Prague|Riga|Rome|Sofia|Stockholm|Tallinn|Vaduz|Vienna|Vilnius|Warsaw|Zagreb)|Atlantic\/(Azores|Canary|Madeira|Reykjavik)|Arctic\/Longyearbyen|Africa\/Ceuta|Asia\/(Nicosia|Famagusta)|America\/(Guadeloupe|Martinique|Cayenne|St_Barthelemy|Marigot)|Indian\/(Reunion|Mayotte))$/;
+  var tz = '';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+  var isEU = EU.test(tz);
+  var consent = get('pillars_consent');
+  if (isEU && consent === 'denied') return;
+  var full = !isEU || consent === 'granted';
+
+  var KEEP = /^(utm_[a-z_]+|ct)$/i;
+  function clean(u) {
+    if (typeof u !== 'string' || u.indexOf('/') === -1) return u;
+    try {
+      var x = new URL(u, location.href), q = new URLSearchParams();
+      x.searchParams.forEach(function (v, k) { if (KEEP.test(k)) q.append(k, v); });
+      x.search = q.toString(); x.hash = '';
+      return x.toString();
+    } catch (e) { return u; }
+  }
+  function scrub(e) {
+    if (!e) return e;
+    var p = e.properties || {};
+    delete p.$ip;
+    p.$geoip_disable = true;
+    p.analytics_mode = full ? 'full' : 'eu_pending';
+    for (var k in p) if (/(_url|referrer|href)$/i.test(k)) p[k] = clean(p[k]);
+    delete e.$set; delete e.$set_once;
+    var d = p.$snapshot_data;
+    if (d && d.length) for (var i = 0; i < d.length; i++) if (d[i] && d[i].data && d[i].data.href) d[i].data.href = clean(d[i].data.href);
+    return e;
+  }
+
+  function banner() {
+    var s = document.createElement('style');
+    s.textContent = '#pa-cb{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:2147483000;max-width:560px;margin:0 auto;background:#0d2a52;border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,.35);font:14px/1.5 Poppins,system-ui,sans-serif}#pa-cb p{margin:0 0 14px!important;font:14px/1.5 Poppins,system-ui,sans-serif!important;color:#F5FBFF!important;letter-spacing:0!important}#pa-cb a{color:#FFBC91;text-decoration:underline}#pa-cb div{display:flex;gap:10px}#pa-cb button{flex:1;font:600 14px Poppins,system-ui,sans-serif;padding:12px 0;border-radius:999px;cursor:pointer;border:1.5px solid #FFBC91}#pa-cb [data-v=denied]{background:transparent;color:#FFBC91;border-color:transparent}#pa-cb [data-v=granted]{background:#FFBC91;color:#00193E}';
+    document.head.appendChild(s);
+    var b = document.createElement('div');
+    b.id = 'pa-cb'; b.setAttribute('role', 'dialog'); b.setAttribute('aria-label', 'Analytics choice');
+    b.innerHTML = '<p>Help us improve Pillars with privacy-first analytics? No ads, no IP addresses, nothing sold. <a href="/privacy">Privacy</a></p><div><button type="button" data-v="denied">Decline</button><button type="button" data-v="granted">Accept</button></div>';
+    b.addEventListener('click', function (ev) {
+      var v = ev.target && ev.target.getAttribute && ev.target.getAttribute('data-v');
+      if (!v) return;
+      set('pillars_consent', v);
+      if (v === 'denied' && window.posthog && posthog.opt_out_capturing) { posthog.opt_out_capturing(); if (posthog.stopSessionRecording) posthog.stopSessionRecording(); }
+      b.remove();
+    });
+    document.body.appendChild(b);
+  }
+
+  function boot() {
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId stopSessionRecording startSessionRecording".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    window.posthog.init(KEY, {
+      api_host: 'https://eu.i.posthog.com',
+      ui_host: 'https://eu.posthog.com',
+      persistence: full ? 'localStorage' : 'memory',
+      person_profiles: 'identified_only',
+      capture_pageview: 'history_change',
+      capture_pageleave: true,
+      autocapture: { capture_copied_text: false },
+      mask_all_element_attributes: false,
+      mask_all_text: false,
+      disable_surveys: true,
+      advanced_disable_feature_flags: true,
+      capture_performance: { web_vitals: true, network_timing: false },
+      enable_recording_console_log: false,
+      session_recording: {
+        maskAllInputs: true,
+        maskTextSelector: 'input, textarea, [data-ph-mask]',
+        recordCrossOriginIframes: false,
+        recordHeaders: false,
+        recordBody: false
+      },
+      before_send: scrub
+    });
+    if (isEU && !consent) banner();
+  }
+
+  function idle() { setTimeout(function () { ('requestIdleCallback' in window) ? requestIdleCallback(boot, { timeout: 2000 }) : boot(); }, 3000); }
+  if (document.readyState === 'complete') idle(); else window.addEventListener('load', idle, { once: true });
+})();
+</script>

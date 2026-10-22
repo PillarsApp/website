@@ -1,8 +1,8 @@
 /* Poppins, self-hosted (latin subset): no third-party font request blocking first paint. */
-@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 400; font-display: swap; src: url(assets/fonts/poppins-400-latin.woff2) format('woff2'); }
-@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 500; font-display: swap; src: url(assets/fonts/poppins-500-latin.woff2) format('woff2'); }
-@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 600; font-display: swap; src: url(assets/fonts/poppins-600-latin.woff2) format('woff2'); }
-@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 700; font-display: swap; src: url(assets/fonts/poppins-700-latin.woff2) format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 400; font-display: swap; src: url(/prayer-times/_/fonts/poppins-400-latin.woff2) format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 500; font-display: swap; src: url(/prayer-times/_/fonts/poppins-500-latin.woff2) format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 600; font-display: swap; src: url(/prayer-times/_/fonts/poppins-600-latin.woff2) format('woff2'); }
+@font-face { font-family: 'Poppins'; font-style: normal; font-weight: 700; font-display: swap; src: url(/prayer-times/_/fonts/poppins-700-latin.woff2) format('woff2'); }
 /* City prayer times page. Mirrors the Pillars app's location prayer page
    (prayers_screen.dart body(): sky, curve + dots, current prayer + countdown,
    TODAY chip, date row, prayer list). Sizes follow the app at 393x852. */

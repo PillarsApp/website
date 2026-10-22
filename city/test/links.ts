@@ -1,0 +1,50 @@
+/// <reference types="vite/client" />
+import { SELF } from "cloudflare:test";
+import { WEBFLOW_PATHS } from "../src/routes";
+
+const ORIGIN = "https://thepillarsapp.com";
+const STATIC_FILES = new Set(Object.keys(import.meta.glob("../public/**/*", { query: "?url" })).map((p) => p.replace("../public", "")));
+const ASSET_PREFIX = "/prayer-times/_/";
+
+function collectStrings(value: unknown, out: string[]): void {
+  if (typeof value === "string") out.push(value);
+  else if (Array.isArray(value)) value.forEach((v) => collectStrings(v, out));
+  else if (value && typeof value === "object") Object.values(value).forEach((v) => collectStrings(v, out));
+}
+
+export function urlsIn(html: string): string[] {
+  const urls: string[] = [];
+  for (const m of html.matchAll(/\b(?:href|src)="([^"]*)"/g)) urls.push(m[1]);
+  for (const m of html.matchAll(/<meta[^>]+content="(https?:\/\/[^"]*)"/g)) urls.push(m[1]);
+  for (const m of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+    const strings: string[] = [];
+    collectStrings(JSON.parse(m[1]), strings);
+    urls.push(...strings.filter((s) => /^https?:\/\//.test(s)));
+  }
+  return urls.map((u) => u.replace(/&amp;/g, "&"));
+}
+
+export function sameOriginPaths(pageUrl: string, urls: string[]): string[] {
+  const paths = new Set<string>();
+  for (const u of urls) {
+    if (u.startsWith("#") || /^(mailto:|data:)/.test(u)) continue;
+    const abs = new URL(u, pageUrl);
+    if (abs.origin === ORIGIN) paths.add(abs.pathname);
+  }
+  return [...paths].sort();
+}
+
+export async function unservedPaths(pageUrl: string, html: string): Promise<string[]> {
+  const bad: string[] = [];
+  for (const path of sameOriginPaths(pageUrl, urlsIn(html))) {
+    if (WEBFLOW_PATHS.has(path)) continue;
+    if (path.startsWith(ASSET_PREFIX)) {
+      if (!STATIC_FILES.has(path)) bad.push(`${path} -> no file`);
+      continue;
+    }
+    const res = await SELF.fetch(`${ORIGIN}${path}`, { redirect: "manual" });
+    await res.arrayBuffer();
+    if (res.status !== 200) bad.push(`${path} -> ${res.status}`);
+  }
+  return bad;
+}
