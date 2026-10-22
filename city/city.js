@@ -77,16 +77,26 @@
   calcHanafi.madhab = adhan.Madhab.Hanafi;
   calcHanafi.highLatitudeRule = calc.highLatitudeRule;
 
+  // Asr toggle on the list (Earlier = Shafi'i/standard, Later = Hanafi), remembered per browser.
+  // day.t carries the chosen Asr, so the header, countdown, curve, list and top bar all follow it;
+  // day.base keeps the standard times for the SEO content, which always shows both.
+  var ASR_KEY = 'pillars.city.asr';
+  var asrLater = false;
+  try { asrLater = localStorage.getItem(ASR_KEY) === 'later'; } catch (e) { /* storage blocked */ }
+
   var dayCache = {};
   function dayFor(ymd) {
     if (dayCache[ymd]) return dayCache[ymd];
     var a = ymdParts(ymd);
     // adhan reads only the date's Y/M/D, so a browser-local date works for any city.
     var pt = new adhan.PrayerTimes(coords, new Date(a[0], a[1] - 1, a[2]), calc);
+    var base = KEYS.map(function (k) { return pt[k].getTime(); });
+    var hanafi = new adhan.PrayerTimes(coords, new Date(a[0], a[1] - 1, a[2]), calcHanafi).asr.getTime();
     var day = {
       date: ymd,
-      t: KEYS.map(function (k) { return pt[k].getTime(); }),
-      asrHanafi: new adhan.PrayerTimes(coords, new Date(a[0], a[1] - 1, a[2]), calcHanafi).asr.getTime(),
+      base: base,
+      t: base.map(function (x, i) { return i === 3 && asrLater ? hanafi : x; }),
+      asrHanafi: hanafi,
       start: zoned(a[0], a[1], a[2], 0, 0, 0),
       end: zoned(a[0], a[1], a[2], 23, 59, 0)
     };
@@ -120,7 +130,7 @@
   // ---------- State ----------
   var todayYmd = ymdOf(nowMs());
   var selected = todayYmd;
-  var theme = 'day';
+  var theme = null;   // set on the first render, which also writes the status-bar colour
 
   function currentIndex(day, now) {
     var idx = -1;
@@ -138,9 +148,18 @@
       theme = next;
       body.classList.toggle('theme-night', theme === 'night');
       buildStars();
-      // Safari paints the status-bar area with theme-color: match the top of the sky.
-      var tc = document.getElementById('theme-color');
-      if (tc) tc.setAttribute('content', getComputedStyle(body).getPropertyValue('--grad-1').trim() || '#031831');
+      // Status-bar colour = the top of the sky. No theme-color ships in the HTML: a static value
+      // (it was night navy) is what iOS Safari painted all day. A fresh meta element per theme
+      // (Safari ignores later edits to an existing one); without it Safari samples the root
+      // background, which css sets to the same --grad-1.
+      var top = getComputedStyle(body).getPropertyValue('--grad-1').trim();
+      var old = document.querySelector('meta[name="theme-color"]');
+      if (old) old.parentNode.removeChild(old);
+      var tc = document.createElement('meta');
+      tc.name = 'theme-color';
+      tc.content = top;
+      document.head.appendChild(tc);
+      root.style.backgroundColor = top;
     }
   }
 
@@ -432,27 +451,37 @@
     $('date-greg').textContent = gregFmt.format(dateObj(selected)).replace(',', '');
     $('date-hijri').textContent = hijriLabel(selected, isToday && now >= day.t[4]);
 
-    // Seven rows: both Asr times in time order. Asr is current from the early
-    // (Shafi'i) Asr until Maghrib, so the early row carries the highlight; the
-    // Hanafi row greys out once its time has passed.
+    // Six rows; the Asr row's pill switches it between the earlier and later Asr.
     var rows = [];
-    for (var k = 0; k < 6; k++) {
-      rows.push({ name: k === 3 ? 'Asr <span class="tag">Earlier</span>' : NAMES[k], t: day.t[k], p: k });
-      if (k === 3) rows.push({ name: 'Asr <span class="tag">Later \u00B7 Hanafi</span>', t: day.asrHanafi, p: 3, hanafi: true });
-    }
-    var curP = isToday ? currentIndex(day, now) : -1;
-    var cur = curP < 0 ? -1 : (curP <= 3 ? curP : curP + 1);
+    for (var k = 0; k < 6; k++) rows.push({ name: k === 3 ? 'Asr ' + asrToggle() : NAMES[k], t: day.t[k] });
+    var cur = isToday ? currentIndex(day, now) : -1;
     var SEP = '<li class="sep" aria-hidden="true"></li>';
     var html = cur === 0 ? '' : SEP;
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
-      var finished = selected < todayYmd || (isToday && (r.hanafi ? now >= r.t && curP >= 3 : cur > -1 && i < cur));
+      var finished = selected < todayYmd || (isToday && cur > -1 && i < cur);
       var cls = 'row' + (i === cur ? ' current' : '') + (finished && i !== cur ? ' finished' : '');
       html += '<li class="' + cls + '"' + (i === cur ? ' aria-current="time"' : '') + '>' +
         '<span class="name">' + r.name + '</span> <span class="t">' + formatTime(r.t) + '</span></li>';
       if (i !== cur && i !== cur - 1) html += SEP;
     }
-    $('list').innerHTML = html;
+    var list = $('list'), focused = list.contains(document.activeElement) && document.activeElement.getAttribute('data-asr');
+    list.innerHTML = html;
+    if (focused) { var b = list.querySelector('[data-asr="' + focused + '"]'); if (b) b.focus(); }
+  }
+  function asrToggle() {
+    var btn = function (key, label, on) {
+      return '<button type="button" class="asr-opt" data-asr="' + key + '" aria-pressed="' + on + '">' + label + '</button>';
+    };
+    return '<span class="asr-toggle" role="group" aria-label="Asr time">' +
+      btn('earlier', 'Earlier', !asrLater) + btn('later', 'Later', asrLater) + '</span>';
+  }
+  function setAsr(later) {
+    if (later === asrLater) return;
+    asrLater = later;
+    try { localStorage.setItem(ASR_KEY, later ? 'later' : 'earlier'); } catch (e) { /* storage blocked */ }
+    dayCache = {};
+    render();
   }
 
   // ---------- Pre-rendered SEO content (build.mjs) ----------
@@ -473,7 +502,7 @@
     each('[data-tz-name]', function (n) { var l = tzName('long'), a = tzName('short'); if (l && a && n.textContent !== l + ' (' + a + ')') n.textContent = l + ' (' + a + ')'; });
     var answer = $('answer');
     if (answer && answer.getAttribute('data-date') !== todayYmd) {
-      var td = dayFor(todayYmd), t = td.t.concat([td.asrHanafi]);  // data-today="6" = Hanafi Asr
+      var td = dayFor(todayYmd), t = td.base.concat([td.asrHanafi]);  // data-today="6" = Hanafi Asr
       answer.setAttribute('data-date', todayYmd);
       each('[data-today]', function (n) { n.textContent = formatTime(t[+n.getAttribute('data-today')]); });
       each('[data-today-date]', function (n) { n.textContent = longFmt.format(dateObj(todayYmd)).replace(',', ''); });
@@ -503,6 +532,10 @@
   on('prev', 'click', function () { selected = addDays(selected, -1); render(); });
   on('next', 'click', function () { selected = addDays(selected, 1); render(); });
   on('chip', 'click', function () { if (selected !== todayYmd) { selected = todayYmd; render(); } });
+  on('list', 'click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-asr]');
+    if (b) setAsr(b.getAttribute('data-asr') === 'later');
+  });
   var resizeTimer;
   // ResizeObserver also catches viewport changes that fire no resize event.
   if (window.ResizeObserver) {
@@ -518,8 +551,8 @@
 
   // ---------- Floating app banner ----------
   // GET goes to the visitor's store; the banner itself never changes or closes.
-  if ($('ab-get') && /android/i.test(navigator.userAgent)) {
-    $('ab-get').href = 'https://play.google.com/store/apps/details?id=com.pillars.pillars';
+  if ($('app-banner') && /android/i.test(navigator.userAgent)) {
+    $('app-banner').href = 'https://play.google.com/store/apps/details?id=com.pillars.pillars';
   }
 
   placeSky();
@@ -542,7 +575,7 @@
         execute: async function (args) {
           var ymd = args && /^\d{4}-\d{2}-\d{2}$/.test(args.date || '') ? args.date : todayYmd;
           var d = dayFor(ymd), out = { city: city.place, date: ymd, timezone: city.timezone, method: city.method };
-          NAMES.forEach(function (n, i) { out[n.toLowerCase()] = formatTime(d.t[i]); });
+          NAMES.forEach(function (n, i) { out[n.toLowerCase()] = formatTime(d.base[i]); });
           out.asr_hanafi = formatTime(d.asrHanafi);
           return JSON.stringify(out);
         }
@@ -635,48 +668,5 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
   function queue() { if (!queued) { queued = true; requestAnimationFrame(update); } }
   window.addEventListener('scroll', queue, { passive: true });
   window.addEventListener('resize', queue, { passive: true });
-  update();
-})();
-
-// Scroll rail: a column of ticks down the left edge, one per section (the app view, then each heading).
-// While scrolling, the tick for where you are grows and turns white (neighbours grow a little);
-// it fades out shortly after scrolling stops.
-(function () {
-  var seo = document.getElementById('seo');
-  if (!seo) return;
-  var els = [document.querySelector('.screen') || document.body].concat([].slice.call(seo.querySelectorAll('h1, h2')));
-  if (els.length < 3) return;
-  var rail = document.createElement('div');
-  rail.className = 'rail';
-  rail.setAttribute('aria-hidden', 'true');
-  var ticks = els.map(function (el, i) {
-    var t = document.createElement('i');
-    rail.appendChild(t);
-    return t;
-  });
-  document.body.appendChild(rail);
-
-  var active = -1, hideTimer = 0, queued = false;
-  function update() {
-    queued = false;
-    var line = window.innerHeight * 0.35, idx = 0;
-    for (var i = 0; i < els.length; i++) {
-      if (els[i].getBoundingClientRect().top <= line) idx = i; else break;
-    }
-    if (idx === active) return;
-    active = idx;
-    ticks.forEach(function (t, i) {
-      var d = Math.abs(i - idx);
-      t.style.width = (d === 0 ? 26 : d === 1 ? 16 : 10) + 'px';
-      t.classList.toggle('on', d === 0);
-    });
-  }
-  function onScroll() {
-    rail.classList.add('show');
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(function () { rail.classList.remove('show'); }, 900);
-    if (!queued) { queued = true; requestAnimationFrame(update); }
-  }
-  window.addEventListener('scroll', onScroll, { passive: true });
   update();
 })();

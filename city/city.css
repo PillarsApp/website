@@ -26,15 +26,15 @@
      caption sits below the fold). It never drops below --sky-min, so the curve keeps its
      arc; on very small phones the list runs below the fold instead of squashing it. */
   --banner-reserve: calc(96px + var(--sb));
-  --row-h: clamp(50px, calc(var(--S) * .072), 64px);
+  --row-h: 53.5px;       /* prayer_time_slot.dart: 14 + 17px Poppins line (25.5) + 14 */
   --date-gap: 20px;
   --date-h: 50px;
   --list-gap: 10px;
   --content-pad: 10px;
   --sep: 6px;            /* separator incl. its margins */
   --caption-h: 46px;     /* trust caption: 16px gap + two 11px lines (line-height 1.35) */
-  --content-h: calc(21px + var(--date-gap) + var(--date-h) + var(--list-gap) + 7 * var(--row-h) + 8 * var(--sep) + var(--caption-h) + var(--content-pad));
-  --to-isha: calc(21px + var(--date-gap) + var(--date-h) + var(--list-gap) + 7 * var(--row-h) + 7 * var(--sep));
+  --content-h: calc(21px + var(--date-gap) + var(--date-h) + var(--list-gap) + 6 * var(--row-h) + 7 * var(--sep) + var(--caption-h) + var(--content-pad));
+  --to-isha: calc(21px + var(--date-gap) + var(--date-h) + var(--list-gap) + 6 * var(--row-h) + 6 * var(--sep));
   --sky-min: 210px;
   /* The content overlaps the sky's bottom quarter, so sky = avail / --ov. When the sky is
      short, the curve box moves down (--curve-shift) so the arc's peak (33% of its height)
@@ -43,13 +43,18 @@
   --ov: .71;             /* content starts this far down the sky (TODAY tag sits in the curve's dip) */
   --lift: 8px;           /* curve raised towards the countdown pill */
   --sky-h: max(var(--sky-min), min(calc(var(--S) * .41), calc(var(--avail) / var(--ov)), calc((var(--avail) - 102px) / (var(--ov) - .3333))));
+  --sky-b: calc(var(--st) + var(--curve-shift) + var(--sky-h));
   --curve-shift: calc(max(0px, calc(102px + var(--lift) - var(--sky-h) * .3333)) - var(--lift));
 
   /* Day theme (default) */
   --grad-1: #C5DFF1;
   --grad-2: #FFFFFF;
-  --grad-s1: 10%;
-  --grad-s2: 37%;
+  /* Stops as multiples of the curve box's bottom edge (--sky-b): the app's stops (10% / 37% of a
+     1.5 x screen-height box, prayers_screen.dart _boxDecorationForTheme) measured against its
+     sky box (status bar + safe height x 4/11) on a 393x852 iPhone. So the wave sits on the same
+     tone as in the app and the page is white from the same point, whatever the viewport height. */
+  --grad-s1: .381;
+  --grad-s2: 1.41;
   --ink: var(--deep-blue);
   --chip-today: var(--deep-blue);
   --chip-city: var(--shade1);
@@ -63,16 +68,12 @@
   --quiet: #A6AFBB;
 }
 @supports (height: 100svh) { :root { --vh: 100svh; } }   /* iOS Safari: toolbar-safe */
-@media (max-height: 700px) {
-  :root { --date-gap: 6px; --date-h: 40px; --list-gap: 6px; --content-pad: 4px; --sep: 4px; --caption-h: 48px; --banner-reserve: calc(88px + var(--sb)); }
-  .list-caption { margin-top: 10px; }
-}
 
 body.theme-night {
   --grad-1: #031831;
   --grad-2: var(--standard-blue);
-  --grad-s1: 30%;
-  --grad-s2: 60%;
+  --grad-s1: 1.145;
+  --grad-s2: 2.29;
   --ink: #FFFFFF;
   --chip-today: var(--pillars-gold);
   --chip-city: var(--pillars-gold);
@@ -103,11 +104,11 @@ body {
   clip: rect(0 0 0 0); white-space: nowrap;
 }
 
-/* Page gradient: a box 1.5x the screen height, stops as fractions of it. */
+/* Page gradient: sky colour fading to the page colour, anchored to the sky/curve box (see --grad-s1). */
 .page-gradient {
   position: absolute; left: 0; right: 0; top: 0;
-  height: calc(var(--vh) * 1.5);
-  background: linear-gradient(180deg, var(--grad-1) var(--grad-s1), var(--grad-2) var(--grad-s2));
+  height: calc(var(--sky-b) * 2.4);
+  background: linear-gradient(180deg, var(--grad-1) calc(var(--sky-b) * var(--grad-s1)), var(--grad-2) calc(var(--sky-b) * var(--grad-s2)));
   pointer-events: none;
 }
 
@@ -146,22 +147,22 @@ body.theme-night .sun { display: none; }
 }
 .current-name {
   margin: 0;
-  font: 500 min(30px, 7.4vw)/1.3 'Poppins', sans-serif;
+  font: 500 min(30px, 7.4vw)/1.5 'Poppins', sans-serif;
   color: var(--ink);
 }
 .current-name { white-space: nowrap; }
 .current-name .dim { opacity: .5; }
 .countdown {
-  margin: 14px 0 0 -12px;
+  margin: 2px 0 0 -7px;   /* app: SizedBox(2), pill at the column's 27px edge (title has +7) */
   display: inline-flex; align-items: center;
-  height: 32px;
-  padding: 4px 12px;
-  border-radius: 16px;
+  height: 24px;
+  padding: 2px 8px;
+  border-radius: 15px;
   background: var(--count-bg);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
   color: var(--count-ink);
-  font: 400 16px/1.5 'Poppins', sans-serif;
+  font: 400 14px/1.5 'Poppins', sans-serif;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -178,7 +179,7 @@ body.theme-night .sun { display: none; }
 .curve { position: absolute; inset: 0; width: 100%; height: 100%; }
 .tree {
   position: absolute;
-  left: 2%;
+  left: calc(2% + 6px);   /* 24px image centred in the app's 36px box */
   top: calc(var(--sky-h) * .47);
   width: 24px; height: 63px;
 }
@@ -199,7 +200,7 @@ body.theme-night .tree { display: none; }
   padding: 1px 5px;
   border: 1px solid var(--chip-border);
   border-radius: 4px;
-  font: 600 11px/1.5 'Poppins', sans-serif;
+  font: 700 11px/1.5 'Poppins', sans-serif;
   background: none;
   white-space: nowrap;
   cursor: default;
@@ -225,14 +226,14 @@ body.theme-night .tree { display: none; }
   width: 250px; height: var(--date-h);
   display: flex; flex-direction: column; justify-content: center;
 }
-.date-greg { font-weight: 500; font-size: 16px; line-height: 1.4; color: var(--accent); }
-.date-hijri { font-weight: 500; font-size: 16px; line-height: 1.4; color: var(--hijri); }
+.date-greg { font-weight: 500; font-size: 16px; line-height: 1.5; color: var(--accent); }
+.date-hijri { font-weight: 500; font-size: 16px; line-height: 1.5; color: var(--hijri); }
 
 /* ---------- Prayer list (buildPrayerTimesList + prayer_time_slot.dart) ---------- */
-/* Seven rows of --row-h (both Asr times); the floating banner sits where the app's SHOW MORE slot is. */
+/* Six rows of --row-h (one Asr row with an Earlier/Later toggle); the floating banner sits where the app's SHOW MORE slot is. */
 .list {
   margin: var(--list-gap) 0 0;
-  padding: 0 27px;
+  padding: 0 20px;
   list-style: none;
   text-align: left;
 }
@@ -445,14 +446,15 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .nearby a:hover, .hub-link a:hover { background: rgba(255, 255, 255, .08); }
 .seo .hub-link { display: flex; margin: 0; }   /* same 10px as the pill rows above: one group */
 
-/* ---------- Floating app banner (App Store smart-banner style) ---------- */
+/* ---------- Floating app banner: the /qibla page's banner (q-ab), same look and behaviour ---------- */
+.app-banner, .app-banner:hover, .app-banner:visited { text-decoration: none; color: #000000; }
 .app-banner {
   position: fixed;
   left: 50%; bottom: calc(12px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   width: min(406px, calc(100% - 24px));
   z-index: 1000;
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 8px;
   padding: 10px 14px 10px 10px;
   border-radius: 18px;
   background: rgba(246, 246, 248, .86);
@@ -460,34 +462,54 @@ body.theme-night .seo .card { background: var(--deep-blue); }
   backdrop-filter: saturate(180%) blur(20px);
   box-shadow: 0 8px 30px rgba(0, 25, 62, .18), 0 0 0 .5px rgba(0, 0, 0, .08);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Poppins', sans-serif;
-  color: #000000;
-  transition: transform .3s ease, opacity .3s ease;
+  color: #000000; text-align: left;
 }
-.ab-icon { width: 52px; height: 52px; border-radius: 12px; flex: none; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .1); }
+.ab-icon { display: block; width: 52px; height: 52px; border-radius: 12px; flex: none; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .1); }
 .ab-text { flex: 1; min-width: 0; line-height: 1.25; }
-.ab-title { font-size: 14px; font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.ab-meta { font-size: 12px; color: #8E8E93; margin-top: 2px; }
+.ab-stars, .ab-title, .ab-meta { display: block; }
+.ab-stars { display: flex; align-items: center; gap: 6px; margin: 0 0 2px; font-size: 13px; color: #8E8E93; white-space: nowrap; line-height: 1.3; }
+.ab-stars b { color: #FFBC91; letter-spacing: 1px; font-size: 13px; font-weight: 400; }
+.ab-title {
+  font-size: clamp(14px, 4.1vw, 16.1px); line-height: 1.25; letter-spacing: -.1px; font-weight: 600;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ab-meta { margin-top: 1px; font-size: 13px; line-height: 1.3; color: #8E8E93; }
 .ab-get {
   flex: none;
-  min-width: 64px; padding: 7px 14px;
+  min-width: 64px; padding: 7px 12px;
   border-radius: 999px;
-  background: #0066CC; color: #FFFFFF;   /* App Store blue, darkened to 5.6:1 contrast */
-  font-size: 15px; font-weight: 700; text-align: center;
+  background: #006EE6; color: #FFFFFF;   /* /qibla blue: 4.8:1 with white */
+  font-size: 15px; font-weight: 700; line-height: 1.25; text-align: center;
   text-decoration: none; letter-spacing: .2px;
 }
+/* /qibla keeps its short title on one line (ellipsis); the longer city title wraps to two lines instead of being cut. */
+@media (max-width: 359px) { .ab-stars { gap: 4px; font-size: 12px; } .ab-stars b { letter-spacing: 0; font-size: 12px; } .ab-meta { font-size: 12px; } }
+@media (max-width: 339px) { .ab-stars { gap: 3px; font-size: 11px; } .ab-stars b { font-size: 11px; } .ab-meta { font-size: 11px; } }
 @media (prefers-color-scheme: dark) {
-  .app-banner { background: rgba(44, 44, 46, .86); color: #FFFFFF; box-shadow: 0 8px 30px rgba(0, 0, 0, .4), 0 0 0 .5px rgba(255, 255, 255, .1); }
+  .app-banner, .app-banner:hover, .app-banner:visited { color: #FFFFFF; }
+  .app-banner { background: rgba(44, 44, 46, .86); box-shadow: 0 8px 30px rgba(0, 0, 0, .4), 0 0 0 .5px rgba(255, 255, 255, .1); }
 }
 .timetable thead th { vertical-align: bottom; }
 
-/* Asr qualifier as a quiet pill (Earlier / Later · Hanafi). */
-.row .name .tag {
-  display: inline-block; vertical-align: middle;
-  margin-left: 8px; padding: 2px 9px;
+/* Asr toggle: a small segmented pill (Earlier | Later) after "Asr". */
+:root { --on-ink: #FFFFFF; }
+body.theme-night { --on-ink: var(--deep-blue); }
+.asr-toggle {
+  display: inline-flex; vertical-align: middle;
+  margin-left: 8px; padding: 2px;
   border-radius: 999px;
-  background: color-mix(in srgb, currentColor 14%, transparent);
-  font-size: 12px; font-weight: 500; letter-spacing: .2px; line-height: 1.4;
+  background: color-mix(in srgb, currentColor 10%, transparent);
 }
+.asr-opt {
+  min-height: 24px; padding: 0 10px;
+  border: 0; border-radius: 999px;
+  background: none; color: inherit;
+  font: 500 12px/24px 'Poppins', sans-serif; letter-spacing: .2px;
+  opacity: .6; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.asr-opt[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); opacity: 1; cursor: default; }
+.asr-opt:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 /* Content column follows the screen width: 16px gutters on phones, capped on wide screens. */
 .seo > * { max-width: 760px; margin-left: auto; margin-right: auto; }
 .seo > nav { padding-left: 11px; }
@@ -517,17 +539,17 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .seo .card .answer .a-times { margin-top: 16px; font-size: 16px; font-weight: 500; color: #FFFFFF; line-height: 1.8; font-variant-numeric: tabular-nums; }
 .seo .card .answer .a-meta { margin-top: 16px; font-size: 13px; font-weight: 400; color: rgba(255, 255, 255, .6); }
 /* Scroll bar: blurred strip with the current prayer + time left, shown once the header scrolls away. */
-/* Same colour as the top of the sky (and Safari's status-bar fill), nearly opaque so it matches. */
-:root { --bar-bg: rgba(197, 223, 241, .94); }
-body.theme-night { --bar-bg: rgba(3, 24, 49, .94); }
+/* iOS-style glass: the sky's top colour (--grad-1) at ~60% over a strong blur, so content shows through. */
+:root { --bar-bg: rgba(197, 223, 241, .6); }
+body.theme-night { --bar-bg: rgba(3, 24, 49, .62); }
 .topbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 950;
   height: calc(52px + var(--st));
   padding-top: var(--st);
   display: flex; align-items: center; justify-content: center; gap: 10px;
   background: var(--bar-bg);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(24px);
   font: 600 17px/1 'Poppins', sans-serif;
   color: var(--ink);
   display: none; opacity: 0; transform: translateY(-100%);
@@ -553,22 +575,12 @@ body.theme-night { --bar-bg: rgba(3, 24, 49, .94); }
 /* Status-bar / overscroll area takes the top of the sky (Safari samples the root background). */
 html { background-color: #C5DFF1; }
 html:has(body.theme-night) { background-color: #031831; }
-/* Scroll rail (city.js): one tick per section down the left edge, shown while scrolling, fading out once you stop. */
-.rail {
-  position: fixed; left: 4px; top: 50%; z-index: 960;
-  transform: translateY(-50%);
-  display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
-  pointer-events: none;
-  opacity: 0; transition: opacity .4s ease;
-}
-.rail.show { opacity: 1; transition-duration: .15s; }
-.rail i {
-  display: block; width: 10px; height: 2px; border-radius: 1px;
-  background: rgba(0, 25, 62, .28);
-  transition: width .18s ease, background-color .18s ease;
-}
-.rail i.on { height: 3px; background: var(--deep-blue); }
-body.theme-night .rail i { background: rgba(255, 255, 255, .28); }
-body.theme-night .rail i.on { background: #FFFFFF; }
 /* Verified badge beside the TODAY | City chip. */
 .chip-verified { width: 16px; height: 16px; margin-left: 6px; vertical-align: middle; fill: var(--chip-city); }
+/* TikTok-style hand-off: the app section and the content below are the only two snap points. The content
+   is one tall snap area, so it scrolls freely inside (no snapping in the SEO sections); between the two
+   the page settles on one or the other. Anchors clear the glass top bar with scroll-margin, not
+   scroll-padding, so the content still snaps flush to the top edge. */
+html { scroll-snap-type: y mandatory; }
+.screen, .seo { scroll-snap-align: start; }
+.seo [id], .seo h2 { scroll-margin-top: calc(52px + var(--st) + 16px); }

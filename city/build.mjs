@@ -228,14 +228,14 @@ __LD__
 const dateBlock = `<div class="date-greg" id="date-greg">${appDate(date)}</div>
         <div class="date-hijri" id="date-hijri">${hijriLong(date)}</div>`;
 let list = '<li class="sep" aria-hidden="true"></li>';
-// Seven rows like city.js: both Asr times in time order.
-const replicaRows = [];
-NAMES.forEach((n, i) => { replicaRows.push([i === 3 ? 'Asr <span class="tag">Earlier</span>' : n, today[i]]); if (i === 3) replicaRows.push(['Asr <span class="tag">Later · Hanafi</span>', todayHanafi]); });
+// Six rows like city.js; the Asr row shows the earlier (standard) time, its pill toggles to the later.
+const asrToggle = '<span class="asr-toggle" role="group" aria-label="Asr time"><button type="button" class="asr-opt" data-asr="earlier" aria-pressed="true">Earlier</button><button type="button" class="asr-opt" data-asr="later" aria-pressed="false">Later</button></span>';
+const replicaRows = NAMES.map((n, i) => [i === 3 ? `Asr ${asrToggle}` : n, today[i]]);
 for (const [n, t] of replicaRows) {
   list += `<li class="row"><span class="name">${n}</span> <span class="t">${fmt(t)}</span></li><li class="sep" aria-hidden="true"></li>`;
 }
 const chip = `<span class="chip-name" id="chip-name">&nbsp;${esc(city.name)} Prayer Times</span>`;
-const banner = `<div class="ab-title" id="ab-title">${SITE.name} App: ${esc(city.name)} Prayer Times</div>`;
+const banner = `<span class="ab-title" id="ab-title">${SITE.name} App: ${esc(city.name)} Prayer Times</span>`;
 
 // ---------- below the replica ----------
 // Decorative section-heading icons: Material outlined versions of the app's Icons.* (filled paths, no strokes); white on the cards.
