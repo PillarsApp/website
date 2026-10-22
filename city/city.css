@@ -200,7 +200,11 @@ body.theme-night .tree { display: none; }
   padding: 1px 5px;
   border: 1px solid var(--chip-border);
   border-radius: 4px;
-  font: 700 11px/1.5 'Poppins', sans-serif;
+  /* App: FontWeight.bold at 11px, but on a plain TextStyle that inherits the theme's GoogleFonts
+     'Poppins_regular' family, which holds only the 400 face, so Flutter fakes the bold by stroking the
+     regular outline (Skia: about 1/24 of the size, 0.45px at 11px). Same here: 400 plus a 0.45px stroke. */
+  font: 400 11px/1.5 'Poppins', sans-serif;
+  -webkit-text-stroke-width: .45px;
   background: none;
   white-space: nowrap;
   cursor: default;
@@ -227,7 +231,10 @@ body.theme-night .tree { display: none; }
   display: flex; flex-direction: column; justify-content: center;
 }
 .date-greg { font-weight: 500; font-size: 16px; line-height: 1.5; color: var(--accent); }
-.date-hijri { font-weight: 500; font-size: 16px; line-height: 1.5; color: var(--hijri); }
+.date-hijri { font-weight: 500; font-size: 16px; line-height: 1.5; color: var(--hijri); display: flex; justify-content: center; align-items: center; white-space: nowrap; transform-origin: center; }
+/* " | (moon) 12": divider and next day in deep blue at 25%, moon #BBC3CF at 14px, 4px gaps (and 4 after). */
+.hj-next { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; padding-right: 4px; color: rgba(0, 25, 62, .25); }
+.hj-moon { width: 14px; height: 14px; flex: none; }
 
 /* ---------- Prayer list (buildPrayerTimesList + prayer_time_slot.dart) ---------- */
 /* Six rows of --row-h (one Asr row with an Earlier/Later toggle); the floating banner sits where the app's SHOW MORE slot is. */
@@ -491,25 +498,43 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 }
 .timetable thead th { vertical-align: bottom; }
 
-/* Asr toggle: a small segmented pill (Earlier | Later) after "Asr". */
+/* Asr toggle: a small segmented pill (Earlier | Later) after "Asr". Equal halves, and a thumb that slides
+   under the chosen one (iOS segmented-control feel) while the label colours crossfade. */
 :root { --on-ink: #FFFFFF; }
 body.theme-night { --on-ink: var(--deep-blue); }
 .asr-toggle {
-  display: inline-flex; vertical-align: middle;
+  position: relative;
+  display: inline-grid; grid-template-columns: 1fr 1fr; vertical-align: middle;
   margin-left: 8px; padding: 2px;
   border-radius: 999px;
   background: color-mix(in srgb, currentColor 10%, transparent);
 }
+.asr-thumb {
+  position: absolute; top: 2px; bottom: 2px; left: 2px;
+  width: calc(50% - 2px);
+  border-radius: 999px;
+  background: var(--ink);
+  transition: transform .28s cubic-bezier(.3, 1.25, .5, 1);
+}
+.asr-toggle.is-later .asr-thumb { transform: translateX(100%); }
 .asr-opt {
+  position: relative;
   min-height: 24px; padding: 0 10px;
   border: 0; border-radius: 999px;
   background: none; color: inherit;
   font: 500 12px/24px 'Poppins', sans-serif; letter-spacing: .2px;
   opacity: .6; cursor: pointer;
+  transition: color .28s ease, opacity .28s ease;
   -webkit-tap-highlight-color: transparent;
 }
-.asr-opt[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); opacity: 1; cursor: default; }
+.asr-opt[aria-pressed="true"] { color: var(--on-ink); opacity: 1; cursor: default; }
 .asr-opt:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.row .t { display: inline-block; }
+/* Highlight box sliding between rows (city.js playFlip); the real row's border waits underneath. */
+.list { position: relative; }
+.hl-ghost { position: absolute; list-style: none; border: 3px solid var(--ink); border-radius: 10px; pointer-events: none; }
+.row.current.hl-hidden { border-color: transparent; }
+@media (prefers-reduced-motion: reduce) { .asr-thumb, .asr-opt { transition: none; } }
 /* Content column follows the screen width: 16px gutters on phones, capped on wide screens. */
 .seo > * { max-width: 760px; margin-left: auto; margin-right: auto; }
 .seo > nav { padding-left: 11px; }
@@ -576,7 +601,7 @@ body.theme-night { --bar-bg: rgba(3, 24, 49, .62); }
 html { background-color: #C5DFF1; }
 html:has(body.theme-night) { background-color: #031831; }
 /* Verified badge beside the TODAY | City chip. */
-.chip-verified { width: 16px; height: 16px; margin-left: 6px; vertical-align: middle; fill: var(--chip-city); }
+.chip-verified { width: 14px; height: 14px; margin-left: 6px; vertical-align: middle; fill: var(--chip-city); }
 /* TikTok-style hand-off: the app section and the content below are the only two snap points. The content
    is one tall snap area, so it scrolls freely inside (no snapping in the SEO sections); between the two
    the page settles on one or the other. Anchors clear the glass top bar with scroll-margin, not
@@ -584,3 +609,11 @@ html:has(body.theme-night) { background-color: #031831; }
 html { scroll-snap-type: y mandatory; }
 .screen, .seo { scroll-snap-align: start; }
 .seo [id], .seo h2 { scroll-margin-top: calc(52px + var(--st) + 16px); }
+/* Sun/moon at the app's spot (top-right corner of the sky). In Safari the page starts below the status bar,
+   so the disc used to end in a hard flat line there. The sky layer now fades in over its top edge: the
+   disc dissolves into the sky colour, which is also the status-bar colour, so it reads as going on under
+   the bar instead of being sliced. The status bar samples sky colour here, never the orange. */
+.sky {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 max(var(--st), 48px));
+  mask-image: linear-gradient(180deg, transparent 0, #000 max(var(--st), 48px));
+}

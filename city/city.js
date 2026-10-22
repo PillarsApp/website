@@ -127,6 +127,48 @@
     return parseInt(p.day, 10) + ' ' + HIJRI_MONTHS[parseInt(p.month, 10) - 1] + ' ' + parseInt(p.year, 10);
   }
 
+  // Hijri line, as hijri_date_widget.dart (showTomorrowIndicator, showNightSlashFormat) for a non-supporter:
+  // in the day (Sunrise to Maghrib, day theme) it reads "11 Jumada al-Awwal 1448 | (moon) 12", the next
+  // Islamic day after the divider. From Maghrib, at night and during Fajr the moon hides: today shows
+  // the Islamic date in force (it turns at Maghrib), other days show both, "11/12 Jumada al-Awwal 1448".
+  function hijriParts(ymd, add) {
+    var p = {};
+    hijriFmt.formatToParts(new Date(dateObj(ymd).getTime() + add * 864e5)).forEach(function (x) { p[x.type] = x.value; });
+    return { d: parseInt(p.day, 10), m: parseInt(p.month, 10), y: parseInt(p.year, 10) };
+  }
+  var MOON_SVG = '<svg class="hj-moon" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true"><path fill="#BBC3CF" transform="translate(.602295 .0273438)" d="M11.882401 7.4878464C11.773164 7.3788714 11.610984 7.3424506 11.465641 7.3942556C9.5123539 8.0906715 7.3326426 7.5998769 5.8663425 6.1334915C4.4000425 4.6671057 3.9093754 2.4873657 4.6059051 .53411961C4.6576595 .38875064 4.6211739 .22657578 4.5121479 .11737879C4.4031215 .0081817899 4.241004 -.028557783 4.0955544 .022969089C3.2327948 .32763457 2.4498477 .82294053 1.804976 1.4720289C-.60230237 3.8811283 -.60156429 7.7853465 1.8066248 10.193536C4.2148137 12.601725 8.1190319 12.602463 10.528131 10.195185C11.177271 9.5501976 11.67258 8.7671089 11.977191 7.9042063C12.028522 7.7587523 11.991639 7.5967441 11.882401 7.4878464Z"/></svg>';
+  function renderHijri(now) {
+    var el = $('date-hijri');
+    var nowIdx = currentIndex(dayFor(todayYmd), now);           // the app reads the current prayer, not the page's
+    var islamicNight = nowIdx === 4 || nowIdx === 5;
+    var hideMoon = nowIdx <= 0 || islamicNight || theme === 'night';
+    var M = function (m) { return HIJRI_MONTHS[m - 1]; };
+    var base = hijriParts(selected, 0), off = hijriParts(selected, 1), disp = islamicNight ? off : base;
+    var boundary = disp.m !== off.m, label, html;
+    if (!hideMoon) {
+      var primary = boundary ? disp.d + ' ' + M(disp.m) : disp.d + ' ' + M(disp.m) + ' ' + disp.y;
+      var next = boundary ? off.d + ' ' + M(off.m) : String(off.d);
+      label = primary + ', next Islamic day ' + next;
+      html = '<span>' + primary + '</span><span class="hj-next" aria-hidden="true"><span>|</span>' + MOON_SVG + '<span>' + next + '</span></span>';
+    } else if (selected !== todayYmd) {
+      label = base.m !== off.m ? base.d + ' ' + M(base.m) + ' / ' + off.d + ' ' + M(off.m) + ' ' + off.y
+        : base.d + '/' + off.d + ' ' + M(disp.m) + ' ' + disp.y;
+      html = '<span>' + label + '</span>';
+    } else {
+      label = disp.d + ' ' + M(disp.m) + ' ' + disp.y;
+      html = '<span>' + label + '</span>';
+    }
+    if (el.getAttribute('data-l') !== label) {
+      el.setAttribute('data-l', label);
+      el.setAttribute('aria-label', label);
+      el.innerHTML = html;
+    }
+    // FittedBox(scaleDown): the line shrinks to the 250px date column rather than wrapping.
+    el.style.transform = '';
+    var w = el.scrollWidth, max = el.parentNode.clientWidth;
+    if (w > max) el.style.transform = 'scale(' + (max / w).toFixed(4) + ')';
+  }
+
   // ---------- State ----------
   var todayYmd = ymdOf(nowMs());
   var selected = todayYmd;
@@ -449,7 +491,7 @@
     chip.style.opacity = isToday ? 1 : (theme === 'night' ? 0.4 : 0.3);
     chip.style.cursor = isToday ? 'default' : 'pointer';
     $('date-greg').textContent = gregFmt.format(dateObj(selected)).replace(',', '');
-    $('date-hijri').textContent = hijriLabel(selected, isToday && now >= day.t[4]);
+    renderHijri(now);
 
     // Six rows; the Asr row's pill switches it between the earlier and later Asr.
     var rows = [];
@@ -466,22 +508,75 @@
       if (i !== cur && i !== cur - 1) html += SEP;
     }
     var list = $('list'), focused = list.contains(document.activeElement) && document.activeElement.getAttribute('data-asr');
+    // FLIP: when the Asr toggle moves the current prayer, rows glide to their new places and the
+    // highlight box slides from the old row to the new one.
+    var flip = animateNext && !reduceMotion;
+    animateNext = false;
+    var before = flip ? snapshot(list) : null;
     list.innerHTML = html;
     if (focused) { var b = list.querySelector('[data-asr="' + focused + '"]'); if (b) b.focus(); }
+    if (before) playFlip(list, before);
+  }
+  var animateNext = false, EASE = 'cubic-bezier(.2, .9, .3, 1)';
+  function snapshot(list) {
+    var rows = list.querySelectorAll('.row'), cur = list.querySelector('.row.current');
+    return {
+      tops: Array.prototype.map.call(rows, function (r) { return r.offsetTop; }),
+      cur: cur ? { top: cur.offsetTop, left: cur.offsetLeft, w: cur.offsetWidth, h: cur.offsetHeight } : null
+    };
+  }
+  function playFlip(list, before) {
+    var rows = list.querySelectorAll('.row'), cur = list.querySelector('.row.current');
+    if (!list.animate) return;
+    Array.prototype.forEach.call(rows, function (r, i) {
+      var dy = before.tops[i] - r.offsetTop;
+      if (dy) r.animate([{ transform: 'translateY(' + dy + 'px)' }, { transform: 'none' }], { duration: 300, easing: EASE });
+    });
+    if (before.cur && cur && before.cur.top !== cur.offsetTop) {
+      var ghost = document.createElement('li');
+      ghost.className = 'hl-ghost';
+      ghost.setAttribute('aria-hidden', 'true');
+      list.appendChild(ghost);
+      cur.classList.add('hl-hidden');
+      var to = { top: cur.offsetTop, left: cur.offsetLeft, w: cur.offsetWidth, h: cur.offsetHeight };
+      var box = function (b) { return { top: b.top + 'px', left: b.left + 'px', width: b.w + 'px', height: b.h + 'px' }; };
+      var anim = ghost.animate([box(before.cur), box(to)], { duration: 300, easing: EASE, fill: 'forwards' });
+      var done = function () { ghost.remove(); cur.classList.remove('hl-hidden'); };
+      anim.onfinish = anim.oncancel = done;
+      setTimeout(done, 450);   // background tabs may never finish the animation
+    }
   }
   function asrToggle() {
     var btn = function (key, label, on) {
       return '<button type="button" class="asr-opt" data-asr="' + key + '" aria-pressed="' + on + '">' + label + '</button>';
     };
-    return '<span class="asr-toggle" role="group" aria-label="Asr time">' +
+    return '<span class="asr-toggle' + (asrLater ? ' is-later' : '') + '" role="group" aria-label="Asr time">' +
+      '<span class="asr-thumb" aria-hidden="true"></span>' +
       btn('earlier', 'Earlier', !asrLater) + btn('later', 'Later', asrLater) + '</span>';
   }
+  var asrTimer = 0;
   function setAsr(later) {
     if (later === asrLater) return;
     asrLater = later;
     try { localStorage.setItem(ASR_KEY, later ? 'later' : 'earlier'); } catch (e) { /* storage blocked */ }
     dayCache = {};
-    render();
+    var toggle = document.querySelector('#list .asr-toggle');
+    if (reduceMotion || !toggle || !toggle.animate) { render(); return; }
+    // In place first, so the CSS transitions run: the thumb slides, the labels crossfade, and the
+    // time rolls (old up and out, new up from below). Then the full render moves the highlight.
+    toggle.classList.toggle('is-later', later);
+    Array.prototype.forEach.call(toggle.querySelectorAll('[data-asr]'), function (b) {
+      b.setAttribute('aria-pressed', String((b.getAttribute('data-asr') === 'later') === later));
+    });
+    var t = toggle.closest('.row').querySelector('.t');
+    var next = formatTime(dayFor(selected).t[3]);
+    t.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-55%)', opacity: 0 }], { duration: 120, easing: 'ease-in' })
+      .onfinish = function () {
+        t.textContent = next;
+        t.animate([{ transform: 'translateY(55%)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 160, easing: EASE });
+      };
+    clearTimeout(asrTimer);
+    asrTimer = setTimeout(function () { animateNext = true; render(); }, 290);
   }
 
   // ---------- Pre-rendered SEO content (build.mjs) ----------

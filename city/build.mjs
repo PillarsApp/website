@@ -229,7 +229,7 @@ const dateBlock = `<div class="date-greg" id="date-greg">${appDate(date)}</div>
         <div class="date-hijri" id="date-hijri">${hijriLong(date)}</div>`;
 let list = '<li class="sep" aria-hidden="true"></li>';
 // Six rows like city.js; the Asr row shows the earlier (standard) time, its pill toggles to the later.
-const asrToggle = '<span class="asr-toggle" role="group" aria-label="Asr time"><button type="button" class="asr-opt" data-asr="earlier" aria-pressed="true">Earlier</button><button type="button" class="asr-opt" data-asr="later" aria-pressed="false">Later</button></span>';
+const asrToggle = '<span class="asr-toggle" role="group" aria-label="Asr time"><span class="asr-thumb" aria-hidden="true"></span><button type="button" class="asr-opt" data-asr="earlier" aria-pressed="true">Earlier</button><button type="button" class="asr-opt" data-asr="later" aria-pressed="false">Later</button></span>';
 const replicaRows = NAMES.map((n, i) => [i === 3 ? `Asr ${asrToggle}` : n, today[i]]);
 for (const [n, t] of replicaRows) {
   list += `<li class="row"><span class="name">${n}</span> <span class="t">${fmt(t)}</span></li><li class="sep" aria-hidden="true"></li>`;
