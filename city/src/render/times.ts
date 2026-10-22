@@ -1,8 +1,7 @@
 // City-local calendar and prayer-time arithmetic. The only module that
 // imports adhan and the only one that creates Intl.DateTimeFormat for a city
-// zone. Port of build.mjs lines 44-103 and 303-313, made per-city instead of
-// module-global and memoized (formatters per isolate, days and abbreviations
-// per clock).
+// zone. Per-city, with formatters memoized per isolate and days and zone
+// abbreviations memoized per clock.
 
 import * as adhan from "adhan"; // named exports only: `import adhan from` breaks under a bundler
 import type { Calc, City, Country, Instant, LocalDate } from "../types";

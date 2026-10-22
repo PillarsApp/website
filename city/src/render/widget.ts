@@ -1,7 +1,6 @@
 // The embeddable widget for one city: a small noindex page with the next 64
 // days of "HH:mm" times inlined as JSON, so the iframe needs no second request.
-// Port of build.mjs 514-530 and city/widget/index.html. Keyed by the route
-// (country + slug), never by slug alone.
+// Keyed by the route (country + slug), never by slug alone.
 
 import template from "../../page/widget.html";
 import type { City, Country, Instant, LocalDate, Rendered } from "../types";

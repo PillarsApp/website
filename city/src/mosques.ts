@@ -151,7 +151,7 @@ export function toMosque(meta: NearbyWire, today: TodayWire, date: LocalDate): M
   };
 }
 
-// Only all-caps names are changed. build.mjs:121-122.
+// Only all-caps names are changed.
 export function titleCase(name: string): string {
   return name === name.toUpperCase() && name !== name.toLowerCase()
     ? name.toLowerCase().replace(/\p{L}+/gu, (w) => w[0].toUpperCase() + w.slice(1))

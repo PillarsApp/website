@@ -21,7 +21,7 @@ export function plainText(html: string): string {
 
 // Headings in Title Case (first letter of every word; existing capitals such
 // as BST, GMT and prayer names are left as they are). Text only, never
-// tags or attributes. build.mjs:507-511.
+// tags or attributes.
 const titleWords = (t: string) => t.replace(/(^|[\s(])([a-z])/g, (_, p: string, c: string) => p + c.toUpperCase());
 export function titleHeadings(html: string): string {
   return html.replace(/<(h[1-3])([^>]*)>([\s\S]*?)<\/\1>/g, (_, tag: string, attrs: string, inner: string) =>
@@ -45,7 +45,7 @@ export function fillRegions(template: string, fill: Readonly<Record<string, stri
   return template.replace(REGION_RE, (_, name: string) => `<!-- build:${name} -->\n${fill[name]}\n<!-- /build:${name} -->`);
 }
 
-// Removes CSS comments and collapses whitespace: build.mjs:542-543.
+// Removes CSS comments and collapses whitespace.
 export function minifyCss(css: string): string {
   return css.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ").replace(/\s*([{}:;,>])\s*/g, "$1").replace(/;}/g, "}").trim();
 }

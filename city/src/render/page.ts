@@ -1,6 +1,6 @@
 // The city page. A pure function of PageInput: no fetch, no env, no clock
-// reads, no filesystem. Port of build.mjs lines 172-511 with every URL taken
-// from input.links and every time from a CityClock.
+// reads, no filesystem. Every URL comes from input.links and every time from
+// a CityClock.
 //
 // Template: page/template.html, imported as text. Its regions are exactly the
 // keys of regions() below; test/page.test.ts asserts the two sets are equal.

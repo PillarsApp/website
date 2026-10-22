@@ -10,7 +10,7 @@
   var city = JSON.parse(document.getElementById('city-data').textContent);
   var tz = city.timezone;
   var params = new URLSearchParams(location.search);
-  // Clock comes from the country config (build.mjs); ?clock=12|24 overrides it.
+  // Clock comes from the country config (src/cities.ts); ?clock=12|24 overrides it.
   var clockParam = params.get('clock');
   var use24h = clockParam === '24' || clockParam === '12' ? clockParam === '24' : city.clock === 24;
   var root = document.documentElement;
@@ -614,7 +614,7 @@
     asrTimer = setTimeout(function () { animateNext = true; render(); }, 420);   // after the digit roll
   }
 
-  // ---------- Pre-rendered SEO content (build.mjs) ----------
+  // ---------- Server-rendered SEO content (src/render/page.ts) ----------
   // The page ships with the build day's times as HTML. If the visitor's "today"
   // differs (stale build, or the page left open past midnight), refresh the
   // today-values and the timetable highlight; the "Updated" stamp stays true.
