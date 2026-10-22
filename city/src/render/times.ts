@@ -52,6 +52,7 @@ export interface CityClock {
   readonly calc: CalcInfo;
   today(now: Instant): LocalDate;
   nextMidnight(now: Instant): Instant; // city-local 00:00 after `now`
+  localInstant(d: LocalDate, h: number, mi: number): Instant; // the instant city-local wall time h:mi on d
   addDays(d: LocalDate, n: number): LocalDate;
   daysInMonth(year: number, month: number): number;
   day(d: LocalDate): DayTimes; // memoized per clock instance
@@ -68,6 +69,7 @@ export interface CityClock {
   hijri(d: LocalDate): HijriDate;
   zoneAbbr(ms: Instant): string; // "BST"
   zoneLong(ms: Instant): string; // "British Summer Time"
+  zoneAbbrOn(d: LocalDate): string; // abbreviation at noon UTC on that date, memoized
   // First date after `from` within a year on which the zone abbreviation
   // changes, or null (no DST).
   nextClockChange(from: LocalDate): LocalDate | null;
@@ -223,6 +225,10 @@ export function cityClock(city: City, country: Country): CityClock {
       const [y, m, d] = ymdParts(addDays(ymdOf(now), 1));
       return zoned(y, m, d, 0, 0);
     },
+    localInstant(d, h, mi) {
+      const [y, m, day] = ymdParts(d);
+      return zoned(y, m, day, h, mi);
+    },
     addDays,
     daysInMonth: (year, month) => new Date(Date.UTC(year, month, 0)).getUTCDate(),
     day: dayFor,
@@ -245,6 +251,7 @@ export function cityClock(city: City, country: Country): CityClock {
     hijri,
     zoneAbbr,
     zoneLong,
+    zoneAbbrOn: abbrAt,
     nextClockChange(from) {
       if (clockChanges.has(from)) return clockChanges.get(from)!;
       let found: LocalDate | null = null;

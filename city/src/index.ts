@@ -6,16 +6,22 @@
 // Orange-to-Orange either would hand the request to Webflow, which 301s the
 // slash away and 404s.
 
-import { routes, canonicalRedirect, type RouteName, type RouteParams } from "./routes";
+import { routes, canonicalRedirect, linksFor, type RouteName, type RouteParams } from "./routes";
 import { staticRegistry, type CityRegistry } from "./registry";
+import { noMosques, type MosqueSource } from "./mosques";
+import { renderCityPage } from "./render/page";
+import { cityClock } from "./render/times";
+import type { City, Country, Instant, LocalDate, Rendered } from "./types";
 
 export interface Deps {
   registry: CityRegistry;
-  now: () => number;
+  mosqueSource: (env: Env) => MosqueSource;
+  now: () => Instant;
 }
 
 const defaultDeps: Deps = {
   registry: staticRegistry(),
+  mosqueSource: () => noMosques,
   now: Date.now,
 };
 
@@ -29,14 +35,47 @@ interface Call<P> {
 }
 type Handler<P> = (call: Call<P>) => Promise<Response>;
 
+const notImplemented: Handler<unknown> = async () => new Response("not implemented", { status: 501 });
+
 // Typed over the route table: a route without a handler is a compile error,
 // and so is a handler for a route that does not exist.
 const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
-  hub: async () => new Response("not implemented", { status: 501 }),
-  country: async () => new Response("not implemented", { status: 501 }),
-  city: async () => new Response("not implemented", { status: 501 }),
-  widget: async () => new Response("not implemented", { status: 501 }),
+  hub: notImplemented,
+  country: notImplemented,
+  city: async ({ url, params, env, deps }) => {
+    const city = await deps.registry.get(params);
+    if (!city) return notFound();
+    const country = deps.registry.country(city.country)!;
+    const clock = cityClock(city, country);
+    const now = devNow(url, env, city, country) ?? deps.now();
+    const date = clock.today(now);
+    const [mosques, nearby] = await Promise.all([
+      (city.mosques ? deps.mosqueSource(env) : noMosques).forCity(city, date),
+      deps.registry.nearby(city, 10),
+    ]);
+    const rendered = renderCityPage({
+      city, country, date, now, mosques,
+      links: linksFor(city, nearby),
+      indexable: env.ENVIRONMENT === "production",
+    });
+    return htmlResponse(rendered);
+  },
+  widget: notImplemented,
 };
+
+// In dev only, ?now=YYYY-MM-DDTHH:mm (city-local) pins the server's clock the
+// way it pins city.js, so the rendered tables and FAQ match what the browser
+// shows. Ignored everywhere else, so it can never reach a cache key.
+function devNow(url: URL, env: Env, city: City, country: Country): Instant | null {
+  if (env.ENVIRONMENT !== "dev") return null;
+  const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/.exec(url.searchParams.get("now") ?? "");
+  if (!m) return null;
+  return cityClock(city, country).localInstant(m[1] as LocalDate, +m[2], +m[3]);
+}
+
+function htmlResponse(rendered: Rendered): Response {
+  return new Response(rendered.html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
 
 export async function handleFetch(request: Request, env: Env, ctx: ExecutionContext, deps: Deps = defaultDeps): Promise<Response> {
   const url = new URL(request.url);

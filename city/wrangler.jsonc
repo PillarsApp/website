@@ -8,8 +8,10 @@
   "compatibility_date": "2026-07-01",
   // observability IS inherited by named envs (unlike vars and assets).
   "observability": { "enabled": true, "head_sampling_rate": 1 },
-  // page/*.html and page/city.css are imported as strings by the renderer.
-  "rules": [{ "type": "Text", "globs": ["page/**/*.html", "page/**/*.css"] }],
+  // page/template.html, page/widget.html (wrangler's default Text rule) and
+  // page/city.css are imported as strings by the renderer. fallthrough keeps
+  // the default rule for .html.
+  "rules": [{ "type": "Text", "globs": ["**/*.css"], "fallthrough": true }],
   // Fonts, vendored adhan and the hashed client bundle live on disk at the
   // path they are served from (`public/prayer-times/_/x` is `/prayer-times/_/x`
   // on staging and on the production route alike). Assets answer before the
