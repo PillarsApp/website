@@ -554,6 +554,45 @@
       '<span class="asr-thumb" aria-hidden="true"></span>' +
       btn('earlier', 'Earlier', !asrLater) + btn('later', 'Later', asrLater) + '</span>';
   }
+  // SwiftUI contentTransition(.numericText()) feel: only the digits that change roll, old glyph out (up for
+  // Later, down for Earlier) with a blur, new glyph in from the other side; left to right with a small stagger.
+  // Characters keep their places (tabular figures), so nothing in the row moves. Screen readers get the
+  // final time once, from a hidden copy; the per-character spans are removed when the roll ends.
+  function morphTime(t, next, dir) {
+    var prev = t.textContent;
+    if (prev === next) return;
+    if (prev.length !== next.length) { t.textContent = next; return; }
+    t.textContent = '';
+    var sr = document.createElement('span');
+    sr.className = 'sr-only';
+    sr.textContent = next;
+    var vis = document.createElement('span');
+    vis.setAttribute('aria-hidden', 'true');
+    t.appendChild(sr); t.appendChild(vis);
+    var anims = [], k = 0, E = 'cubic-bezier(.2, .8, .2, 1)';
+    for (var i = 0; i < next.length; i++) {
+      var cell = document.createElement('span');
+      cell.className = 'dg';
+      cell.textContent = next[i];
+      vis.appendChild(cell);
+      if (prev[i] === next[i]) continue;
+      var old = document.createElement('span');
+      old.className = 'dg-old';
+      old.textContent = prev[i];
+      cell.appendChild(old);
+      var o = { duration: 320, delay: 25 * k++, easing: E, fill: 'both' };
+      anims.push(old.animate([
+        { transform: 'none', filter: 'blur(0)', opacity: 1 },
+        { transform: 'translateY(' + (6 * dir) + 'px)', filter: 'blur(2px)', opacity: 0 }], o));
+      anims.push(cell.animate([
+        { transform: 'translateY(' + (-6 * dir) + 'px)', filter: 'blur(2px)', opacity: 0 },
+        { transform: 'none', filter: 'blur(0)', opacity: 1 }], o));
+    }
+    var cleaned = false;
+    var clean = function () { if (cleaned) return; cleaned = true; if (t.contains(vis)) t.textContent = next; };
+    Promise.all(anims.map(function (a) { return a.finished; })).then(clean, clean);
+    setTimeout(clean, 320 + 25 * k + 200);   // background tabs may never finish the animations
+  }
   var asrTimer = 0;
   function setAsr(later) {
     if (later === asrLater) return;
@@ -570,15 +609,9 @@
     });
     var t = toggle.closest('.row').querySelector('.t');
     var next = formatTime(dayFor(selected).t[3]);
-    // Crossfade in place: width pinned so the swap never shifts the row.
-    t.style.minWidth = t.offsetWidth + 'px';
-    t.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 90, easing: 'ease-in' })
-      .onfinish = function () {
-        t.textContent = next;
-        t.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 90, easing: 'ease-out' });
-      };
+    morphTime(t, next, later ? -1 : 1);
     clearTimeout(asrTimer);
-    asrTimer = setTimeout(function () { animateNext = true; render(); }, 290);
+    asrTimer = setTimeout(function () { animateNext = true; render(); }, 420);   // after the digit roll
   }
 
   // ---------- Pre-rendered SEO content (build.mjs) ----------
