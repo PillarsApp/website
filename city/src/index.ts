@@ -11,7 +11,8 @@ import { staticRegistry, type CityRegistry } from "./registry";
 import { liveMosqueSource, noMosques, type MosqueSource } from "./mosques";
 import { renderCityPage } from "./render/page";
 import { cityClock } from "./render/times";
-import type { City, Country, Instant, LocalDate, Rendered } from "./types";
+import { edgeCache } from "./cache";
+import type { City, Country, Instant, LocalDate } from "./types";
 
 export interface Deps {
   registry: CityRegistry;
@@ -35,6 +36,8 @@ interface Call<P> {
 }
 type Handler<P> = (call: Call<P>) => Promise<Response>;
 
+const HTML = "text/html; charset=utf-8";
+
 const notImplemented: Handler<unknown> = async () => new Response("not implemented", { status: 501 });
 
 // Typed over the route table: a route without a handler is a compile error,
@@ -42,23 +45,24 @@ const notImplemented: Handler<unknown> = async () => new Response("not implement
 const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
   hub: notImplemented,
   country: notImplemented,
-  city: async ({ url, params, env, deps }) => {
+  city: async ({ url, params, request, env, ctx, deps }) => {
     const city = await deps.registry.get(params);
     if (!city) return notFound();
     const country = deps.registry.country(city.country)!;
     const clock = cityClock(city, country);
     const now = devNow(url, env, city, country) ?? deps.now();
     const date = clock.today(now);
-    const [mosques, nearby] = await Promise.all([
-      (city.mosques ? deps.mosqueSource(env) : noMosques).forCity(city, date),
-      deps.registry.nearby(city, 10),
-    ]);
-    const rendered = renderCityPage({
-      city, country, date, now, mosques,
-      links: linksFor(city, nearby),
-      indexable: env.ENVIRONMENT === "production",
+    return edgeCache(env, ctx).respond({ request, path: routes.city.href(city), date, now, contentType: HTML }, async () => {
+      const [mosques, nearby] = await Promise.all([
+        (city.mosques ? deps.mosqueSource(env) : noMosques).forCity(city, date),
+        deps.registry.nearby(city, 10),
+      ]);
+      return renderCityPage({
+        city, country, date, now, mosques,
+        links: linksFor(city, nearby),
+        indexable: env.ENVIRONMENT === "production",
+      });
     });
-    return htmlResponse(rendered);
   },
   widget: notImplemented,
 };
@@ -71,10 +75,6 @@ function devNow(url: URL, env: Env, city: City, country: Country): Instant | nul
   const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/.exec(url.searchParams.get("now") ?? "");
   if (!m) return null;
   return cityClock(city, country).localInstant(m[1] as LocalDate, +m[2], +m[3]);
-}
-
-function htmlResponse(rendered: Rendered): Response {
-  return new Response(rendered.html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
 
 export async function handleFetch(request: Request, env: Env, ctx: ExecutionContext, deps: Deps = defaultDeps): Promise<Response> {

@@ -18,8 +18,9 @@ function ldGraph(html: string): Record<string, any>[] {
   return JSON.parse(m[1])["@graph"];
 }
 
+// dev bypasses the edge cache, so each test renders its own mosque section.
 async function render(section: MosqueSection = DOWN) {
-  const res = await fetchWith("/prayer-times/uk/london/", deps(section));
+  const res = await fetchWith("/prayer-times/uk/london/", deps(section), { ENVIRONMENT: "dev" });
   return { res, html: await res.text() };
 }
 
@@ -55,8 +56,8 @@ describe("London page", () => {
 
   it("is noindex outside production and indexable in production", async () => {
     expect((await render()).html).toContain('<meta name="robots" content="noindex">');
-    const prod = await fetchWith("/prayer-times/uk/london/", deps(DOWN), { ENVIRONMENT: "production" });
-    expect(await prod.text()).not.toContain('name="robots"');
+    const input = { city: london, country: COUNTRIES.uk, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, []), indexable: true };
+    expect(renderCityPage(input).html).not.toContain('name="robots"');
   });
 
   it("answers an unknown city or country with the Worker's 404", async () => {
