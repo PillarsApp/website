@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { existsSync, watch } from "node:fs";
 import { readFile, writeFile, readdir, unlink, mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { bundleTimetables } from "./timetable-data.mjs";
 
 const root = (p) => fileURLToPath(new URL(`../${p}`, import.meta.url));
 const SRC = root("page/city.js");
@@ -32,6 +33,7 @@ async function lintTemplate() {
 
 async function once() {
   await lintTemplate();
+  await bundleTimetables();
   const result = await build({ entryPoints: [SRC], minify: true, target: "es2017", write: false, logLevel: "warning" });
   const code = result.outputFiles[0].contents;
   const hash = createHash("sha1").update(code).digest("hex").slice(0, 8);

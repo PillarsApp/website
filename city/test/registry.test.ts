@@ -4,9 +4,9 @@ import { CITIES } from "../src/cities";
 import type { City } from "../src/types";
 
 const london = CITIES[0];
-const leeds: City = { country: "uk", slug: "leeds", name: "Leeds", lat: 53.8, lng: -1.55, timezone: "Europe/London", datePublished: "2026-11-01" };
+const leeds: City = { country: "uk", slug: "leeds", name: "Leeds", lat: 53.8, lng: -1.55, timezone: "Europe/London", datePublished: "2026-11-01", standard: london.standard };
 const luton: City = { ...leeds, slug: "luton", name: "Luton", lat: 51.88, lng: -0.42 };
-const toronto: City = { country: "ca", slug: "toronto", name: "Toronto", lat: 43.65, lng: -79.38, timezone: "America/Toronto", datePublished: "2026-11-01" };
+const toronto: City = { country: "ca", slug: "toronto", name: "Toronto", lat: 43.65, lng: -79.38, timezone: "America/Toronto", datePublished: "2026-11-01", standard: london.standard };
 
 describe("registry", () => {
   it("ships a valid registry", async () => {

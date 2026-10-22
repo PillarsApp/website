@@ -5,13 +5,13 @@ import { renderCityPage } from "../src/render/page";
 import { cityClock } from "../src/render/times";
 import { linksFor } from "../src/routes";
 import { DOWN } from "./fixtures";
-import { CHICAGO, HOUSTON, LONDON, LOS_ANGELES, NEW_YORK, SEATTLE, TORONTO } from "./city-fixtures";
+import { CHICAGO, HOUSTON, ISNA_GPS, LONDON, LOS_ANGELES, NEW_YORK, SEATTLE, TORONTO } from "./city-fixtures";
 import type { City, LocalDate } from "../src/types";
 
 function page(city: City, date: LocalDate = "2026-10-22") {
   const country = COUNTRIES[city.country];
   const now = cityClock(city, country).localInstant(date, 12, 0);
-  const html = renderCityPage({ city, country, date, now, mosques: DOWN, links: linksFor(city, []), audience: "public" }).html;
+  const html = renderCityPage({ city, country, timetable: null, date, now, mosques: DOWN, links: linksFor(city, []), audience: "public" }).html;
   const visible = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, "");
   return { html, text: plainText(visible).replace(/\s+/g, " ") };
 }
@@ -77,7 +77,7 @@ describe("time zone wording", () => {
 
 describe("midsummer Isha answer", () => {
   const ISHA_Q = "Why is Isha so late in";
-  const ANCHORAGE: City = { country: "us", slug: "anchorage", name: "Anchorage", lat: 61.2181, lng: -149.9003, timezone: "America/Anchorage", datePublished: "2026-10-22" };
+  const ANCHORAGE: City = { country: "us", slug: "anchorage", name: "Anchorage", lat: 61.2181, lng: -149.9003, timezone: "America/Anchorage", datePublished: "2026-10-22", standard: ISNA_GPS };
 
   it("does not say the sky stays light where the sun does reach the Isha angle", () => {
     for (const city of [NEW_YORK, HOUSTON, TORONTO]) {

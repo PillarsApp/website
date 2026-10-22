@@ -14,7 +14,8 @@ describe("hub and country stubs", () => {
     expect(html).toContain('<meta name="robots" content="noindex">');
     expect(html).toContain('<a href="/prayer-times/uk/london/">London</a>');
     expect(html).toContain('<a href="/prayer-times/uk/">United Kingdom</a>');
-    expect(html).not.toContain("/prayer-times/us/");
+    expect(html).toContain('<a href="/prayer-times/us/chicago/">Chicago</a>');
+    expect(html).toContain('<a href="/prayer-times/ca/">Canada</a>');
   });
 
   it("serve a country with cities and 404 an unknown or empty one", async () => {

@@ -7,6 +7,7 @@ import { CITIES, COUNTRIES } from "../src/cities";
 import { renderCityPage, type TemplateRegion } from "../src/render/page";
 import { staticRegistry } from "../src/registry";
 import { linksFor } from "../src/routes";
+import { timetableFor } from "../src/timetables";
 import { DOWN, FOUR_MOSQUES, LONDON_NOON_OCT_22, deps, fetchWith } from "./fixtures";
 import type { MosqueSection } from "../src/types";
 
@@ -55,7 +56,7 @@ describe("London page", () => {
 
   it("is noindex outside production and indexable in production", async () => {
     expect((await render()).html).toContain('<meta name="robots" content="noindex">');
-    const input = { city: london, country: COUNTRIES.uk, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, []), audience: "public" as const };
+    const input = { city: london, country: COUNTRIES.uk, timetable: null, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, []), audience: "public" as const };
     expect(renderCityPage(input).html).not.toContain('name="robots"');
   });
 
@@ -82,13 +83,13 @@ describe("London page", () => {
   });
 
   it("omits the nearby card when no city is near", () => {
-    const input = { city: london, country: COUNTRIES.uk, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, []), audience: "public" as const };
+    const input = { city: london, country: COUNTRIES.uk, timetable: null, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, []), audience: "public" as const };
     expect(renderCityPage(input).html).not.toContain('class="nearby"');
   });
 
   it("lists nearby cities from the registry when the country has more", () => {
     const luton = { ...london, slug: "luton", name: "Luton", lat: 51.88, lng: -0.42 };
-    const input = { city: london, country: COUNTRIES.uk, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, [luton]), audience: "public" as const };
+    const input = { city: london, country: COUNTRIES.uk, timetable: null, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, [luton]), audience: "public" as const };
     const html = renderCityPage(input).html;
     expect(html).toContain('<li><a href="/prayer-times/uk/luton/">Luton</a></li>');
   });
@@ -125,7 +126,7 @@ describe("the registry's cities all render", () => {
     const reg = staticRegistry();
     for (const c of CITIES) {
       const country = reg.country(c.country)!;
-      const input = { city: c, country, date: cityClock(c, country).today(Date.now()), now: Date.now(), mosques: DOWN, links: linksFor(c, []), audience: "preview" as const };
+      const input = { city: c, country, timetable: timetableFor(c), date: cityClock(c, country).today(Date.now()), now: Date.now(), mosques: DOWN, links: linksFor(c, []), audience: "preview" as const };
       expect(renderCityPage(input).html).toContain(`${c.name} Prayer Times`);
     }
   });

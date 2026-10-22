@@ -1,5 +1,5 @@
 import * as adhan from "adhan";
-import type { Calc, City, Country, Instant, LocalDate } from "../types";
+import type { Calc, City, Country, DayOrigin, Instant, LocalDate, Timetable, TimetableDay, WallClock } from "../types";
 
 export const PRAYERS = [
   { key: "fajr", name: "Fajr" },
@@ -14,6 +14,7 @@ export interface DayTimes {
   readonly date: LocalDate;
   readonly t: readonly [Instant, Instant, Instant, Instant, Instant, Instant];
   readonly asrHanafi: Instant;
+  readonly origin: DayOrigin;
 }
 
 export interface CalcInfo {
@@ -124,7 +125,7 @@ function paramsFor(calc: Calc, madhab: "Shafi" | "Hanafi"): adhan.CalculationPar
   return p;
 }
 
-export function cityClock(city: City, country: Country): CityClock {
+export function cityClock(city: City, country: Country, timetable: Timetable | null = null): CityClock {
   const calc: Calc = city.calc ?? country.calc;
   const tz = city.timezone;
   const coords = new adhan.Coordinates(city.lat, city.lng);
@@ -165,18 +166,51 @@ export function cityClock(city: City, country: Country): CityClock {
   const zoneAbbr = zoneName("short");
   const zoneLong = zoneName("long");
 
+  const calculated = (d: LocalDate): DayTimes => {
+    const [y, m, day] = ymdParts(d);
+    const at = new Date(y, m - 1, day);
+    const pt = new adhan.PrayerTimes(coords, at, standard);
+    return {
+      date: d,
+      t: [pt.fajr.getTime(), pt.sunrise.getTime(), pt.dhuhr.getTime(), pt.asr.getTime(), pt.maghrib.getTime(), pt.isha.getTime()],
+      asrHanafi: new adhan.PrayerTimes(coords, at, hanafi).asr.getTime(),
+      origin: "calculated",
+    };
+  };
+
+  // The timetable's own row for d, else last year's row for the same month and day (29 Feb falls back
+  // to 28 Feb) carried forward by whole days, so a clock change that moves between years keeps the
+  // same solar time rather than the same wall clock.
+  const publishedRow = (d: LocalDate): { readonly wall: TimetableDay; readonly on: LocalDate; readonly origin: "published" | "last-year" } | null => {
+    if (!timetable) return null;
+    if (timetable.days[d]) return { wall: timetable.days[d], on: d, origin: "published" };
+    const [y, m, day] = ymdParts(d);
+    const lastYear = ymd(y - 1, m, m === 2 && day === 29 ? 28 : day);
+    return timetable.days[lastYear] ? { wall: timetable.days[lastYear], on: lastYear, origin: "last-year" } : null;
+  };
+  const wallOn = (on: LocalDate, d: LocalDate, hm: WallClock): Instant => {
+    const [h, mi] = hm.split(":").map(Number);
+    const [y, m, day] = ymdParts(on);
+    return zoned(y, m, day, h, mi) + Math.round((noonUTC(d).getTime() - noonUTC(on).getTime()) / 864e5) * 864e5;
+  };
+
   const days = new Map<LocalDate, DayTimes>();
   const dayFor = (d: LocalDate): DayTimes => {
     let cached = days.get(d);
     if (!cached) {
-      const [y, m, day] = ymdParts(d);
-      const at = new Date(y, m - 1, day);
-      const pt = new adhan.PrayerTimes(coords, at, standard);
-      cached = {
-        date: d,
-        t: [pt.fajr.getTime(), pt.sunrise.getTime(), pt.dhuhr.getTime(), pt.asr.getTime(), pt.maghrib.getTime(), pt.isha.getTime()],
-        asrHanafi: new adhan.PrayerTimes(coords, at, hanafi).asr.getTime(),
-      };
+      const calc = calculated(d);
+      const row = publishedRow(d);
+      if (!row) cached = calc;
+      else {
+        // Timetable columns are [fajr, sunrise, dhuhr, asr1, asr2, maghrib, isha]; a null column is calculated.
+        const at = (column: number, fallback: Instant) => { const hm = row.wall[column]; return hm === null ? fallback : wallOn(row.on, d, hm); };
+        cached = {
+          date: d,
+          t: [at(0, calc.t[0]), at(1, calc.t[1]), at(2, calc.t[2]), at(3, calc.t[3]), at(5, calc.t[4]), at(6, calc.t[5])],
+          asrHanafi: at(4, calc.asrHanafi),
+          origin: row.origin,
+        };
+      }
       days.set(d, cached);
     }
     return cached;

@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { cityClock } from "../src/render/times";
 import { CITIES, COUNTRIES } from "../src/cities";
 import type { City, LocalDate } from "../src/types";
+import { ISNA_GPS } from "./city-fixtures";
 
 const london = cityClock(CITIES[0], COUNTRIES.uk);
 const noonLondon = Date.UTC(2026, 9, 22, 11, 0);
 
 describe("London clock", () => {
-  it("computes 2026-10-22 as the committed build did", () => {
+  it("computes 2026-10-22 as the committed build did, with no timetable", () => {
     const day = london.day("2026-10-22");
     expect(day.t.map((t) => london.time(t))).toEqual(["06:00", "07:36", "12:50", "15:20", "17:56", "19:17"]);
     expect(london.time(day.asrHanafi)).toBe("16:02");
@@ -36,7 +37,7 @@ describe("London clock", () => {
 });
 
 describe("other zones and clocks", () => {
-  const dubai: City = { country: "us", slug: "dubai", name: "Dubai", lat: 25.2, lng: 55.27, timezone: "Asia/Dubai", datePublished: "2026-10-22", calc: { method: "Dubai", madhab: "Shafi", highLatitudeRule: "TwilightAngle" } };
+  const dubai: City = { country: "us", slug: "dubai", name: "Dubai", lat: 25.2, lng: 55.27, timezone: "Asia/Dubai", datePublished: "2026-10-22", calc: { method: "Dubai", madhab: "Shafi", highLatitudeRule: "TwilightAngle" }, standard: ISNA_GPS };
   const dubaiClock = cityClock(dubai, COUNTRIES.us);
 
   it("has no clock change in a zone without DST and finds it fast", () => {

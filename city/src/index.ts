@@ -5,9 +5,10 @@ import { renderCityPage } from "./render/page";
 import { renderWidget } from "./render/widget";
 import { renderHubStub, renderCountryStub, renderNotFound } from "./render/stubs";
 import { cityClock } from "./render/times";
+import { timetableFor } from "./timetables";
 import { SITE } from "./cities";
 import { edgeCache } from "./cache";
-import type { Audience, City, CityRef, Country, Instant, LocalDate, Rendered } from "./types";
+import type { Audience, City, CityRef, Country, Instant, LocalDate, Rendered, Timetable } from "./types";
 
 export interface Deps {
   registry: CityRegistry;
@@ -62,26 +63,27 @@ const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
     return stubResponse(renderCountryStub(country.name, cities.map(cityLink), HUB_LINK, audienceOf(env)));
   },
   city: (call) =>
-    serveCity(call, routes.city.href(call.params), async ({ city, country, date, now }) => {
+    serveCity(call, routes.city.href(call.params), async ({ city, country, timetable, date, now }) => {
       const { env, deps } = call;
       const [mosques, nearby] = await Promise.all([
         (city.mosques ? deps.mosqueSource(env) : noMosques).forCity(city, date),
         deps.registry.nearby(city, 10),
       ]);
       return renderCityPage({
-        city, country, date, now, mosques,
+        city, country, timetable, date, now, mosques,
         links: linksFor(city, nearby),
         audience: audienceOf(env),
       });
     }),
   widget: (call) =>
-    serveCity(call, routes.widget.href(call.params), async ({ city, country, date, now }) =>
-      renderWidget({ city, country, date, now, pageUrl: SITE.origin + routes.city.href(city) })),
+    serveCity(call, routes.widget.href(call.params), async ({ city, country, timetable, date, now }) =>
+      renderWidget({ city, country, timetable, date, now, pageUrl: SITE.origin + routes.city.href(city) })),
 };
 
 interface CityRender {
   readonly city: City;
   readonly country: Country;
+  readonly timetable: Timetable | null;
   readonly date: LocalDate;
   readonly now: Instant;
 }
@@ -93,7 +95,7 @@ async function serveCity(call: Call<CityRef>, path: string, render: (c: CityRend
   const country = deps.registry.country(city.country)!;
   const now = devNow(url, env, city, country) ?? deps.now();
   const date = cityClock(city, country).today(now);
-  return edgeCache(env, ctx).respond({ request, path, date, now, contentType: HTML }, () => render({ city, country, date, now }));
+  return edgeCache(env, ctx).respond({ request, path, date, now, contentType: HTML }, () => render({ city, country, timetable: timetableFor(city), date, now }));
 }
 
 function devNow(url: URL, env: Env, city: City, country: Country): Instant | null {
