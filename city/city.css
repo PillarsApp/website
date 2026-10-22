@@ -147,22 +147,22 @@ body.theme-night .sun { display: none; }
 }
 .current-name {
   margin: 0;
-  font: 500 min(30px, 7.4vw)/1.5 'Poppins', sans-serif;
+  font: 500 min(27.5px, 6.8vw)/1.5 'Poppins', sans-serif;
   color: var(--ink);
 }
-.current-name { white-space: nowrap; }
+.current-name { padding-right: 16px; text-wrap: balance; }   /* long city names wrap instead of running off */
 .current-name .dim { opacity: .5; }
 .countdown {
   margin: 2px 0 0 -7px;   /* app: SizedBox(2), pill at the column's 27px edge (title has +7) */
   display: inline-flex; align-items: center;
-  height: 24px;
-  padding: 2px 8px;
+  height: 30px;
+  padding: 3px 12px;
   border-radius: 15px;
   background: var(--count-bg);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
   color: var(--count-ink);
-  font: 400 14px/1.5 'Poppins', sans-serif;
+  font: 400 16px/1.5 'Poppins', sans-serif;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
