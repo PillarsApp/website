@@ -1,4 +1,8 @@
 /prayer-times/_/city.*.js
   Cache-Control: public, max-age=31536000, immutable
-/prayer-times/_/*
+/prayer-times/_/adhan-*.js
+  Cache-Control: public, max-age=31536000, immutable
+/prayer-times/_/fonts/*
+  Cache-Control: public, max-age=604800
+/prayer-times/_/*.png
   Cache-Control: public, max-age=604800
