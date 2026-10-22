@@ -240,7 +240,7 @@ interface MonthTable { readonly label: string; readonly note: string; readonly h
 function monthTable(view: View, year: number, month: number): MonthTable {
   const { input, clock } = view;
   const { city, date } = input;
-  const pad =(n: number) => String(n).padStart(2, "0");
+  const pad = (n: number) => String(n).padStart(2, "0");
   const at = (d: number) => `${year}-${pad(month)}-${pad(d)}` as LocalDate;
   const first = at(1);
   let rows = "";
@@ -300,7 +300,7 @@ function fajrCard(view: View): string {
   const otherMethods = c.method === "NorthAmerica"
     ? `the Muslim World League and Karachi methods put Fajr at 18°, which gives an earlier time than the ${c.fajrAngle}° used here.`
     : c.fajrAngle === 18
-    ?"ISNA puts Fajr at 15°, which gives a later time, while the Muslim World League and Karachi methods use 18° like this page but handle high latitudes differently."
+    ? "ISNA puts Fajr at 15°, which gives a later time, while the Muslim World League and Karachi methods use 18° like this page but handle high latitudes differently."
     : `the Muslim World League and Karachi methods put Fajr at 18° and ISNA at 15°, against ${c.fajrAngle}° here.`;
   const week = weekTable(view, `Fajr and sunrise in ${name}, next 7 days`, [["Fajr", (d) => clock.day(d).t[0]], ["Sunrise", (d) => clock.day(d).t[1]]]);
   return `
