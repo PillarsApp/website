@@ -74,3 +74,44 @@ describe("time zone wording", () => {
     }
   });
 });
+
+describe("midsummer Isha answer", () => {
+  const ISHA_Q = "Why is Isha so late in";
+  const ANCHORAGE: City = { country: "us", slug: "anchorage", name: "Anchorage", lat: 61.2181, lng: -149.9003, timezone: "America/Anchorage", datePublished: "2026-10-22" };
+
+  it("does not say the sky stays light where the sun does reach the Isha angle", () => {
+    for (const city of [NEW_YORK, HOUSTON, TORONTO]) {
+      const answer = faqAnswer(city, ISHA_Q);
+      expect(answer, city.slug).not.toMatch(/far enough north|barely gets fully dark|seasonal limits/);
+      expect(answer, city.slug).toContain("sunset comes late");
+      expect(answer, city.slug).toMatch(/Fajr is at .*, Maghrib at .* and Isha at /);
+    }
+  });
+
+  it("keeps the dark-sky claim for London, with its seasonal limits", () => {
+    const answer = faqAnswer(LONDON, ISHA_Q);
+    expect(answer).toContain("far enough north that the sky barely gets fully dark around midsummer");
+    expect(answer).toContain("applies seasonal limits");
+  });
+
+  it("makes the dark-sky claim for a far-north ISNA city but never mentions seasonal limits", () => {
+    const answer = faqAnswer(ANCHORAGE, ISHA_Q);
+    expect(answer).toContain("far enough north");
+    expect(answer).not.toContain("seasonal limits");
+  });
+
+  it("agrees with the Isha card about whether the sun reaches the angle", () => {
+    for (const city of [NEW_YORK, HOUSTON, TORONTO, LONDON, ANCHORAGE]) {
+      const { text } = page(city);
+      const cardSaysNever = text.includes("the sun never sinks");
+      expect(faqAnswer(city, ISHA_Q).includes("far enough north"), city.slug).toBe(cardSaysNever);
+    }
+  });
+
+  it("names seasonal limits only on pages whose method has them", () => {
+    for (const city of [NEW_YORK, HOUSTON, TORONTO, ANCHORAGE]) {
+      expect(page(city).text, city.slug).not.toMatch(/seasonal limits|Moonsighting/);
+    }
+    expect(page(LONDON).text).toContain("seasonal limits");
+  });
+});

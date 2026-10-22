@@ -1,7 +1,7 @@
 import template from "../../page/template.html";
 import cssSource from "../../page/city.css";
 import { SITE } from "../cities";
-import type { LocalDate, Mosque, MosqueSection, PageInput, PageLinks, PrayerKey, Rendered } from "../types";
+import type { City, LocalDate, Mosque, MosqueSection, PageInput, PageLinks, PrayerKey, Rendered } from "../types";
 import { cityClock, PRAYERS, type CityClock, type DayTimes } from "./times";
 import { esc, fillRegions, jsonInScript, minifyCss, plainText, titleHeadings } from "./html";
 import { icon } from "./icons";
@@ -175,6 +175,9 @@ function listCaption({ input, clock, today, methodName }: View): string {
 const HANAFI_ASR = 6;
 const EARTH_AXIAL_TILT_DEG = 23.44;
 
+// The deepest the sun sinks below the horizon at midsummer. Beyond this, a method with a larger twilight angle never sees full darkness.
+const midsummerMaxDepression = (city: City) => 90 - Math.abs(city.lat) - EARTH_AXIAL_TILT_DEG;
+
 const todaySpan = (clock: CityClock, today: DayTimes, i: number) =>
   `<span data-today="${i}">${clock.time(i === HANAFI_ASR ? today.asrHanafi : today.t[i])}</span>`;
 
@@ -218,7 +221,9 @@ function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly 
     text(`What time is Jumu'ah in ${name}?`,
       `Jumu'ah is prayed in place of Dhuhr. On ${clock.longDate(fri)} Dhuhr in ${name} begins at ${fmt(friDhuhr)}. Each mosque sets its own khutbah and jamaat times, so check with the mosque you attend.`),
     text(`Why is Isha so late in ${name} in summer?`,
-      `${name} is far enough north that the sky barely gets fully dark around midsummer. On ${clock.longDate(mid)}, Fajr is at ${fmt(midT[0])}, Maghrib at ${fmt(midT[4])} and Isha at ${fmt(midT[5])}. The ${methodName} method applies seasonal limits so Isha and Fajr stay at a practical time.`),
+      `${midsummerMaxDepression(city) < c.ishaAngle
+        ? `${name} is far enough north that the sky barely gets fully dark around midsummer.`
+        : `Isha begins when evening twilight ends, with the sun ${c.ishaAngle}° below the horizon, and in summer sunset comes late, so Isha follows it.`} On ${clock.longDate(mid)}, Fajr is at ${fmt(midT[0])}, Maghrib at ${fmt(midT[4])} and Isha at ${fmt(midT[5])}.${c.seasonalLimits ? ` The ${methodName} method applies seasonal limits so Isha and Fajr stay at a practical time.` : ""}`),
     text(`What is the Qibla direction in ${name}?`,
       `The Qibla from ${name} is ${qibla.bearing}° from true north, roughly ${qibla.compass}. That is the shortest path across the globe to the Kaaba in Makkah, which is why it points ${qibla.compass} rather than straight towards Saudi Arabia on a flat map.`),
   ];
@@ -301,7 +306,7 @@ function fajrCard(view: View): string {
     <h2 id="fajr">${icon("wb_twilight")}Fajr time in ${name} today</h2>
     <p class="answer">Fajr in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(0)}; sunrise is at ${td(1)}, so Fajr ends then. Tomorrow, ${clock.longDate(tomorrow)}, Fajr is at ${clock.time(clock.day(tomorrow).t[0])}.</p>
     <p>These times use the ${view.methodName} method, with Fajr when the sun is ${c.fajrAngle}° below the horizon${highLat}.${lt ? ` Many ${name} mosques publish the ${esc(lt.name)} instead, so their Fajr (often spelled Fajar) can differ by several minutes.` : " Fajr is also often spelled Fajar."}</p>
-    <p>Other websites may show a different Fajr time for ${name} because they use other calculation methods: ${otherMethods}${Math.abs(city.lat) > 48 ? ` The gap is widest in summer, when the sky over ${name} never gets fully dark.` : ""}</p>${week}
+    <p>Other websites may show a different Fajr time for ${name} because they use other calculation methods: ${otherMethods}${midsummerMaxDepression(city) < c.fajrAngle ? ` The gap is widest in summer, when the sky over ${name} never gets fully dark.` : ""}</p>${week}
     </div>`;
 }
 
@@ -331,7 +336,7 @@ function ishaCard(view: View): string {
   const tomorrow = clock.addDays(date, 1);
   const lt = city.localTimetable;
   const highLat = c.seasonalLimits ? ` and seasonal limits for ${name}'s high latitude` : "";
-  const maxDepression = 90 - Math.abs(city.lat) - EARTH_AXIAL_TILT_DEG;
+  const maxDepression = midsummerMaxDepression(city);
   const week = weekTable(view, `Isha and the next Fajr in ${name}, next 7 days`, [["Isha", (d) => clock.day(d).t[5]], ["Next Fajr", (d) => clock.day(clock.addDays(d, 1)).t[0]]]);
   return `
     <div class="card">
