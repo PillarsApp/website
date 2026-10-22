@@ -1,8 +1,8 @@
 import template from "../../page/template.html";
 import cssSource from "../../page/city.css";
 import { SITE } from "../cities";
-import type { City, LocalDate, Mosque, MosqueSection, PageInput, PageLinks, PrayerKey, Rendered } from "../types";
 import { timetableId } from "../timetables";
+import type { City, DayOrigin, LocalDate, Mosque, MosqueSection, PageInput, PageLinks, PrayerKey, Rendered, Standard, Timetable, TimetableDay } from "../types";
 import { cityClock, PRAYERS, type CityClock, type DayTimes } from "./times";
 import { esc, fillRegions, jsonInScript, minifyCss, plainText, titleHeadings } from "./html";
 import { icon } from "./icons";
@@ -13,7 +13,7 @@ const CSS = minifyCss(cssSource);
 export const UNAVAILABLE_RETRY_MS = 10 * 60 * 1000;
 
 export type TemplateRegion =
-  | "html" | "head" | "css" | "preload" | "chip" | "date" | "list-open" | "list" | "caption" | "seo" | "banner" | "scripts" | "analytics";
+  | "html" | "head" | "css" | "preload" | "chip" | "dialog" | "date" | "list-open" | "list" | "caption" | "seo" | "banner" | "scripts" | "analytics";
 
 export function renderCityPage(input: PageInput): Rendered {
   const clock = cityClock(input.city, input.country, input.timetable);
@@ -31,6 +31,9 @@ interface View {
   readonly clock: CityClock;
   readonly today: DayTimes;
   readonly methodName: string;
+  readonly standard: Standard;
+  // The standard's times come from a timetable file, so a day that is not in it is an estimate.
+  readonly published: boolean;
   readonly faq: readonly Faq[];
 }
 
@@ -39,20 +42,32 @@ interface Faq {
   readonly answerHtml: string;
 }
 
+type Ctx = Omit<View, "faq">;
+
+// How the copy refers to the standard mid-sentence: "the London Unified Prayer Timetable",
+// "Birmingham Central Mosque's timetable", "the ISNA method".
+const standardRef = (s: Standard) => (s.kind === "mosque" ? `${s.name}'s timetable` : `the ${s.name}`);
+
+const ESTIMATE_MARK = '<span class="est" title="Estimated">*</span>';
+const JAMAAH_LINE = "Each mosque sets its own jama'ah (congregation) times, so check with the mosque you attend.";
+
 function regions(input: PageInput, clock: CityClock): Record<TemplateRegion, string> {
   const today = clock.day(input.date);
-  const view: View = { input, clock, today, methodName: clock.calc.methodLabel, faq: faqList(input, clock, today) };
   const { city, links } = input;
+  const ctx: Ctx = { input, clock, today, methodName: clock.calc.methodLabel, standard: city.standard, published: timetableId(city.standard) !== null };
+  const view: View = { ...ctx, faq: faqList(ctx) };
   return {
     html: `<html lang="${input.country.lang}">`,
     head: head(view),
     css: `<style id="city-css">${CSS}</style>`,
     preload: preloadFonts(links),
-    chip: `<span class="chip-name" id="chip-name">${esc(city.name)} Prayer Times</span>`,
+    chip: `<span class="chip-name" id="chip-name">${esc(city.name)} Prayer Times</span>
+      <button type="button" class="chip-badge" id="chip-badge" aria-haspopup="dialog" aria-controls="std-dialog" aria-label="About these times: ${esc(city.standard.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m23 12-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82L8.6 22.5l3.4-1.47 3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z"/></svg></button>`,
+    dialog: standardDialog(view),
     date: `<div class="date-greg" id="date-greg">${clock.appDate(input.date)}</div>
         <div class="date-hijri" id="date-hijri">${clock.hijri(input.date).long}</div>`,
     "list-open": `<ul class="list" id="list" aria-label="${esc(city.name)} prayer times today">`,
-    list: replicaList(clock, today),
+    list: replicaList(view),
     caption: listCaption(view),
     seo: titleHeadings(seoSection(view)),
     banner: `<span class="ab-title" id="ab-title">${SITE.name} App: ${esc(city.name)} Prayer Times</span>`,
@@ -61,18 +76,43 @@ function regions(input: PageInput, clock: CityClock): Record<TemplateRegion, str
   };
 }
 
-function timesText(clock: CityClock, today: DayTimes): string {
-  return PRAYERS.map((p, i) => `${p.name} ${clock.time(today.t[i])}${i === 3 ? ` (Hanafi ${clock.time(today.asrHanafi)})` : ""}`).join(", ");
+const firstAsr = (view: Ctx, day: DayTimes) => (view.standard.asrFirst === "Hanafi" ? day.asrHanafi : day.t[3]);
+const otherAsr = (view: Ctx, day: DayTimes) => (view.standard.asrFirst === "Hanafi" ? day.t[3] : day.asrHanafi);
+const otherAsrLabel = (view: Ctx) => (view.standard.asrFirst === "Hanafi" ? "Shafi'i" : "Hanafi");
+
+function timesText(view: Ctx): string {
+  const { clock, today } = view;
+  return PRAYERS.map((p, i) => (i === 3
+    ? `Asr ${clock.time(firstAsr(view, today))} (${otherAsrLabel(view)} ${clock.time(otherAsr(view, today))})`
+    : `${p.name} ${clock.time(today.t[i])}`)).join(", ");
+}
+
+// Timetable rows the client can reach by stepping days: from the first of last month to the end of the
+// month six months on, plus last year's row for any day in that span the timetable has not published.
+// Each row is one string, "06:00 07:34 12:50 15:21 16:03 17:56 19:21", with "-" for a null column.
+function inlineDays(timetable: Timetable, clock: CityClock, date: LocalDate): Record<LocalDate, string> {
+  const [y, m] = [Number(date.slice(0, 4)), Number(date.slice(5, 7))];
+  const monthStart = (months: number) => { const t = new Date(Date.UTC(y, m - 1 + months, 1)); return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, "0")}-01` as LocalDate; };
+  const row = (r: TimetableDay) => r.map((v) => v ?? "-").join(" ");
+  const out: Record<LocalDate, string> = {};
+  for (let d = monthStart(-1), end = monthStart(7); d < end; d = clock.addDays(d, 1)) {
+    const own = timetable.days[d];
+    if (own) { out[d] = row(own); continue; }
+    const [yy, mm, dd] = d.split("-").map(Number);
+    const lastYear = `${yy - 1}-${d.slice(5, 8)}${String(mm === 2 && dd === 29 ? 28 : dd).padStart(2, "0")}` as LocalDate;
+    if (timetable.days[lastYear]) out[lastYear] = row(timetable.days[lastYear]);
+  }
+  return out;
 }
 
 function head(view: View): string {
-  const { input, clock, today } = view;
+  const { input, clock, standard } = view;
   const { city, country, date, links, mosques } = input;
   const url = links.canonical;
   const hubUrl = SITE.origin + links.hub;
   const countryUrl = SITE.origin + links.country;
   const title = `${city.name} Prayer Times Today – Salah Times, Fajr to Isha | ${SITE.name}`;
-  const description = `${city.name} prayer times today, ${clock.longDate(date)}: ${timesText(clock, today)}. Monthly timetable and calculation method.`;
+  const description = `${city.name} prayer times today, ${clock.longDate(date)}: ${timesText(view)}. Monthly timetable${view.published ? ` from ${standardRef(standard)}` : " and calculation method"}.`;
   const qibla = clock.qibla();
   const live = mosques.kind === "live" ? mosques : null;
 
@@ -119,6 +159,8 @@ function head(view: View): string {
     name: city.name, place: `${city.name}, ${country.short}`, country: country.code, lang: country.lang, clock: country.clock,
     lat: city.lat, lng: city.lng, timezone: city.timezone,
     method: clock.calc.method, madhab: clock.calc.madhab, highLatitudeRule: clock.calc.highLatitudeRule,
+    standard: standard.name, asrFirst: standard.asrFirst,
+    ...(view.published ? { timetable: input.timetable ? inlineDays(input.timetable, clock, date) : {} } : {}),
     url, qibla,
     ...(live ? { mosquesDate: live.date, mosques: live.mosques.map((m) => ({ name: m.name, address: m.address, athan: m.athan, iqamah: m.iqamah, jummah: m.jummah })) } : {}),
   };
@@ -150,31 +192,44 @@ function preloadFonts(links: PageLinks): string {
     .join("\n");
 }
 
-const ASR_TOGGLE = '<span class="asr-toggle" role="group" aria-label="Asr time"><span class="asr-thumb" aria-hidden="true"></span><button type="button" class="asr-opt" data-asr="earlier" aria-pressed="true">Earlier</button><button type="button" class="asr-opt" data-asr="later" aria-pressed="false">Later</button></span>';
+function asrToggle(later: boolean): string {
+  const opt = (key: string, label: string, on: boolean) => `<button type="button" class="asr-opt" data-asr="${key}" aria-pressed="${on}">${label}</button>`;
+  return `<span class="asr-toggle${later ? " is-later" : ""}" role="group" aria-label="Asr time"><span class="asr-thumb" aria-hidden="true"></span>${opt("earlier", "Earlier", !later)}${opt("later", "Later", later)}</span>`;
+}
 
-function replicaList(clock: CityClock, today: DayTimes): string {
+function replicaList(view: View): string {
+  const { clock, today } = view;
   let list = '<li class="sep" aria-hidden="true"></li>';
   PRAYERS.forEach((p, i) => {
-    const name = i === 3 ? `Asr ${ASR_TOGGLE}` : p.name;
-    list += `<li class="row"><span class="name">${name}</span> <span class="t">${clock.time(today.t[i])}</span></li><li class="sep" aria-hidden="true"></li>`;
+    const name = i === 3 ? `Asr ${asrToggle(view.standard.asrFirst === "Hanafi")}` : p.name;
+    const t = i === 3 ? firstAsr(view, today) : today.t[i];
+    list += `<li class="row"><span class="name">${name}</span> <span class="t">${clock.time(t)}</span></li><li class="sep" aria-hidden="true"></li>`;
   });
   return list;
 }
 
 const deg = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? pos : neg}`;
 
-function listCaption({ input, clock, today, methodName }: View): string {
+// What a day's times are, for the trust caption; page/city.js writes the same words as the visitor steps days.
+function originLabel(origin: DayOrigin, year: number): string {
+  if (origin === "published") return "published start times";
+  if (origin === "last-year") return `estimated from its ${year - 1} timetable`;
+  return "calculated until published";
+}
+
+function listCaption(view: View): string {
+  const { input, clock, today, methodName, standard } = view;
   const { city } = input;
   const c = clock.calc;
   const angles = c.fajrAngle === c.ishaAngle ? `Fajr &amp; Isha ${c.fajrAngle}°` : `Fajr ${c.fajrAngle}° · Isha ${c.ishaAngle}°`;
-  const text = `Based on ${esc(city.coordinatesLabel ?? city.name)} (${deg(city.lat, "N", "S")}, ${deg(city.lng, "E", "W")}) · ${methodName} · ${angles} · <span data-tz-name>${clock.zoneLong(today.t[2])} (${clock.zoneAbbr(today.t[2])})</span>`;
+  const zone = `<span data-tz-name>${clock.zoneLong(today.t[2])} (${clock.zoneAbbr(today.t[2])})</span>`;
+  const text = view.published
+    ? `${esc(standard.name)} · <span data-origin>${originLabel(today.origin, Number(input.date.slice(0, 4)))}</span> · ${zone}`
+    : standard.kind === "gps"
+    ? `Based on ${esc(city.coordinatesLabel ?? city.name)} (${deg(city.lat, "N", "S")}, ${deg(city.lng, "E", "W")}) · ${methodName} · ${angles} · ${zone}`
+    : `${esc(standard.name)} · ${methodName} · ${angles} · ${zone}`;
   return `<p class="list-caption" id="list-caption">${text}</p>`;
 }
-
-// Until the copy follows the standard: a published standard reads as the old London timetable note did.
-const publishedNote = (city: City) => (timetableId(city.standard)
-  ? { name: city.standard.name, note: `Many ${city.name} mosques publish ${city.standard.name}. ${city.standard.badge}` }
-  : undefined);
 
 const HANAFI_ASR = 6;
 const EARTH_AXIAL_TILT_DEG = 23.44;
@@ -185,18 +240,61 @@ const midsummerMaxDepression = (city: City) => 90 - Math.abs(city.lat) - EARTH_A
 const todaySpan = (clock: CityClock, today: DayTimes, i: number) =>
   `<span data-today="${i}">${clock.time(i === HANAFI_ASR ? today.asrHanafi : today.t[i])}</span>`;
 
-function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly Faq[] {
-  const { city, country, date } = input;
+function todayList(view: Ctx): string {
+  const { clock, today } = view;
+  const hanafiFirst = view.standard.asrFirst === "Hanafi";
+  return PRAYERS.map((p, i) => (i === 3
+    ? `Asr ${todaySpan(clock, today, hanafiFirst ? HANAFI_ASR : 3)} (${otherAsrLabel(view)} ${todaySpan(clock, today, hanafiFirst ? 3 : HANAFI_ASR)})`
+    : `${p.name} ${todaySpan(clock, today, i)}`)).join(", ");
+}
+
+// The FAQ answers "which timetable" with the same paragraphs as the badge dialog.
+function dialogParagraphs(view: Ctx): readonly string[] {
+  const { standard, today, input } = view;
+  const [first, second, last] = standard.dialog ?? [standard.badge, kindParagraph(view), JAMAAH_LINE];
+  const year = Number(input.date.slice(0, 4));
+  const estimate = !view.published || today.origin === "published" ? []
+    : [today.origin === "last-year"
+      ? `Today's times are estimated from ${standard.name}'s ${year - 1} timetable until it publishes ${year}.`
+      : `Today's times are calculated until ${standard.name} publishes them.`];
+  return [first, second, ...estimate, last];
+}
+
+function kindParagraph(view: Ctx): string {
+  const { standard, input, methodName } = view;
+  const { city } = input;
+  if (standard.kind === "gps") {
+    return `${city.name} has no timetable that most of its mosques share, so these times are calculated for ${city.coordinatesLabel ?? `central ${city.name}`} with the ${methodName} method, and checked against the mosques named above on dates through the year.`;
+  }
+  if (standard.timetable === null) {
+    return standard.kind === "mosque"
+      ? `${standard.name}'s published start times match this calculation within a minute on every day we checked, so this page calculates them.`
+      : `The ${standard.name} is itself an ${methodName} calculation, so this page calculates the same times rather than copying the sheet.`;
+  }
+  return standard.kind === "mosque"
+    ? `${city.name} has no city-wide timetable. These are ${standard.name}'s published start times, loaded from its timetable rather than calculated, because no standard calculation reproduces its seasonal rules.`
+    : `These are the start times the ${standard.name} publishes, loaded from the timetable rather than calculated.`;
+}
+
+function standardDialog(view: View): string {
+  return `<dialog class="std-dialog" id="std-dialog" aria-labelledby="std-title">
+      <form method="dialog"><button type="submit" class="std-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></form>
+      <h2 class="std-title" id="std-title">${esc(view.standard.name)}</h2>
+      ${dialogParagraphs(view).map((p) => `<p>${esc(p)}</p>`).join("\n      ")}
+    </dialog>`;
+}
+
+function faqList(view: Ctx): readonly Faq[] {
+  const { input, clock, today, standard } = view;
+  const { city, date } = input;
   const name = city.name;
   const methodName = clock.calc.methodLabel;
   const c = clock.calc;
-  const lt = publishedNote(city);
   const td = (i: number) => todaySpan(clock, today, i);
   const fmt = (ms: number) => clock.time(ms);
   const raw = (question: string, answerHtml: string): Faq => ({ question, answerHtml });
   const text = (question: string, answer: string): Faq => ({ question, answerHtml: esc(answer) });
 
-  const todayList = PRAYERS.map((p, i) => `${p.name} ${td(i)}${i === 3 ? ` (Hanafi ${td(HANAFI_ASR)})` : ""}`).join(", ");
   let fri = date;
   while (clock.weekday(fri) !== 5) fri = clock.addDays(fri, 1);
   const friDhuhr = clock.day(fri).t[2];
@@ -207,10 +305,13 @@ function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly 
   const clockChange = clock.nextClockChange(date);
   const qibla = clock.qibla();
   const hanafiAsr = today.asrHanafi;
+  const ref = standardRef(standard);
+  const angles = c.fajrAngle === c.ishaAngle ? `Fajr and Isha both at ${c.fajrAngle}°` : `Fajr at ${c.fajrAngle}° and Isha at ${c.ishaAngle}°`;
+  const [p1, p2] = dialogParagraphs(view);
 
   const items: Faq[] = [
     raw(`What are the namaz timings in ${name} today?`,
-      `${esc(name)} namaz timings today are ${todayList}. The list at the top of this page shows them with the current prayer, and the arrows step to other days.`),
+      `${esc(name)} namaz timings today are ${todayList(view)}. The list at the top of this page shows them with the current prayer, and the arrows step to other days.`),
     raw(`What time is Fajr in ${name} today?`,
       `Fajr in ${esc(name)} today begins at ${td(0)} and lasts until sunrise at ${td(1)}. When fasting, suhoor ends as Fajr begins, and the fast is opened at Maghrib, ${td(4)}.`),
     raw(`What time is Maghrib (iftar) in ${name} today?`,
@@ -218,16 +319,20 @@ function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly 
     raw(`What time is Isha in ${name} today?`,
       `Isha in ${esc(name)} today begins at ${td(5)}. Its time lasts until Fajr the next morning, and it is recommended not to delay it past the middle of the night.`),
     text(`Why do ${name} prayer times differ between apps and mosques?`,
-      `Apps and mosques use different calculation methods. This page uses the ${methodName} method with ${c.fajrAngle === c.ishaAngle ? `Fajr and Isha both at ${c.fajrAngle}°` : `Fajr at ${c.fajrAngle}° and Isha at ${c.ishaAngle}°`}${lt ? `, while many ${name} mosques follow the ${lt.name}` : ""}. The difference is usually a few minutes for Dhuhr, Asr and Maghrib and larger for Fajr and Isha.`),
-    ...(lt ? [text(`Which timetable do ${name} mosques follow?`, lt.note)] : []),
+      view.published
+        ? `Apps calculate prayer times from sun angles, while this page shows the start times ${ref} publishes. A mosque that follows another timetable usually differs by a few minutes for Dhuhr, Asr and Maghrib and by more for Fajr and Isha.`
+        : `Apps and mosques use different calculation methods. This page uses the ${methodName} method with ${angles}${standard.kind === "gps" ? "" : `, the same times ${ref} publishes`}. The difference is usually a few minutes for Dhuhr, Asr and Maghrib and larger for Fajr and Isha.`),
+    text(standard.kind === "gps" ? `Do these times match ${name} mosques?` : `Which timetable do ${name} mosques follow?`, `${p1} ${p2}`),
     text(`What is the Asr time in ${name} for Hanafis?`,
-      `${name} has two Asr times. Today the Hanafi Asr in ${name} is at ${fmt(hanafiAsr)}, ${Math.round((hanafiAsr - today.t[3]) / 60000)} minutes after the Shafi'i Asr at ${fmt(today.t[3])}. Hanafi Asr starts when an object's shadow is twice its length; the Shafi'i, Maliki and Hanbali time starts at once its length.`),
+      `${name} has two Asr times. Today the Hanafi Asr in ${name} is at ${fmt(hanafiAsr)}, ${Math.round((hanafiAsr - today.t[3]) / 60000)} minutes after the Shafi'i Asr at ${fmt(today.t[3])}. Hanafi Asr starts when an object's shadow is twice its length; the Shafi'i, Maliki and Hanbali time starts at once its length.${standard.asrFirst === "Hanafi" ? ` The list on this page shows the Hanafi time first, as most ${name} mosques do.` : ""}`),
     text(`What time is Jumu'ah in ${name}?`,
       `Jumu'ah is prayed in place of Dhuhr. On ${clock.longDate(fri)} Dhuhr in ${name} begins at ${fmt(friDhuhr)}. Each mosque sets its own khutbah and jamaat times, so check with the mosque you attend.`),
     text(`Why is Isha so late in ${name} in summer?`,
-      `${midsummerMaxDepression(city) < c.ishaAngle
-        ? `${name} is far enough north that the sky barely gets fully dark around midsummer.`
-        : `Isha begins when evening twilight ends, with the sun ${c.ishaAngle}° below the horizon, and in summer sunset comes late, so Isha follows it.`} On ${clock.longDate(mid)}, Fajr is at ${fmt(midT[0])}, Maghrib at ${fmt(midT[4])} and Isha at ${fmt(midT[5])}.${c.seasonalLimits ? ` The ${methodName} method applies seasonal limits so Isha and Fajr stay at a practical time.` : ""}`),
+      view.published
+        ? `In summer sunset comes late and twilight lasts long, so Isha follows it. On ${clock.longDate(mid)}, Fajr is at ${fmt(midT[0])}, Maghrib at ${fmt(midT[4])} and Isha at ${fmt(midT[5])}. ${standard.isha}`
+        : `${midsummerMaxDepression(city) < c.ishaAngle
+          ? `${name} is far enough north that the sky barely gets fully dark around midsummer.`
+          : `Isha begins when evening twilight ends, with the sun ${c.ishaAngle}° below the horizon, and in summer sunset comes late, so Isha follows it.`} On ${clock.longDate(mid)}, Fajr is at ${fmt(midT[0])}, Maghrib at ${fmt(midT[4])} and Isha at ${fmt(midT[5])}.${c.seasonalLimits ? ` The ${methodName} method applies seasonal limits so Isha and Fajr stay at a practical time.` : ""}`),
     text(`What is the Qibla direction in ${name}?`,
       `The Qibla from ${name} is ${qibla.bearing}° from true north, roughly ${qibla.compass}. That is the shortest path across the globe to the Kaaba in Makkah, which is why it points ${qibla.compass} rather than straight towards Saudi Arabia on a flat map.`),
   ];
@@ -239,6 +344,19 @@ function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly 
   return items;
 }
 
+const estimated = (view: View, d: LocalDate) => view.published && view.clock.day(d).origin !== "published";
+const dayLabel = (view: View, d: LocalDate) => view.clock.shortDay(d) + (estimated(view, d) ? ESTIMATE_MARK : "");
+
+function estimateNote(view: View, dates: readonly LocalDate[]): string {
+  const origins = new Set(dates.filter((d) => estimated(view, d)).map((d) => view.clock.day(d).origin));
+  if (!origins.size) return "";
+  const { name } = view.standard;
+  const year = Number(dates[0].slice(0, 4));
+  if (!origins.has("calculated")) return ` ${ESTIMATE_MARK} estimated from ${esc(name)}'s ${year - 1} timetable until it publishes ${year}.`;
+  if (!origins.has("last-year")) return ` ${ESTIMATE_MARK} calculated until ${esc(name)} publishes these dates.`;
+  return ` ${ESTIMATE_MARK} estimated from ${esc(name)}'s earlier timetable, or calculated, until it publishes these dates.`;
+}
+
 interface MonthTable { readonly label: string; readonly note: string; readonly html: string }
 
 function monthTable(view: View, year: number, month: number): MonthTable {
@@ -247,18 +365,19 @@ function monthTable(view: View, year: number, month: number): MonthTable {
   const pad = (n: number) => String(n).padStart(2, "0");
   const at = (d: number) => `${year}-${pad(month)}-${pad(d)}` as LocalDate;
   const first = at(1);
+  const dates = Array.from({ length: clock.daysInMonth(year, month) }, (_, i) => at(i + 1));
   let rows = "";
   let dstNote = "";
-  for (let d = 1; d <= clock.daysInMonth(year, month); d++) {
-    const ymd = at(d);
+  for (const ymd of dates) {
     const t = clock.day(ymd);
     const h = clock.hijri(ymd);
-    if (d > 1 && clock.zoneAbbrOn(ymd) !== clock.zoneAbbrOn(clock.addDays(ymd, -1))) {
+    if (ymd !== first && clock.zoneAbbrOn(ymd) !== clock.zoneAbbrOn(clock.addDays(ymd, -1))) {
       dstNote = ` Clocks change on ${clock.longDate(ymd)}; times from that day are in ${clock.zoneAbbrOn(ymd)}.`;
     }
-    const cls = ymd === date ? ' class="today" aria-current="date"' : ymd < date ? ' class="past"' : "";
+    const cls = [ymd === date ? "today" : ymd < date ? "past" : "", estimated(view, ymd) ? "estimate" : ""].filter(Boolean).join(" ");
+    const attrs = `${cls ? ` class="${cls}"` : ""}${ymd === date ? ' aria-current="date"' : ""}`;
     const cells = t.t.map((x, i) => `<td>${clock.tableTime(x)}</td>${i === 3 ? `<td>${clock.tableTime(t.asrHanafi)}</td>` : ""}`).join("");
-    rows += `\n        <tr data-date="${ymd}"${cls}><th scope="row">${clock.shortDay(ymd)}<span class="hj" title="${h.long}">${h.short}</span></th>${cells}</tr>`;
+    rows += `\n        <tr data-date="${ymd}"${attrs}><th scope="row">${dayLabel(view, ymd)}<span class="hj" title="${h.long}">${h.short}</span></th>${cells}</tr>`;
   }
   const label = clock.monthYear(first);
   const noteId = `tt-note-${year}-${pad(month)}`;
@@ -267,7 +386,7 @@ function monthTable(view: View, year: number, month: number): MonthTable {
     : `<th scope="col">${p.name}</th>`)).join("");
   return {
     label,
-    note: `<p class="table-note" id="${noteId}">${esc(city.name)} local time. Asr I: Shafi'i, Maliki, Hanbali. Asr II: Hanafi.${dstNote}</p>`,
+    note: `<p class="table-note" id="${noteId}">${esc(city.name)} local time. Asr I: Shafi'i, Maliki, Hanbali. Asr II: Hanafi.${dstNote}${estimateNote(view, dates)}</p>`,
     html: `<div class="table-wrap">
       <table class="timetable" aria-describedby="${noteId}">
         <caption class="sr-only">${esc(city.name)} prayer timetable, ${label}</caption>
@@ -282,24 +401,24 @@ function monthTable(view: View, year: number, month: number): MonthTable {
 function weekTable(view: View, caption: string, cols: readonly (readonly [string, (d: LocalDate) => number])[]): string {
   const { clock, input } = view;
   const week = Array.from({ length: 7 }, (_, i) => clock.addDays(input.date, i));
+  const note = estimateNote(view, week);
   return `
     <table class="timetable fajr-week">
       <caption class="sr-only">${caption}</caption>
       <thead><tr><th scope="col"><span class="sr-only">Date</span></th>${cols.map(([h]) => `<th scope="col">${h}</th>`).join("")}</tr></thead>
       <tbody>${week.map((d) => `
-        <tr data-date="${d}"${d === input.date ? ' class="today" aria-current="date"' : ""}><th scope="row">${clock.shortDay(d)}</th>${cols.map(([, f]) => `<td>${clock.time(f(d))}</td>`).join("")}</tr>`).join("")}
+        <tr data-date="${d}"${d === input.date ? ' class="today" aria-current="date"' : ""}><th scope="row">${dayLabel(view, d)}</th>${cols.map(([, f]) => `<td>${clock.time(f(d))}</td>`).join("")}</tr>`).join("")}
       </tbody>
-    </table>`;
+    </table>${note ? `\n    <p class="est-note">${note.trim()}</p>` : ""}`;
 }
 
 function fajrCard(view: View): string {
-  const { input, clock, today } = view;
+  const { input, clock, today, standard } = view;
   const { city, date } = input;
   const name = esc(city.name);
   const c = clock.calc;
   const td = (i: number) => todaySpan(clock, today, i);
   const tomorrow = clock.addDays(date, 1);
-  const lt = publishedNote(city);
   const highLat = c.seasonalLimits ? ` and seasonal limits for ${name}'s high latitude` : "";
   const otherMethods = c.method === "NorthAmerica"
     ? `the Muslim World League and Karachi methods put Fajr at 18°, which gives an earlier time than the ${c.fajrAngle}° used here.`
@@ -307,12 +426,16 @@ function fajrCard(view: View): string {
     ? "ISNA puts Fajr at 15°, which gives a later time, while the Muslim World League and Karachi methods use 18° like this page but handle high latitudes differently."
     : `the Muslim World League and Karachi methods put Fajr at 18° and ISNA at 15°, against ${c.fajrAngle}° here.`;
   const week = weekTable(view, `Fajr and sunrise in ${name}, next 7 days`, [["Fajr", (d) => clock.day(d).t[0]], ["Sunrise", (d) => clock.day(d).t[1]]]);
+  const how = view.published
+    ? `<p>Fajr here is the start time ${esc(standardRef(standard))} publishes. Fajr is also often spelled Fajar.</p>
+    <p>Other websites may show a different Fajr time for ${name} because they calculate it from a fixed sun angle instead of taking it from the timetable. The difference is usually a few minutes, and widest in summer.</p>`
+    : `<p>These times use the ${view.methodName} method, with Fajr when the sun is ${c.fajrAngle}° below the horizon${highLat}. Fajr is also often spelled Fajar.</p>
+    <p>Other websites may show a different Fajr time for ${name} because they use other calculation methods: ${otherMethods}${midsummerMaxDepression(city) < c.fajrAngle ? ` The gap is widest in summer, when the sky over ${name} never gets fully dark.` : ""}</p>`;
   return `
     <div class="card">
     <h2 id="fajr">${icon("wb_twilight")}Fajr time in ${name} today</h2>
     <p class="answer">Fajr in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(0)}; sunrise is at ${td(1)}, so Fajr ends then. Tomorrow, ${clock.longDate(tomorrow)}, Fajr is at ${clock.time(clock.day(tomorrow).t[0])}.</p>
-    <p>These times use the ${view.methodName} method, with Fajr when the sun is ${c.fajrAngle}° below the horizon${highLat}.${lt ? ` Many ${name} mosques publish the ${esc(lt.name)} instead, so their Fajr (often spelled Fajar) can differ by several minutes.` : " Fajr is also often spelled Fajar."}</p>
-    <p>Other websites may show a different Fajr time for ${name} because they use other calculation methods: ${otherMethods}${midsummerMaxDepression(city) < c.fajrAngle ? ` The gap is widest in summer, when the sky over ${name} never gets fully dark.` : ""}</p>${week}
+    ${how}${week}
     </div>`;
 }
 
@@ -324,32 +447,73 @@ function maghribCard(view: View): string {
   const tomorrow = clock.addDays(date, 1);
   const mAdj = clock.calc.adjustments.find((a) => a.prayer === "Maghrib")?.minutes ?? 0;
   const week = weekTable(view, `Maghrib and Isha in ${name}, next 7 days`, [["Maghrib", (d) => clock.day(d).t[4]], ["Isha", (d) => clock.day(d).t[5]]]);
+  const begins = view.published
+    ? "Maghrib begins once the sun has fully set, at the time the timetable lists"
+    : `Maghrib begins once the sun has fully set${mAdj ? `; the ${view.methodName} method adds ${mAdj} minutes to sunset as a precaution` : ""}`;
   return `
     <div class="card">
     <h2 id="maghrib">${icon("sunset")}Maghrib time in ${name} today</h2>
     <p class="answer">Maghrib in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(4)}. This is also iftar time: when fasting, the fast is opened at Maghrib. Tomorrow, ${clock.longDate(tomorrow)}, Maghrib is at ${clock.time(clock.day(tomorrow).t[4])}.</p>
-    <p>Maghrib begins once the sun has fully set${mAdj ? `; the ${view.methodName} method adds ${mAdj} minutes to sunset as a precaution` : ""}. It lasts until Isha begins, at ${td(5)} today. It is recommended to pray it soon after it begins.</p>
+    <p>${begins}. It lasts until Isha begins, at ${td(5)} today. It is recommended to pray it soon after it begins.</p>
     <p>Because every calculation method works from sunset, Maghrib times for ${name} usually differ by only a few minutes between apps, websites and mosques, mostly from the precaution each one adds.</p>${week}
     </div>`;
 }
 
 function ishaCard(view: View): string {
-  const { input, clock, today } = view;
+  const { input, clock, today, standard } = view;
   const { city, date } = input;
   const name = esc(city.name);
   const c = clock.calc;
   const td = (i: number) => todaySpan(clock, today, i);
   const tomorrow = clock.addDays(date, 1);
-  const lt = publishedNote(city);
   const highLat = c.seasonalLimits ? ` and seasonal limits for ${name}'s high latitude` : "";
   const maxDepression = midsummerMaxDepression(city);
   const week = weekTable(view, `Isha and the next Fajr in ${name}, next 7 days`, [["Isha", (d) => clock.day(d).t[5]], ["Next Fajr", (d) => clock.day(clock.addDays(d, 1)).t[0]]]);
+  const how = view.published
+    ? `<p>Isha here is the start time ${esc(standardRef(standard))} publishes. The time for Isha lasts until Fajr, and it is recommended not to delay it past the middle of the night.</p>
+    <p>Isha times for ${name} differ between sites most in summer, when the sky stays light late: apps calculate Isha from a sun angle, while the timetable sets it by its own rule.</p>`
+    : `<p>These times use the ${view.methodName} method, with Isha when the sun is ${c.ishaAngle}° below the horizon${highLat}. The time for Isha lasts until Fajr, and it is recommended not to delay it past the middle of the night.</p>
+    <p>Isha times for ${name} differ between sites most in summer.${maxDepression < c.ishaAngle ? ` Around midsummer the sun never sinks ${c.ishaAngle}° below the horizon in ${name}, so each method falls back on a high-latitude rule, such as the middle of the night or one-seventh of the night.` : ""} Methods also use different Isha angles: ${c.method === "NorthAmerica" ? `the Muslim World League uses 17° and Karachi 18°, against ${c.ishaAngle}° here` : "the Muslim World League uses 17°, ISNA 15° and Karachi 18°"}, while Umm al-Qura sets Isha 90 minutes after Maghrib.</p>`;
   return `
     <div class="card">
     <h2 id="isha">${icon("bedtime")}Isha time in ${name} today</h2>
     <p class="answer">Isha in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(5)}. Tomorrow, ${clock.longDate(tomorrow)}, Isha is at ${clock.time(clock.day(tomorrow).t[5])}.</p>
-    <p>These times use the ${view.methodName} method, with Isha when the sun is ${c.ishaAngle}° below the horizon${highLat}. The time for Isha lasts until Fajr, and it is recommended not to delay it past the middle of the night.</p>
-    <p>Isha times for ${name} differ between sites most in summer.${maxDepression < c.ishaAngle ? ` Around midsummer the sun never sinks ${c.ishaAngle}° below the horizon in ${name}, so each method falls back on a high-latitude rule, such as the middle of the night or one-seventh of the night.` : ""} Methods also use different Isha angles: ${c.method === "NorthAmerica" ? `the Muslim World League uses 17° and Karachi 18°, against ${c.ishaAngle}° here` : "the Muslim World League uses 17°, ISNA 15° and Karachi 18°"}, while Umm al-Qura sets Isha 90 minutes after Maghrib.${lt ? ` Many ${name} mosques follow the ${esc(lt.name)} instead.` : ""}</p>${week}
+    ${how}${week}
+    <p class="standard-isha">${esc(standard.isha)}</p>
+    </div>`;
+}
+
+function methodCard(view: View): string {
+  const { input, clock, standard } = view;
+  const name = esc(input.city.name);
+  const c = clock.calc;
+  const asr = `Both times shown: Shafi'i, Maliki and Hanbali (shadow equal to an object’s length) and Hanafi (shadow twice its length). The ${standard.asrFirst === "Hanafi" ? "Hanafi" : "Shafi'i"} time is listed first.`;
+  if (view.published) {
+    const retrieved = input.timetable ? `, read from its published timetable on ${clock.longDate(input.timetable.retrieved)}` : "";
+    const gaps = input.timetable && Object.values(input.timetable.days).some((row) => row.includes(null));
+    return `
+    <div class="card">
+    <h2>${icon("tune")}Where do ${name} prayer times come from?</h2>
+    <dl class="method">
+      <div><dt>Source</dt><dd>${esc(standardRef(standard))}${retrieved}</dd></div>
+      <div><dt>Times</dt><dd>Published start times, not calculated.${gaps ? ` A column the timetable leaves out is calculated with the ${view.methodName} method.` : ""}</dd></div>
+      <div><dt>Asr</dt><dd>${asr}</dd></div>
+      <div><dt>Not yet published</dt><dd>Days the timetable does not cover yet are estimated from its previous year, moved by whole days so clock changes land right, or calculated when there is no earlier year. They are marked ${ESTIMATE_MARK}.</dd></div>
+    </dl>
+    </div>`;
+  }
+  const adj = c.adjustments.map((a) => `${a.prayer} ${a.minutes > 0 ? "+" : ""}${a.minutes} min`).join(", ");
+  return `
+    <div class="card">
+    <h2>${icon("tune")}How are ${name} prayer times calculated?</h2>
+    <dl class="method">${standard.kind === "gps" ? "" : `
+      <div><dt>Standard</dt><dd>${esc(standard.name)}</dd></div>`}
+      <div><dt>Method</dt><dd>${view.methodName}</dd></div>
+      <div><dt>Fajr angle</dt><dd>${c.fajrAngle}° below the horizon</dd></div>
+      <div><dt>Isha angle</dt><dd>${c.ishaAngle}° below the horizon</dd></div>
+      <div><dt>Asr</dt><dd>${asr}</dd></div>
+      <div><dt>High latitudes</dt><dd>${c.seasonalLimits ? "Moonsighting Committee seasonal limits on Fajr and Isha" : c.highLatitudeRule === "MiddleOfTheNight" ? "Middle of the night rule" : c.highLatitudeRule === "SeventhOfTheNight" ? "Seventh of the night rule" : "Twilight angle rule"}</dd></div>${adj ? `\n      <div><dt>Adjustments</dt><dd>${adj}</dd></div>` : ""}
+    </dl>
     </div>`;
 }
 
@@ -412,11 +576,21 @@ function nearbyCard(input: PageInput): string {
 `;
 }
 
+function sourceLine(view: View): string {
+  const { input, clock, standard, today } = view;
+  const ref = esc(standardRef(standard));
+  const what = standard.kind === "gps"
+    ? `Times calculated with ${ref}`
+    : view.published
+    ? `Times follow ${ref}${today.origin === "published" ? "" : " · Today's times are an estimate"}`
+    : `Times follow ${ref}, calculated with the ${view.methodName} method`;
+  return `<p class="source-line">Updated <time datetime="${input.date}">${clock.longDate(input.date)}</time> · ${what}</p>`;
+}
+
 function seoSection(view: View): string {
-  const { input, clock, today, methodName } = view;
+  const { input, clock } = view;
   const { city, country, date, links } = input;
   const name = esc(city.name);
-  const c = clock.calc;
   const [y, mo] = [Number(date.slice(0, 4)), Number(date.slice(5, 7))];
   const thisMonth = monthTable(view, y, mo);
   let nextMonthHtml = "";
@@ -426,9 +600,6 @@ function seoSection(view: View): string {
     nextMonthNote = `\n    ${t.note}`;
     nextMonthHtml = `\n    <h3>${name} prayer timetable | ${t.label}</h3>\n    ${t.html}`;
   }
-  const todayList = PRAYERS.map((p, i) => `${p.name} ${todaySpan(clock, today, i)}${i === 3 ? ` (Hanafi ${todaySpan(clock, today, HANAFI_ASR)})` : ""}`).join(", ");
-  const adj = c.adjustments.map((a) => `${a.prayer} ${a.minutes > 0 ? "+" : ""}${a.minutes} min`).join(", ");
-  const timesSource = city.standard.kind === "gps" ? city.standard.name : `${methodName} method`;
 
   return `<section class="seo" id="seo">
     <div class="card">
@@ -440,8 +611,8 @@ function seoSection(view: View): string {
         </ol>
       </nav>
     <h1>${icon("schedule")}Prayer Times in ${name}, ${esc(country.name)}</h1>
-    <p class="answer" id="answer" data-date="${date}"><span class="a-lead">Salah (namaz) times in ${name} today</span><span class="sr-only">, </span><span class="a-date"><span data-today-date>${clock.longDate(date)}</span> · <span data-today-hijri>${clock.hijri(date).long}</span></span><span class="sr-only">: </span><span class="a-times">${todayList.split(", ").join(" · ")}</span><span class="sr-only">. </span></p>
-    <p class="source-line">Updated <time datetime="${date}">${clock.longDate(date)}</time> · Times calculated with the ${esc(timesSource)}</p>
+    <p class="answer" id="answer" data-date="${date}"><span class="a-lead">Salah (namaz) times in ${name} today</span><span class="sr-only">, </span><span class="a-date"><span data-today-date>${clock.longDate(date)}</span> · <span data-today-hijri>${clock.hijri(date).long}</span></span><span class="sr-only">: </span><span class="a-times">${todayList(view).split(", ").join(" · ")}</span><span class="sr-only">. </span></p>
+    ${sourceLine(view)}
     </div>
 
     <div class="card">
@@ -452,17 +623,7 @@ function seoSection(view: View): string {
 ${fajrCard(view)}
 ${maghribCard(view)}
 ${ishaCard(view)}
-
-    <div class="card">
-    <h2>${icon("tune")}How are ${name} prayer times calculated?</h2>
-    <dl class="method">
-      <div><dt>Method</dt><dd>${methodName}</dd></div>
-      <div><dt>Fajr angle</dt><dd>${c.fajrAngle}° below the horizon</dd></div>
-      <div><dt>Isha angle</dt><dd>${c.ishaAngle}° below the horizon</dd></div>
-      <div><dt>Asr</dt><dd>Both times shown: Shafi'i, Maliki and Hanbali (shadow equal to an object’s length) and Hanafi (shadow twice its length).</dd></div>
-      <div><dt>High latitudes</dt><dd>${c.seasonalLimits ? "Moonsighting Committee seasonal limits on Fajr and Isha" : "Twilight angle rule"}</dd></div>${adj ? `\n      <div><dt>Adjustments</dt><dd>${adj}</dd></div>` : ""}
-    </dl>
-    </div>
+${methodCard(view)}
 ${mosquesCard(input.mosques, clock, city.name, date)}
 ${widgetCard(input)}
 

@@ -210,10 +210,35 @@ body.theme-night .tree { display: none; }
   cursor: default;
 }
 .chip-today { color: var(--chip-today); white-space: pre; }
-/* Verified badge at the end of the chip, in the city colour (navy by day, gold at night); nudged so its
-   centre sits on the cap-height centre of the Poppins text (measured 0.4px high otherwise). */
-.chip-badge { width: 12px; height: 12px; margin-left: 4px; fill: var(--chip-city); flex: none; transform: translateY(.4px); }
+/* Badge at the end of the chip, in the city colour (navy by day, gold at night): a button that opens the
+   standard dialog. The icon is nudged so its centre sits on the cap-height centre of the Poppins text
+   (measured 0.4px high otherwise); the hit area is padded out to 24px without moving the icon. */
+.chip-badge { display: inline-flex; width: 12px; height: 12px; margin: -6px -6px -6px 4px; padding: 6px; box-sizing: content-box; border: 0; background: none; color: var(--chip-city); flex: none; cursor: pointer; border-radius: 50%; }
+.chip-badge svg { width: 12px; height: 12px; fill: currentColor; transform: translateY(.4px); }
+.chip-badge:focus-visible { outline: 2px solid var(--chip-city); outline-offset: -2px; }
 .chip-name { color: var(--chip-city); white-space: pre; }
+
+/* The standard dialog: a small sheet in the page's colours. Native <dialog>, so Escape, the backdrop
+   and focus return are the browser's. */
+.std-dialog {
+  width: min(100% - 32px, 400px); max-height: calc(100% - 32px);
+  margin: auto; padding: 22px 22px 20px;
+  border: 0; border-radius: 16px;
+  background: #FFFFFF; color: var(--deep-blue);
+  font: 400 14px/1.6 'Poppins', sans-serif;
+  text-align: left;
+  box-shadow: 0 12px 40px rgba(0, 25, 62, .25);
+}
+body.theme-night .std-dialog { background: var(--standard-blue); color: #FFFFFF; }
+.std-dialog::backdrop { background: rgba(0, 25, 62, .45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.std-dialog form { position: absolute; top: 8px; right: 8px; margin: 0; }
+.std-close { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
+.std-close svg { width: 18px; height: 18px; }
+.std-close:hover { background: rgba(127, 127, 127, .12); }
+.std-close:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
+.std-title { margin: 0 36px 10px 0; font-size: 16px; line-height: 1.4; font-weight: 500; }
+.std-dialog p { margin: 0 0 10px; }
+.std-dialog p:last-child { margin-bottom: 0; }
 
 /* Date row (same as the mosque page) */
 .date-row {
@@ -384,6 +409,10 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .timetable tbody td, .timetable tbody th { color: #FFFFFF; }
 .timetable tr.past th, .timetable tr.past td, .timetable tr.past .hj { color: rgba(255, 255, 255, .5); }   /* dimmed but still 4.5:1 (WCAG AA) */
 .timetable tr.today th, .timetable tr.today td { font-weight: 700; color: #FFFFFF; }
+/* Estimated rows (a published standard that has not covered the date yet): a star after the date. */
+.timetable .est, .table-note .est, .est-note .est, .method .est { font-weight: 600; color: var(--gold); }
+.timetable th[scope="row"] .est { margin-left: 3px; }
+.seo .card .est-note { margin: 8px 0 0; font-size: 13px; line-height: 1.6; }
 /* Divider lines between rows (no stripes); none under the last row, where the card ends. */
 .timetable tbody tr:last-child th, .timetable tbody tr:last-child td { border-bottom: 0; }
 

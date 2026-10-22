@@ -5,7 +5,7 @@ import { renderCityPage } from "../src/render/page";
 import { cityClock } from "../src/render/times";
 import { linksFor } from "../src/routes";
 import { DOWN } from "./fixtures";
-import { CHICAGO, HOUSTON, ISNA_GPS, LONDON, LOS_ANGELES, NEW_YORK, SEATTLE, TORONTO } from "./city-fixtures";
+import { CALCULATED_LONDON, CHICAGO, HOUSTON, ISNA_GPS, LONDON, LOS_ANGELES, NEW_YORK, SEATTLE, TORONTO } from "./city-fixtures";
 import type { City, LocalDate } from "../src/types";
 
 function page(city: City, date: LocalDate = "2026-10-22") {
@@ -88,8 +88,8 @@ describe("midsummer Isha answer", () => {
     }
   });
 
-  it("keeps the dark-sky claim for London, with its seasonal limits", () => {
-    const answer = faqAnswer(LONDON, ISHA_Q);
+  it("keeps the dark-sky claim for a calculated London, with its seasonal limits", () => {
+    const answer = faqAnswer(CALCULATED_LONDON, ISHA_Q);
     expect(answer).toContain("far enough north that the sky barely gets fully dark around midsummer");
     expect(answer).toContain("applies seasonal limits");
   });
@@ -101,7 +101,7 @@ describe("midsummer Isha answer", () => {
   });
 
   it("agrees with the Isha card about whether the sun reaches the angle", () => {
-    for (const city of [NEW_YORK, HOUSTON, TORONTO, LONDON, ANCHORAGE]) {
+    for (const city of [NEW_YORK, HOUSTON, TORONTO, CALCULATED_LONDON, ANCHORAGE]) {
       const { text } = page(city);
       const cardSaysNever = text.includes("the sun never sinks");
       expect(faqAnswer(city, ISHA_Q).includes("far enough north"), city.slug).toBe(cardSaysNever);
@@ -112,7 +112,7 @@ describe("midsummer Isha answer", () => {
     for (const city of [NEW_YORK, HOUSTON, TORONTO, ANCHORAGE]) {
       expect(page(city).text, city.slug).not.toMatch(/seasonal limits|Moonsighting/);
     }
-    expect(page(LONDON).text).toContain("seasonal limits");
+    expect(page(CALCULATED_LONDON).text).toContain("seasonal limits");
   });
 });
 
@@ -127,8 +127,8 @@ describe("other calculation methods", () => {
     }
   });
 
-  it("still lists ISNA as another method on London's page", () => {
-    const { text } = page(LONDON);
+  it("still lists ISNA as another method on a Moonsighting Committee page", () => {
+    const { text } = page(CALCULATED_LONDON);
     expect(text).toContain("ISNA puts Fajr at 15°");
     expect(text).toContain("ISNA 15°");
   });

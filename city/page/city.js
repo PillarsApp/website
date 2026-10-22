@@ -77,12 +77,36 @@
   calcHanafi.madhab = adhan.Madhab.Hanafi;
   calcHanafi.highLatitudeRule = calc.highLatitudeRule;
 
-  // Asr toggle on the list (Earlier = Shafi'i/standard, Later = Hanafi), remembered per browser.
+  // Asr toggle on the list (Earlier = Shafi'i/standard, Later = Hanafi), remembered per browser and
+  // starting on the Asr the city's standard lists first.
   // day.t carries the chosen Asr, so the header, countdown, curve, list and top bar all follow it;
   // day.base keeps the standard times for the SEO content, which always shows both.
   var ASR_KEY = 'pillars.city.asr';
-  var asrLater = false;
-  try { asrLater = localStorage.getItem(ASR_KEY) === 'later'; } catch (e) { /* storage blocked */ }
+  var asrLater = city.asrFirst === 'Hanafi';
+  try {
+    var storedAsr = localStorage.getItem(ASR_KEY);
+    if (storedAsr === 'later' || storedAsr === 'earlier') asrLater = storedAsr === 'later';
+  } catch (e) { /* storage blocked */ }
+
+  // Published standard: the timetable rows the server inlined (src/render/page.ts inlineDays), resolved
+  // by the same rules as the server (src/render/times.ts): the day's own row, else last year's row for
+  // the same month and day carried forward by whole days, else the calculation. A row is one string of
+  // [fajr, sunrise, dhuhr, asr1, asr2, maghrib, isha]; a "-" column is calculated.
+  var timetable = city.timetable || null;
+  function lastYear(ymd) {
+    var a = ymdParts(ymd);
+    return (a[0] - 1) + '-' + pad(a[1]) + '-' + pad(a[1] === 2 && a[2] === 29 ? 28 : a[2]);
+  }
+  function publishedRow(ymd) {
+    if (!timetable) return null;
+    if (timetable[ymd]) return { wall: timetable[ymd].split(' '), on: ymd, origin: 'published' };
+    var ly = lastYear(ymd);
+    return timetable[ly] ? { wall: timetable[ly].split(' '), on: ly, origin: 'last-year' } : null;
+  }
+  function wallOn(on, ymd, hm) {
+    var a = ymdParts(on), t = hm.split(':');
+    return zoned(a[0], a[1], a[2], +t[0], +t[1], 0) + Math.round((dateObj(ymd) - dateObj(on)) / 864e5) * 864e5;
+  }
 
   var dayCache = {};
   function dayFor(ymd) {
@@ -92,11 +116,20 @@
     var pt = new adhan.PrayerTimes(coords, new Date(a[0], a[1] - 1, a[2]), calc);
     var base = KEYS.map(function (k) { return pt[k].getTime(); });
     var hanafi = new adhan.PrayerTimes(coords, new Date(a[0], a[1] - 1, a[2]), calcHanafi).asr.getTime();
+    var origin = 'calculated';
+    var row = publishedRow(ymd);
+    if (row) {
+      var at = function (column, fallback) { return row.wall[column] === '-' ? fallback : wallOn(row.on, ymd, row.wall[column]); };
+      base = [at(0, base[0]), at(1, base[1]), at(2, base[2]), at(3, base[3]), at(5, base[4]), at(6, base[5])];
+      hanafi = at(4, hanafi);
+      origin = row.origin;
+    }
     var day = {
       date: ymd,
       base: base,
       t: base.map(function (x, i) { return i === 3 && asrLater ? hanafi : x; }),
       asrHanafi: hanafi,
+      origin: origin,
       start: zoned(a[0], a[1], a[2], 0, 0, 0),
       end: zoned(a[0], a[1], a[2], 23, 59, 0)
     };
@@ -507,6 +540,14 @@
         '<span class="name">' + r.name + '</span> <span class="t">' + formatTime(r.t) + '</span></li>';
       if (i !== cur && i !== cur - 1) html += SEP;
     }
+    // Trust caption: a published standard says whether the selected day's times are its own or an estimate.
+    var originEl = document.querySelector('#list-caption [data-origin]');
+    if (originEl) {
+      var label = day.origin === 'published' ? 'published start times'
+        : day.origin === 'last-year' ? 'estimated from its ' + (ymdParts(selected)[0] - 1) + ' timetable'
+        : 'calculated until published';
+      if (originEl.textContent !== label) originEl.textContent = label;
+    }
     var list = $('list'), focused = list.contains(document.activeElement) && document.activeElement.getAttribute('data-asr');
     // FLIP: when the Asr toggle moves the current prayer, rows glide to their new places and the
     // highlight box slides from the old row to the new one.
@@ -664,7 +705,15 @@
   function on(id, ev, fn) { var n = $(id); if (n) n.addEventListener(ev, fn); }
   on('prev', 'click', function () { selected = addDays(selected, -1); render(); });
   on('next', 'click', function () { selected = addDays(selected, 1); render(); });
-  on('chip', 'click', function () { if (selected !== todayYmd) { selected = todayYmd; render(); } });
+  on('chip', 'click', function (e) {
+    if (e.target.closest && e.target.closest('#chip-badge')) return;
+    if (selected !== todayYmd) { selected = todayYmd; render(); }
+  });
+  // The badge opens the standard dialog. showModal gives Escape, a backdrop and focus return for free;
+  // a click on the backdrop closes it too.
+  var dialog = $('std-dialog');
+  on('chip-badge', 'click', function () { if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', ''); });
+  on('std-dialog', 'click', function (e) { if (e.target === dialog) dialog.close(); });
   on('list', 'click', function (e) {
     var b = e.target.closest && e.target.closest('[data-asr]');
     if (b) setAsr(b.getAttribute('data-asr') === 'later');
@@ -697,6 +746,7 @@
     var out = {};
     NAMES.forEach(function (n, i) { out[n.toLowerCase()] = formatTime(d.base[i]); });
     out.asr_hanafi = formatTime(d.asrHanafi);
+    if (timetable) out.origin = d.origin;
     return out;
   }
   var mc = document.modelContext || navigator.modelContext;
@@ -716,7 +766,7 @@
       annotations: { readOnlyHint: true },
       execute: async function (args) {
         var ymd = args && /^\d{4}-\d{2}-\d{2}$/.test(args.date || '') ? args.date : todayYmd;
-        var out = { city: city.place, date: ymd, timezone: city.timezone, method: city.method }, t = timesOut(dayFor(ymd));
+        var out = { city: city.place, date: ymd, timezone: city.timezone, standard: city.standard, method: city.method }, t = timesOut(dayFor(ymd));
         for (var k in t) out[k] = t[k];
         return JSON.stringify(out);
       }
@@ -754,7 +804,7 @@
           for (var k in t) row[k] = t[k];
           days.push(row);
         }
-        return JSON.stringify({ city: city.place, month: m, timezone: city.timezone, method: city.method, days: days });
+        return JSON.stringify({ city: city.place, month: m, timezone: city.timezone, standard: city.standard, method: city.method, days: days });
       }
     });
     if (city.qibla) tool({

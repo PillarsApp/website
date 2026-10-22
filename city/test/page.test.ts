@@ -49,7 +49,7 @@ describe("London page", () => {
 
   it("takes every region from the renderer and none from elsewhere", () => {
     const expected: Record<TemplateRegion, true> = {
-      html: true, head: true, css: true, preload: true, chip: true, date: true, "list-open": true, list: true, caption: true, seo: true, banner: true, scripts: true, analytics: true,
+      html: true, head: true, css: true, preload: true, chip: true, dialog: true, date: true, "list-open": true, list: true, caption: true, seo: true, banner: true, scripts: true, analytics: true,
     };
     expect([...regionNames(template)].sort()).toEqual(Object.keys(expected).sort());
   });
