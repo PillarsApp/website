@@ -8,7 +8,7 @@
 
 import { routes, canonicalRedirect, linksFor, type RouteName, type RouteParams } from "./routes";
 import { staticRegistry, type CityRegistry } from "./registry";
-import { liveMosqueSource, noMosques, type MosqueSource } from "./mosques";
+import { liveMosqueSource, noMosques, type MosqueDirectory, type MosqueSource } from "./mosques";
 import { renderCityPage } from "./render/page";
 import { renderWidget } from "./render/widget";
 import { renderHubStub, renderCountryStub, renderNotFound } from "./render/stubs";
@@ -26,9 +26,9 @@ export interface Deps {
 const defaultDeps: Deps = {
   registry: staticRegistry(),
   mosqueSource: (env) => liveMosqueSource({
-    baseUrl: env.MASJID_TIMES_URL,
-    secret: env.MASJID_TIMES_SECRET,
-    fetch: env.MASJID_TIMES ? (input, init) => env.MASJID_TIMES!.fetch(input, init) : undefined,
+    // `wrangler types` cannot type another Worker's entrypoint (a bare Service),
+    // and tests that inject no binding leave it undefined.
+    directory: env.MASJID_TIMES as unknown as MosqueDirectory | undefined,
   }),
   now: Date.now,
 };

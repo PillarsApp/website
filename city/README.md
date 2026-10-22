@@ -22,7 +22,6 @@ Production pages (`ENVIRONMENT=production`) carry the homepage's Plausible and P
 ```
 cd city
 npm install
-cp .dev.vars.example .dev.vars    # optional: paste MASJID_TIMES_SECRET to see real mosques
 npm run dev
 ```
 
@@ -30,7 +29,7 @@ Open <http://localhost:8787/prayer-times/uk/london/>. Edit `page/template.html`,
 
 `?now=2026-06-21T21:30` (city-local), `?theme=night`, `?clock=12` and `?safe` work as before. In dev, `?now` also sets the server's clock, so the tables and FAQ match what the browser shows. Outside dev the server ignores it.
 
-Without the secret the page has no mosque section. That is the honest state, not an error: there are no placeholder mosques anywhere in the Worker.
+Dev reads mosques from the deployed `masjid-times-prod` through a remote service binding, so `npm run dev` needs `wrangler login`. Without a login, or while masjid-times is unreachable, the page has no mosque section. That is the honest state, not an error: there are no placeholder mosques anywhere in the Worker. `npm test` never uses the remote binding and needs no login.
 
 To get a page as a file for diffing, run `npm run snapshot -- uk/london > /tmp/london.html` while the dev server runs.
 
@@ -43,7 +42,7 @@ To get a page as a file for diffing, run `npm run snapshot -- uk/london > /tmp/l
 | `src/cities.ts` | the cities and countries (data) |
 | `src/routes.ts` | every URL the Worker serves, and the only place the page's links are built |
 | `src/render/` | the renderers: page, widget, index stubs, prayer-time arithmetic |
-| `src/mosques.ts` | the masjid-times client |
+| `src/mosques.ts` | the masjid-times `MosqueDirectory` client |
 | `src/cache.ts` | the edge cache policy |
 | `public/prayer-times/_/` | static files, at the path they are served from |
 | `scripts/client.mjs` | bundles `page/city.js` to `public/prayer-times/_/city.<hash>.js` and writes `src/generated/client.ts` (gitignored) |
@@ -81,13 +80,6 @@ npm run deploy:staging       # https://city-pages-staging.omar-abb.workers.dev/p
 npm run deploy:production    # routes thepillarsapp.com/prayer-times/* and thepillarsapp.com/prayer-times
 ```
 
-Set the masjid-times secret once per environment:
-
-```
-npx wrangler secret put MASJID_TIMES_SECRET --env staging
-npx wrangler secret put MASJID_TIMES_SECRET --env production
-```
-
 Never run a bare `wrangler deploy`: the top-level config is the local `city-pages-dev` Worker. `npx wrangler deploy --env production --dry-run` lists the routes and the assets directory without deploying.
 
 The production route is `thepillarsapp.com/prayer-times/*` plus the exact `thepillarsapp.com/prayer-times`. Do not use `thepillarsapp.com/prayer-times*`: it would capture the live Webflow pages `/prayer-times-app` and `/prayer-times-widget`.
@@ -98,4 +90,4 @@ A rendered page is cached at the edge until the city's next local midnight, or f
 
 ### Mosque data
 
-`MASJID_TIMES_SECRET` is the legacy `X-App-Secret`. When masjid-times requires App Check, the live source returns "unavailable" and the pages render without the mosque section until the source is moved to a service binding. `liveMosqueSource` in `src/mosques.ts` is the only code to change.
+Pages read mosques over RPC from the `MosqueDirectory` entrypoint of `masjid-times-prod`, through the `MASJID_TIMES` service binding. The binding is the authorization, so there is no secret to set. The entrypoint must be deployed in masjid-times before this Worker. `liveMosqueSource` in `src/mosques.ts` is the only code that talks to it.

@@ -1,6 +1,9 @@
 /// <reference types="vite/client" />
 import { describe, expect, it } from "vitest";
-import { liveMosqueSource, pickIds, titleCase, toMosque, parseNearby } from "../src/mosques";
+import { liveMosqueSource, type MosqueDirectory, pickIds, titleCase, toMosque, parseNearby } from "../src/mosques";
+import { createExecutionContext } from "cloudflare:test";
+import { handleFetch } from "../src/index";
+import { get, testEnv } from "./fixtures";
 import { CITIES } from "../src/cities";
 import type { MasjidId } from "../src/types";
 
@@ -14,85 +17,116 @@ const todayRow = (id: string, date: string, extra: Record<string, unknown> = {})
   day: { date, athan: { fajr: "05:50", sunrise: null }, iqamah: { fajr: "06:20", dhuhr: "13:15" }, jummah: ["13:15"] },
   ...extra,
 });
-const ok = (data: unknown) => new Response(JSON.stringify({ data }), { headers: { "Content-Type": "application/json" } });
+interface Calls { nearby: unknown[]; today: unknown[] }
 
-interface Call { url: URL; headers: Headers }
-
-function fakeFetch(handler: (url: URL, call: Call) => Response | Promise<Response>) {
-  const calls: Call[] = [];
-  const fn = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = new URL(String(input));
-    const call = { url, headers: new Headers(init?.headers) };
-    calls.push(call);
-    if (init?.signal?.aborted) throw init.signal.reason;
-    return new Promise<Response>((resolve, reject) => {
-      init?.signal?.addEventListener("abort", () => reject(init.signal!.reason));
-      Promise.resolve(handler(url, call)).then(resolve, reject);
-    });
-  }) as typeof fetch;
-  return { fn, calls };
+function fakeDirectory(handlers: { nearby?: (q: unknown) => unknown; today?: (q: any) => unknown }): { directory: MosqueDirectory; calls: Calls } {
+  const calls: Calls = { nearby: [], today: [] };
+  const directory: MosqueDirectory = {
+    async nearby(q) { calls.nearby.push(q); return handlers.nearby!(q); },
+    async today(q) { calls.today.push(q); return handlers.today!(q); },
+  };
+  return { directory, calls };
 }
 
-const londonApi = (date: string, rows = FEATURED) =>
-  (url: URL) => url.pathname === "/v1/masjids/nearby"
-    ? ok({ masjids: rows.map((id) => nearbyRow(id)) })
-    : ok({ date, masjids: url.searchParams.get("ids")!.split(",").map((id) => todayRow(id, date)) });
+const londonApi = (date: string, rows = FEATURED) => ({
+  nearby: () => ({ masjids: rows.map((id) => nearbyRow(id)) }),
+  today: (q: { ids: readonly string[] }) => ({ date, masjids: q.ids.map((id) => todayRow(id, date)) }),
+});
 
 describe("liveMosqueSource", () => {
-  it("answers no-credentials without a network call when the secret is absent", async () => {
-    const { fn, calls } = fakeFetch(() => ok({}));
-    const out = await liveMosqueSource({ baseUrl: "https://m", secret: undefined, fetch: fn }).forCity(london, "2026-10-22");
-    expect(out).toEqual({ kind: "unavailable", reason: "no-credentials" });
-    expect(calls).toHaveLength(0);
+  it("answers no-directory without a call when there is no binding", async () => {
+    const out = await liveMosqueSource({ directory: undefined }).forCity(london, "2026-10-22");
+    expect(out).toEqual({ kind: "unavailable", reason: "no-directory" });
   });
 
-  it("sends the secret and the city-local date and makes two calls for London", async () => {
-    const { fn, calls } = fakeFetch(londonApi("2026-10-22"));
-    const out = await liveMosqueSource({ baseUrl: "https://m", secret: "s3cret", fetch: fn }).forCity(london, "2026-10-22");
-    expect(calls).toHaveLength(2);
-    expect(calls.every((c) => c.headers.get("x-app-secret") === "s3cret")).toBe(true);
-    expect(calls[0].url.searchParams.get("radius_km")).toBe("15");
-    expect(calls[1].url.searchParams.get("date")).toBe("2026-10-22");
-    expect(calls[1].url.searchParams.get("ids")).toBe(FEATURED.join(","));
+  it("asks nearby for the city, then today for the picked ids and the city-local date", async () => {
+    const { directory, calls } = fakeDirectory(londonApi("2026-10-22"));
+    const out = await liveMosqueSource({ directory }).forCity(london, "2026-10-22");
+    expect(calls.nearby).toEqual([{ lat: london.lat, lng: london.lng, radiusKm: 15, limit: 50 }]);
+    expect(calls.today).toEqual([{ ids: FEATURED, date: "2026-10-22" }]);
     expect(out.kind).toBe("live");
     if (out.kind === "live") expect(out.mosques).toHaveLength(10);
   });
 
-  it("gives up at the deadline", async () => {
-    const { fn } = fakeFetch(() => new Promise<Response>(() => {}));
+  it("parses a directory result into the same Mosque values as before", async () => {
+    const { directory } = fakeDirectory({
+      nearby: () => ({ masjids: [nearbyRow(FEATURED[0], { name: "EAST LONDON MOSQUE" })] }),
+      today: () => ({ date: "2026-10-22", masjids: [todayRow(FEATURED[0], "2026-10-22")] }),
+    });
+    const out = await liveMosqueSource({ directory }).forCity({ ...london, mosques: { radiusKm: 5, max: 1, featured: [] } }, "2026-10-22");
+    expect(out).toEqual({
+      kind: "live",
+      date: "2026-10-22",
+      mosques: [{ name: "East London Mosque", address: "1 High St, E1 1AA", postcode: "E1 1AA", athan: { fajr: "05:50" }, iqamah: { fajr: "06:20", dhuhr: "13:15" }, jummah: ["13:15"] }],
+    });
+  });
+
+  it("gives up at the deadline when the directory never answers", async () => {
+    const never = () => new Promise<never>(() => {});
+    const { directory } = fakeDirectory({ nearby: never, today: never });
     const start = performance.now();
-    const out = await liveMosqueSource({ baseUrl: "https://m", secret: "s", deadlineMs: 50, fetch: fn }).forCity(london, "2026-10-22");
+    const out = await liveMosqueSource({ directory, deadlineMs: 50 }).forCity(london, "2026-10-22");
     expect(out).toEqual({ kind: "unavailable", reason: "timeout" });
     expect(performance.now() - start).toBeLessThan(500);
   });
 
-  it("treats a 401, a 500 and malformed JSON as unavailable", async () => {
-    for (const res of [new Response("no", { status: 401 }), new Response("no", { status: 500 }), new Response("{not json"), ok({ nope: 1 })]) {
-      const { fn } = fakeFetch(() => res.clone());
-      const out = await liveMosqueSource({ baseUrl: "https://m", secret: "s", fetch: fn }).forCity(london, "2026-10-22");
-      expect(out).toEqual({ kind: "unavailable", reason: "error" });
+  it("shares one deadline across both calls", async () => {
+    const slow = (ms: number, v: unknown) => new Promise((r) => setTimeout(() => r(v), ms));
+    const api = londonApi("2026-10-22");
+    const { directory } = fakeDirectory({ nearby: () => slow(60, api.nearby()), today: () => slow(60, api.today({ ids: FEATURED })) });
+    const out = await liveMosqueSource({ directory, deadlineMs: 100 }).forCity(london, "2026-10-22");
+    expect(out).toEqual({ kind: "unavailable", reason: "timeout" });
+  });
+
+  it("maps a thrown error and a malformed result to error", async () => {
+    const thrown = fakeDirectory({ nearby: () => { throw new Error("invalid_coords"); } });
+    expect(await liveMosqueSource({ directory: thrown.directory }).forCity(london, "2026-10-22")).toEqual({ kind: "unavailable", reason: "error" });
+    for (const bad of [{ nope: 1 }, null, "text"]) {
+      const { directory } = fakeDirectory({ nearby: () => bad });
+      expect(await liveMosqueSource({ directory }).forCity(london, "2026-10-22")).toEqual({ kind: "unavailable", reason: "error" });
     }
   });
 
   it("drops one mosque whose day is missing and keeps the rest", async () => {
-    const { fn } = fakeFetch((url) => url.pathname === "/v1/masjids/nearby"
-      ? ok({ masjids: FEATURED.slice(0, 3).map((id) => nearbyRow(id)) })
-      : ok({ date: "2026-10-22", masjids: [todayRow(FEATURED[0], "2026-10-22"), todayRow(FEATURED[1], "2026-10-22", { day: null }), todayRow(FEATURED[2], "2026-10-22")] }));
-    const out = await liveMosqueSource({ baseUrl: "https://m", secret: "s", fetch: fn }).forCity(london, "2026-10-22");
+    const { directory } = fakeDirectory({
+      nearby: () => ({ masjids: FEATURED.slice(0, 3).map((id) => nearbyRow(id)) }),
+      today: () => ({ date: "2026-10-22", masjids: [todayRow(FEATURED[0], "2026-10-22"), todayRow(FEATURED[1], "2026-10-22", { day: null }), todayRow(FEATURED[2], "2026-10-22")] }),
+    });
+    const out = await liveMosqueSource({ directory }).forCity(london, "2026-10-22");
     expect(out.kind === "live" && out.mosques).toHaveLength(2);
   });
 
   it("is unavailable (empty) when every mosque is dropped", async () => {
-    const { fn } = fakeFetch((url) => url.pathname === "/v1/masjids/nearby"
-      ? ok({ masjids: [nearbyRow(FEATURED[0])] })
-      : ok({ date: "2026-10-22", masjids: [todayRow(FEATURED[0], "2026-10-22", { day: null })] }));
-    const out = await liveMosqueSource({ baseUrl: "https://m", secret: "s", fetch: fn }).forCity(london, "2026-10-22");
+    const { directory } = fakeDirectory({
+      nearby: () => ({ masjids: [nearbyRow(FEATURED[0])] }),
+      today: () => ({ date: "2026-10-22", masjids: [todayRow(FEATURED[0], "2026-10-22", { day: null })] }),
+    });
+    const out = await liveMosqueSource({ directory }).forCity(london, "2026-10-22");
     expect(out).toEqual({ kind: "unavailable", reason: "empty" });
   });
 });
 
+describe("city page with a bound directory", () => {
+  it("renders the mosque section from the MASJID_TIMES binding", async () => {
+    const { directory } = fakeDirectory({
+      nearby: () => ({ masjids: [nearbyRow(FEATURED[0], { name: "Bound Directory Mosque" })] }),
+      today: (q) => ({ date: q.date, masjids: [todayRow(FEATURED[0], q.date)] }),
+    });
+    const res = await handleFetch(get("/prayer-times/uk/london/"), testEnv({ MASJID_TIMES: directory as never }), createExecutionContext());
+    const html = await res.text();
+    expect(html).toContain('id="mosques"');
+    expect(html).toContain("Bound Directory Mosque");
+  });
+
+  it("renders without the mosque section when the binding is absent", async () => {
+    const res = await handleFetch(get("/prayer-times/uk/luton/"), testEnv({ MASJID_TIMES: undefined as never }), createExecutionContext());
+    expect(res.status).toBe(200);
+    expect(await res.text()).not.toContain('id="mosques"');
+  });
+});
+
 describe("pure parts", () => {
-  const pool = (ids: string[], extra: Record<string, unknown> = {}) => parseNearby({ data: { masjids: ids.map((id) => nearbyRow(id, extra)) } });
+  const pool = (ids: string[], extra: Record<string, unknown> = {}) => parseNearby({ masjids: ids.map((id) => nearbyRow(id, extra)) });
 
   it("puts featured first, fills the nearest others to max, never beyond max", () => {
     const others = [OTHER(1), OTHER(2), OTHER(3)];

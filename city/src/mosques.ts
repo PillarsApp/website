@@ -1,13 +1,12 @@
-// Mosque data for a city page. The only module that knows masjid-times' URL
-// shapes, JSON and auth header. Callers get a MosqueSection; they never see a
-// wire object.
+// Mosque data for a city page. The only module that knows the masjid-times
+// RPC shapes. Callers get a MosqueSection; they never see a wire object.
 //
-// Protocol (two round trips, bounded by one deadline):
-//   1. GET /v1/masjids/nearby?lat&lng&radius_km&limit=50       (pool + addresses)
-//   2. GET /v1/timetables/today?ids=<up to 15>&date=<city-local>  (one call, all mosques)
+// Protocol (two RPC calls, bounded by one deadline):
+//   1. nearby({ lat, lng, radiusKm, limit: 50 })   (pool + addresses)
+//   2. today({ ids: <up to 15>, date: <city-local> })  (one call, all mosques)
 // Featured ids go first, then the nearest reliable others up to query.max. Any
-// failure, non-2xx, bad shape or the deadline gives "unavailable". Nothing in
-// this module can construct a Mosque that did not come from the API.
+// failure, bad shape or the deadline gives "unavailable". Nothing in this
+// module can construct a Mosque that did not come from the directory.
 
 import type { City, LocalDate, MasjidId, Mosque, MosqueQuery, MosqueSection, PrayerKey, WallClock } from "./types";
 import { MASJID_ID_RE } from "./registry";
@@ -23,39 +22,43 @@ export const noMosques: MosqueSource = {
   },
 };
 
+// The masjid-times `MosqueDirectory` entrypoint, reached through a service
+// binding. Results come from another service, so they are `unknown` until
+// parseNearby / parseToday accept them.
+export interface MosqueDirectory {
+  nearby(q: { lat: number; lng: number; radiusKm: number; limit: number }): Promise<unknown>;
+  today(q: { ids: readonly string[]; date: string }): Promise<unknown>;
+}
+
 export interface LiveMosqueSourceOptions {
-  readonly baseUrl: string;
-  readonly secret: string | undefined; // undefined: every call answers "no-credentials"
+  readonly directory: MosqueDirectory | undefined; // undefined: every call answers "no-directory"
   readonly deadlineMs?: number; // the page must not wait on mosques
-  readonly fetch?: typeof fetch; // injected in tests
 }
 
 const DEFAULT_DEADLINE_MS = 2500;
 const POOL_SIZE = 50;
 
-// Without a secret there is no network call and no mosque: there is no code
-// path from "no data" to "some mosques".
+class DeadlineError extends Error {}
+
+// Without a directory there is no call and no mosque: there is no code path
+// from "no data" to "some mosques".
 export function liveMosqueSource(opts: LiveMosqueSourceOptions): MosqueSource {
-  const doFetch = opts.fetch ?? fetch;
+  const { directory } = opts;
   return {
     async forCity(city, date) {
       const query = city.mosques;
       if (!query) return { kind: "unavailable", reason: "no-query" };
-      if (!opts.secret) return { kind: "unavailable", reason: "no-credentials" };
-      const signal = AbortSignal.timeout(opts.deadlineMs ?? DEFAULT_DEADLINE_MS);
-      const get = async (path: string, params: Record<string, string | number>): Promise<unknown> => {
-        const res = await doFetch(`${opts.baseUrl}${path}?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)]))}`, {
-          headers: { "X-App-Secret": opts.secret! },
-          signal,
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
-        return res.json();
-      };
-      try {
-        const pool = parseNearby(await get("/v1/masjids/nearby", { lat: city.lat, lng: city.lng, radius_km: query.radiusKm, limit: POOL_SIZE }));
+      if (!directory) return { kind: "unavailable", reason: "no-directory" };
+      // RPC takes no AbortSignal, so the deadline is a race; the losing call is abandoned.
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const deadline = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new DeadlineError("deadline exceeded")), opts.deadlineMs ?? DEFAULT_DEADLINE_MS);
+      });
+      const load = async (): Promise<MosqueSection> => {
+        const pool = parseNearby(await directory.nearby({ lat: city.lat, lng: city.lng, radiusKm: query.radiusKm, limit: POOL_SIZE }));
         const ids = pickIds(pool, query);
         if (!ids.length) return { kind: "unavailable", reason: "empty" };
-        const today = parseToday(await get("/v1/timetables/today", { ids: ids.join(","), date }));
+        const today = parseToday(await directory.today({ ids, date }));
         const byId = new Map(pool.map((m) => [m.id, m]));
         const todayById = new Map(today.map((t) => [t.id, t]));
         const mosques = ids.flatMap((id) => {
@@ -65,11 +68,15 @@ export function liveMosqueSource(opts: LiveMosqueSourceOptions): MosqueSource {
           return m ? [m] : [];
         });
         return mosques.length ? { kind: "live", date, mosques } : { kind: "unavailable", reason: "empty" };
+      };
+      try {
+        return await Promise.race([load(), deadline]);
       } catch (e) {
-        const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
-        const reason = timedOut ? "timeout" : "error";
+        const reason = e instanceof DeadlineError ? "timeout" : "error";
         console.log(JSON.stringify({ event: "mosques", city: `${city.country}/${city.slug}`, outcome: reason, detail: e instanceof Error ? e.message : String(e) }));
         return { kind: "unavailable", reason };
+      } finally {
+        clearTimeout(timer);
       }
     },
   };
@@ -87,21 +94,21 @@ const str = (v: unknown): string | null => (typeof v === "string" && v ? v : nul
 // The API sends booleans or 0/1; only an explicit false/0 excludes.
 const flag = (v: unknown) => v !== false && v !== 0;
 
-function masjidList(body: unknown): unknown[] {
-  if (!isRecord(body) || !isRecord(body.data) || !Array.isArray(body.data.masjids)) throw new Error("unexpected response shape");
-  return body.data.masjids;
+function masjidList(data: unknown): unknown[] {
+  if (!isRecord(data) || !Array.isArray(data.masjids)) throw new Error("unexpected response shape");
+  return data.masjids;
 }
 
-export function parseNearby(body: unknown): readonly NearbyWire[] {
-  return masjidList(body).flatMap((m): NearbyWire[] => {
+export function parseNearby(data: unknown): readonly NearbyWire[] {
+  return masjidList(data).flatMap((m): NearbyWire[] => {
     if (!isRecord(m)) return [];
     const id = str(m.id), name = str(m.name);
     return id && name ? [{ id, name, address: str(m.address), zipcode: str(m.zipcode), active: flag(m.active), reliable: flag(m.times_reliable) }] : [];
   });
 }
 
-export function parseToday(body: unknown): readonly TodayWire[] {
-  return masjidList(body).flatMap((m): TodayWire[] => {
+export function parseToday(data: unknown): readonly TodayWire[] {
+  return masjidList(data).flatMap((m): TodayWire[] => {
     if (!isRecord(m)) return [];
     const id = str(m.id);
     if (!id) return [];

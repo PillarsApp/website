@@ -18,24 +18,23 @@
   // Worker; a miss falls through to src/index.ts.
   "assets": { "directory": "./public", "not_found_handling": "none" },
   "vars": {
-    "ENVIRONMENT": "dev",
-    "MASJID_TIMES_URL": "https://masjid-times-prod.omar-abb.workers.dev"
+    "ENVIRONMENT": "dev"
   },
+  // Local dev reaches the deployed entrypoint through a remote binding.
+  "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod", "entrypoint": "MosqueDirectory", "remote": true }],
   // NOTE: vars and assets are NOT inherited into named envs: repeat them per
   // env or the deployed worker silently has none. test/config.test.ts checks
   // the three envs agree.
-  // Secret (per env): MASJID_TIMES_SECRET. `wrangler secret put MASJID_TIMES_SECRET --env staging`.
   "env": {
     "staging": {
       "name": "city-pages-staging",
       "workers_dev": true,
-      // A deployed Worker cannot fetch another Worker's workers.dev URL in the
-      // same account (error 1042), so masjid-times is reached through a binding.
-      "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod" }],
+      // Mosques are read over RPC from masjid-times' MosqueDirectory entrypoint.
+      // The binding is the authorization: there is no secret.
+      "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod", "entrypoint": "MosqueDirectory" }],
       "assets": { "directory": "./public", "not_found_handling": "none" },
       "vars": {
-        "ENVIRONMENT": "staging",
-        "MASJID_TIMES_URL": "https://masjid-times-prod.omar-abb.workers.dev"
+        "ENVIRONMENT": "staging"
       }
     },
     "production": {
@@ -48,11 +47,10 @@
         { "pattern": "thepillarsapp.com/prayer-times/*", "zone_id": "50f55a7e891d8e8bdc988d43e6a83a31" },
         { "pattern": "thepillarsapp.com/prayer-times", "zone_id": "50f55a7e891d8e8bdc988d43e6a83a31" }
       ],
-      "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod" }],
+      "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod", "entrypoint": "MosqueDirectory" }],
       "assets": { "directory": "./public", "not_found_handling": "none" },
       "vars": {
-        "ENVIRONMENT": "production",
-        "MASJID_TIMES_URL": "https://masjid-times-prod.omar-abb.workers.dev"
+        "ENVIRONMENT": "production"
       }
     }
   }

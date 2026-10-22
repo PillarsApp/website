@@ -126,7 +126,7 @@ export interface Mosque {
 // which made-up mosques could be shown.
 export type MosqueSection =
   | { readonly kind: "live"; readonly date: LocalDate; readonly mosques: readonly Mosque[] }
-  | { readonly kind: "unavailable"; readonly reason: "no-query" | "no-credentials" | "error" | "timeout" | "empty" };
+  | { readonly kind: "unavailable"; readonly reason: "no-query" | "no-directory" | "error" | "timeout" | "empty" };
 
 // ---------- Render input ----------
 
