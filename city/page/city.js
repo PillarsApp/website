@@ -621,7 +621,7 @@
   var longFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   function each(sel, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), fn); }
   function tzName(style) {
-    var p = new Intl.DateTimeFormat('en-GB', { timeZone: tz, timeZoneName: style }).formatToParts(new Date(nowMs()))
+    var p = new Intl.DateTimeFormat(city.lang || 'en-GB', { timeZone: tz, timeZoneName: style }).formatToParts(new Date(nowMs()))
       .filter(function (x) { return x.type === 'timeZoneName'; })[0];
     if (!p) return '';
     // Some browsers give UTC+0 as an offset ("GMT+00:00", "GMT+0"); show it the way Node/CLDR names it.

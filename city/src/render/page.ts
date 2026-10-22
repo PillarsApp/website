@@ -115,7 +115,7 @@ function head(view: View): string {
   });
 
   const cityData = {
-    name: city.name, place: `${city.name}, ${country.short}`, country: country.code, clock: country.clock,
+    name: city.name, place: `${city.name}, ${country.short}`, country: country.code, lang: country.lang, clock: country.clock,
     lat: city.lat, lng: city.lng, timezone: city.timezone,
     method: clock.calc.method, madhab: clock.calc.madhab, highLatitudeRule: clock.calc.highLatitudeRule,
     url, qibla,
@@ -222,8 +222,9 @@ function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly 
     text(`What is the Qibla direction in ${name}?`,
       `The Qibla from ${name} is ${qibla.bearing}° from true north, roughly ${qibla.compass}. That is the shortest path across the globe to the Kaaba in Makkah, which is why it points ${qibla.compass} rather than straight towards Saudi Arabia on a flat map.`),
   ];
-  if (clockChange) {
-    items.push(text(`Are these times in GMT or BST?`,
+  const zoneNames = clock.standardAndDaylightAbbr(Number(date.slice(0, 4)));
+  if (clockChange && zoneNames) {
+    items.push(text(`Are these times in ${zoneNames.standard} or ${zoneNames.daylight}?`,
       `All times are ${name} local time, currently ${clock.zoneAbbr(today.t[2])}. The clocks change on ${clock.longDate(clockChange)}; from that day the times are in ${clock.zoneAbbrOn(clockChange)}, and the timetable already accounts for it.`));
   }
   return items;
