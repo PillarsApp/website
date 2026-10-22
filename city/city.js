@@ -563,17 +563,19 @@
     var toggle = document.querySelector('#list .asr-toggle');
     if (reduceMotion || !toggle || !toggle.animate) { render(); return; }
     // In place first, so the CSS transitions run: the thumb slides, the labels crossfade, and the
-    // time rolls (old up and out, new up from below). Then the full render moves the highlight.
+    // time crossfades in place. Then the full render moves the highlight.
     toggle.classList.toggle('is-later', later);
     Array.prototype.forEach.call(toggle.querySelectorAll('[data-asr]'), function (b) {
       b.setAttribute('aria-pressed', String((b.getAttribute('data-asr') === 'later') === later));
     });
     var t = toggle.closest('.row').querySelector('.t');
     var next = formatTime(dayFor(selected).t[3]);
-    t.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(-55%)', opacity: 0 }], { duration: 120, easing: 'ease-in' })
+    // Crossfade in place: width pinned so the swap never shifts the row.
+    t.style.minWidth = t.offsetWidth + 'px';
+    t.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 90, easing: 'ease-in' })
       .onfinish = function () {
         t.textContent = next;
-        t.animate([{ transform: 'translateY(55%)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 160, easing: EASE });
+        t.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 90, easing: 'ease-out' });
       };
     clearTimeout(asrTimer);
     asrTimer = setTimeout(function () { animateNext = true; render(); }, 290);

@@ -529,7 +529,7 @@ body.theme-night { --on-ink: var(--deep-blue); }
 }
 .asr-opt[aria-pressed="true"] { color: var(--on-ink); opacity: 1; cursor: default; }
 .asr-opt:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
-.row .t { display: inline-block; }
+.row .t { display: inline-block; text-align: right; }
 /* Highlight box sliding between rows (city.js playFlip); the real row's border waits underneath. */
 .list { position: relative; }
 .hl-ghost { position: absolute; list-style: none; border: 3px solid var(--ink); border-radius: 10px; pointer-events: none; }
