@@ -153,7 +153,7 @@ body.theme-night .sun { display: none; }
 .current-name { padding-right: 16px; text-wrap: balance; }   /* long city names wrap instead of running off */
 .current-name .dim { opacity: .5; }
 .countdown {
-  margin: 2px 0 0 -7px;   /* app: SizedBox(2), pill at the column's 27px edge (title has +7) */
+  margin: 10px 0 0 -7px;   /* 10px under the heading (owner's call over the app's 2); pill at the 27px edge */
   display: inline-flex; align-items: center;
   height: 30px;
   padding: 3px 12px;
