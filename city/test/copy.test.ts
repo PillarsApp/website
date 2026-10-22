@@ -115,3 +115,21 @@ describe("midsummer Isha answer", () => {
     expect(page(LONDON).text).toContain("seasonal limits");
   });
 });
+
+describe("other calculation methods", () => {
+  it("never presents ISNA as another method on a page that uses ISNA", () => {
+    for (const city of [NEW_YORK, HOUSTON, TORONTO]) {
+      const { text } = page(city);
+      expect(text, city.slug).toContain("ISNA (North America) method");
+      expect(text, city.slug).not.toMatch(/ISNA puts|ISNA at 15°|ISNA 15°/);
+      expect(text, city.slug).toContain("put Fajr at 18°, which gives an earlier time than the 15° used here");
+      expect(text, city.slug).toContain("the Muslim World League uses 17° and Karachi 18°, against 15° here");
+    }
+  });
+
+  it("still lists ISNA as another method on London's page", () => {
+    const { text } = page(LONDON);
+    expect(text).toContain("ISNA puts Fajr at 15°");
+    expect(text).toContain("ISNA 15°");
+  });
+});

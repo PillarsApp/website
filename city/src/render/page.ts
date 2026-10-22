@@ -297,8 +297,10 @@ function fajrCard(view: View): string {
   const tomorrow = clock.addDays(date, 1);
   const lt = city.localTimetable;
   const highLat = c.seasonalLimits ? ` and seasonal limits for ${name}'s high latitude` : "";
-  const otherMethods = c.fajrAngle === 18
-    ? "ISNA puts Fajr at 15°, which gives a later time, while the Muslim World League and Karachi methods use 18° like this page but handle high latitudes differently."
+  const otherMethods = c.method === "NorthAmerica"
+    ? `the Muslim World League and Karachi methods put Fajr at 18°, which gives an earlier time than the ${c.fajrAngle}° used here.`
+    : c.fajrAngle === 18
+    ?"ISNA puts Fajr at 15°, which gives a later time, while the Muslim World League and Karachi methods use 18° like this page but handle high latitudes differently."
     : `the Muslim World League and Karachi methods put Fajr at 18° and ISNA at 15°, against ${c.fajrAngle}° here.`;
   const week = weekTable(view, `Fajr and sunrise in ${name}, next 7 days`, [["Fajr", (d) => clock.day(d).t[0]], ["Sunrise", (d) => clock.day(d).t[1]]]);
   return `
@@ -343,7 +345,7 @@ function ishaCard(view: View): string {
     <h2 id="isha">${icon("bedtime")}Isha time in ${name} today</h2>
     <p class="answer">Isha in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(5)}. Tomorrow, ${clock.longDate(tomorrow)}, Isha is at ${clock.time(clock.day(tomorrow).t[5])}.</p>
     <p>These times use the ${view.methodName} method, with Isha when the sun is ${c.ishaAngle}° below the horizon${highLat}. The time for Isha lasts until Fajr, and it is recommended not to delay it past the middle of the night.</p>
-    <p>Isha times for ${name} differ between sites most in summer.${maxDepression < c.ishaAngle ? ` Around midsummer the sun never sinks ${c.ishaAngle}° below the horizon in ${name}, so each method falls back on a high-latitude rule, such as the middle of the night or one-seventh of the night.` : ""} Methods also use different Isha angles: the Muslim World League uses 17°, ISNA 15° and Karachi 18°, while Umm al-Qura sets Isha 90 minutes after Maghrib.${lt ? ` Many ${name} mosques follow the ${esc(lt.name)} instead.` : ""}</p>${week}
+    <p>Isha times for ${name} differ between sites most in summer.${maxDepression < c.ishaAngle ? ` Around midsummer the sun never sinks ${c.ishaAngle}° below the horizon in ${name}, so each method falls back on a high-latitude rule, such as the middle of the night or one-seventh of the night.` : ""} Methods also use different Isha angles: ${c.method === "NorthAmerica" ? `the Muslim World League uses 17° and Karachi 18°, against ${c.ishaAngle}° here` : "the Muslim World League uses 17°, ISNA 15° and Karachi 18°"}, while Umm al-Qura sets Isha 90 minutes after Maghrib.${lt ? ` Many ${name} mosques follow the ${esc(lt.name)} instead.` : ""}</p>${week}
     </div>`;
 }
 
