@@ -2,6 +2,7 @@ import template from "../../page/template.html";
 import cssSource from "../../page/city.css";
 import { SITE } from "../cities";
 import type { City, LocalDate, Mosque, MosqueSection, PageInput, PageLinks, PrayerKey, Rendered } from "../types";
+import { timetableId } from "../timetables";
 import { cityClock, PRAYERS, type CityClock, type DayTimes } from "./times";
 import { esc, fillRegions, jsonInScript, minifyCss, plainText, titleHeadings } from "./html";
 import { icon } from "./icons";
@@ -15,7 +16,7 @@ export type TemplateRegion =
   | "html" | "head" | "css" | "preload" | "chip" | "date" | "list-open" | "list" | "caption" | "seo" | "banner" | "scripts" | "analytics";
 
 export function renderCityPage(input: PageInput): Rendered {
-  const clock = cityClock(input.city, input.country);
+  const clock = cityClock(input.city, input.country, input.timetable);
   const html = fillRegions(template, regions(input, clock));
   const midnight = clock.nextMidnight(input.now);
   const freshUntil =
@@ -166,11 +167,14 @@ function listCaption({ input, clock, today, methodName }: View): string {
   const { city } = input;
   const c = clock.calc;
   const angles = c.fajrAngle === c.ishaAngle ? `Fajr &amp; Isha ${c.fajrAngle}°` : `Fajr ${c.fajrAngle}° · Isha ${c.ishaAngle}°`;
-  const text = city.listCaption
-    ? esc(city.listCaption)
-    : `Based on ${esc(city.coordinatesLabel ?? city.name)} (${deg(city.lat, "N", "S")}, ${deg(city.lng, "E", "W")}) · ${methodName} · ${angles} · <span data-tz-name>${clock.zoneLong(today.t[2])} (${clock.zoneAbbr(today.t[2])})</span>`;
+  const text = `Based on ${esc(city.coordinatesLabel ?? city.name)} (${deg(city.lat, "N", "S")}, ${deg(city.lng, "E", "W")}) · ${methodName} · ${angles} · <span data-tz-name>${clock.zoneLong(today.t[2])} (${clock.zoneAbbr(today.t[2])})</span>`;
   return `<p class="list-caption" id="list-caption">${text}</p>`;
 }
+
+// Until the copy follows the standard: a published standard reads as the old London timetable note did.
+const publishedNote = (city: City) => (timetableId(city.standard)
+  ? { name: city.standard.name, note: `Many ${city.name} mosques publish ${city.standard.name}. ${city.standard.badge}` }
+  : undefined);
 
 const HANAFI_ASR = 6;
 const EARTH_AXIAL_TILT_DEG = 23.44;
@@ -186,7 +190,7 @@ function faqList(input: PageInput, clock: CityClock, today: DayTimes): readonly 
   const name = city.name;
   const methodName = clock.calc.methodLabel;
   const c = clock.calc;
-  const lt = city.localTimetable;
+  const lt = publishedNote(city);
   const td = (i: number) => todaySpan(clock, today, i);
   const fmt = (ms: number) => clock.time(ms);
   const raw = (question: string, answerHtml: string): Faq => ({ question, answerHtml });
@@ -295,7 +299,7 @@ function fajrCard(view: View): string {
   const c = clock.calc;
   const td = (i: number) => todaySpan(clock, today, i);
   const tomorrow = clock.addDays(date, 1);
-  const lt = city.localTimetable;
+  const lt = publishedNote(city);
   const highLat = c.seasonalLimits ? ` and seasonal limits for ${name}'s high latitude` : "";
   const otherMethods = c.method === "NorthAmerica"
     ? `the Muslim World League and Karachi methods put Fajr at 18°, which gives an earlier time than the ${c.fajrAngle}° used here.`
@@ -336,7 +340,7 @@ function ishaCard(view: View): string {
   const c = clock.calc;
   const td = (i: number) => todaySpan(clock, today, i);
   const tomorrow = clock.addDays(date, 1);
-  const lt = city.localTimetable;
+  const lt = publishedNote(city);
   const highLat = c.seasonalLimits ? ` and seasonal limits for ${name}'s high latitude` : "";
   const maxDepression = midsummerMaxDepression(city);
   const week = weekTable(view, `Isha and the next Fajr in ${name}, next 7 days`, [["Isha", (d) => clock.day(d).t[5]], ["Next Fajr", (d) => clock.day(clock.addDays(d, 1)).t[0]]]);
@@ -424,7 +428,7 @@ function seoSection(view: View): string {
   }
   const todayList = PRAYERS.map((p, i) => `${p.name} ${todaySpan(clock, today, i)}${i === 3 ? ` (Hanafi ${todaySpan(clock, today, HANAFI_ASR)})` : ""}`).join(", ");
   const adj = c.adjustments.map((a) => `${a.prayer} ${a.minutes > 0 ? "+" : ""}${a.minutes} min`).join(", ");
-  const timesSource = city.timesSource ?? `${methodName} method`;
+  const timesSource = city.standard.kind === "gps" ? city.standard.name : `${methodName} method`;
 
   return `<section class="seo" id="seo">
     <div class="card">

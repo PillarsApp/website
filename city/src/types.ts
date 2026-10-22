@@ -52,10 +52,49 @@ export interface City extends CityRef {
   readonly datePublished: LocalDate;
   readonly coordinatesLabel?: string;
   readonly calc?: Calc;
-  readonly localTimetable?: { readonly name: string; readonly note: string };
-  readonly listCaption?: string;
-  readonly timesSource?: string;
+  readonly standard: Standard;
   readonly mosques?: MosqueQuery;
+}
+
+export type TimetableId =
+  | "london-unified"
+  | "chelmsford-cms"
+  | "watford-central"
+  | "oxford-coms"
+  | "birmingham-central"
+  | "leicester-masjid-umar"
+  | "bradford-central"
+  | "manchester-central"
+  | "glasgow-central";
+
+// The prayer-time standard a city page follows: what its times are, whose they are, and the copy that
+// says so. A gps city is always calculated; a city-timetable or mosque standard is published from a
+// timetable file, or calculated when the standard's own times match the calculation (timetable: null).
+export type Standard = StandardCopy & (
+  | { readonly kind: "gps" }
+  | { readonly kind: "city-timetable" | "mosque"; readonly timetable: TimetableId | null }
+);
+
+export interface StandardCopy {
+  readonly name: string;
+  readonly asrFirst: Madhab;
+  readonly badge: string;
+  readonly isha: string;
+  // Stands in for the badge line, the kind paragraph and the jama'ah paragraph of the dialog.
+  readonly dialog?: readonly [string, string, string];
+}
+
+export type DayOrigin = "published" | "last-year" | "calculated";
+
+export type TimetableDay = readonly [
+  WallClock | null, WallClock | null, WallClock | null, WallClock | null, WallClock | null, WallClock | null, WallClock | null,
+];
+
+export interface Timetable {
+  readonly id: TimetableId;
+  readonly zone: string;
+  readonly retrieved: LocalDate;
+  readonly days: Readonly<Record<LocalDate, TimetableDay>>;
 }
 
 export interface MosqueQuery {
@@ -105,6 +144,7 @@ export type Audience = "public" | "preview";
 export interface PageInput {
   readonly city: City;
   readonly country: Country;
+  readonly timetable: Timetable | null;
   readonly date: LocalDate;
   readonly now: Instant;
   readonly mosques: MosqueSection;

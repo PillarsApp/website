@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { DOWN, LONDON_NOON_OCT_22, deps, fetchWith } from "./fixtures";
 import { SELF } from "cloudflare:test";
+import { staticRegistry } from "../src/registry";
+import { CALCULATED_LONDON } from "./city-fixtures";
 
 const WIDGET = "/prayer-times/uk/london/widget/";
 
@@ -34,7 +36,8 @@ describe("embed widget", () => {
   });
 
   it("carries yesterday through day 62 for exactly this city, with the absolute page URL", async () => {
-    const { data } = await widget();
+    const res = await fetchWith(WIDGET, deps(DOWN, LONDON_NOON_OCT_22, staticRegistry([CALCULATED_LONDON])), { ENVIRONMENT: "dev" });
+    const data = JSON.parse(/<script id="widget-data" type="application\/json">([\s\S]*?)<\/script>/.exec(await res.text())![1]);
     const days = Object.keys(data.days).sort();
     expect(days).toHaveLength(64);
     expect(days[0]).toBe("2026-10-21");
