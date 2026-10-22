@@ -566,7 +566,7 @@ body.theme-night { --on-ink: var(--deep-blue); }
 /* Scroll bar: blurred strip with the current prayer + time left, shown once the header scrolls away. */
 /* iOS-style glass: the sky's top colour (--grad-1) at ~60% over a strong blur, so content shows through. */
 :root { --bar-bg: rgba(197, 223, 241, .6); }
-body.theme-night { --bar-bg: rgba(3, 24, 49, .62); }
+body.theme-night { --bar-bg: rgba(0, 25, 62, .72); }   /* night: the cards' --deep-blue #00193E */
 .topbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 950;
   height: calc(52px + var(--st));
