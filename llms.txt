@@ -6,7 +6,7 @@ Times are calculated with the adhan library using each city's standard method (U
 
 ## Prayer times
 
-- [London prayer times](https://thepillarsapp.com/prayer-times/uk/london/): today's Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha, the month's timetable, calculation method and London mosques
+- [London prayer times](https://thepillarsapp.com/prayer-times/uk/london/): today's Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha, a Fajr section with the next 7 days' Fajr and sunrise, the month's timetable, calculation method and London mosques
 - [United Kingdom prayer times](https://thepillarsapp.com/prayer-times/uk/): all UK cities
 - [All prayer times](https://thepillarsapp.com/prayer-times/): every country and city
 

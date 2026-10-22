@@ -245,6 +245,7 @@ const ICONS = {
   mosque: 'M24 7c0-1.1-2-3-2-3s-2 1.9-2 3c0 .74.4 1.38 1 1.72V13h-2v-2c0-.95-.66-1.74-1.55-1.94.34-.58.55-1.25.55-1.97 0-1.31-.65-2.53-1.74-3.25L12 1 7.74 3.84C6.65 4.56 6 5.78 6 7.09c0 .72.21 1.39.55 1.97C5.66 9.26 5 10.05 5 11v2H3V8.72c.6-.34 1-.98 1-1.72 0-1.1-2-3-2-3S0 5.9 0 7c0 .74.4 1.38 1 1.72V21h10v-4c0-.55.45-1 1-1s1 .45 1 1v4h10V8.72c.6-.34 1-.98 1-1.72zM8.85 5.5 12 3.4l3.15 2.1c.53.36.85.95.85 1.59C16 8.14 15.14 9 14.09 9H9.91C8.86 9 8 8.14 8 7.09c0-.64.32-1.23.85-1.59zM21 19h-6v-2c0-1.65-1.35-3-3-3s-3 1.35-3 3v2H3v-4h4v-4h10v4h4v4z',
   tune: 'M3 18c0 .55.45 1 1 1h5v-2H4c-.55 0-1 .45-1 1zM3 6c0 .55.45 1 1 1h9V5H4c-.55 0-1 .45-1 1zm10 14v-1h7c.55 0 1-.45 1-1s-.45-1-1-1h-7v-1c0-.55-.45-1-1-1s-1 .45-1 1v4c0 .55.45 1 1 1s1-.45 1-1zM7 10v1H4c-.55 0-1 .45-1 1s.45 1 1 1h3v1c0 .55.45 1 1 1s1-.45 1-1v-4c0-.55-.45-1-1-1s-1 .45-1 1zm14 2c0-.55-.45-1-1-1h-9v2h9c.55 0 1-.45 1-1zm-5-3c.55 0 1-.45 1-1V7h3c.55 0 1-.45 1-1s-.45-1-1-1h-3V4c0-.55-.45-1-1-1s-1 .45-1 1v4c0 .55.45 1 1 1z',
   help: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z',
+  wb_twilight: 'M16.955 8.662l2.12-2.122 1.414 1.414-2.121 2.122zM2 18h20v2H2zm9-14h2v3h-2zM3.543 7.925l1.414-1.414 2.121 2.122-1.414 1.414zM5 16h14c0-3.87-3.13-7-7-7s-7 3.13-7 7z',
   location_on: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
 };
 const ico = (n) => `<svg class="h-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="${ICONS[n]}"/></svg>`;
@@ -347,6 +348,28 @@ ld['@graph'].push({
   mainEntity: faq.map(([q, a, raw]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: plain(raw ? a : esc(a)) } })),
 });
 
+// ---------- Fajr today (answer-first section for "fajr time {city}") ----------
+const tomorrow = addDays(date, 1);
+const fajrWeek = Array.from({ length: 7 }, (_, i) => addDays(date, i));
+const highLat = city.method === 'MoonsightingCommittee' ? ` and seasonal limits for ${esc(city.name)}'s high latitude` : '';
+const otherMethods = p0.fajrAngle === 18
+  ? `ISNA puts Fajr at 15°, which gives a later time, while the Muslim World League and Karachi methods use 18° like this page but handle high latitudes differently.`
+  : `the Muslim World League and Karachi methods put Fajr at 18° and ISNA at 15°, against ${p0.fajrAngle}° here.`;
+const fajrHtml = `
+    <div class="card">
+    <h2 id="fajr">${ico('wb_twilight')}Fajr time in ${esc(city.name)} today</h2>
+    <p class="answer">Fajr in ${esc(city.name)} today, <span data-today-date>${longDate(date)}</span>, is at ${td(0)}; sunrise is at ${td(1)}, so Fajr ends then. Tomorrow, ${longDate(tomorrow)}, Fajr is at ${fmt(dayFor(tomorrow)[0])}.</p>
+    <p>These times use the ${methodName} method, with Fajr when the sun is ${p0.fajrAngle}° below the horizon${highLat}.${lt ? ` Many ${esc(city.name)} mosques publish the ${esc(lt.name)} instead, so their Fajr (often spelled Fajar) can differ by several minutes.` : ' Fajr is also often spelled Fajar.'}</p>
+    <p>Other websites may show a different Fajr time for ${esc(city.name)} because they use other calculation methods: ${otherMethods}${Math.abs(city.lat) > 48 ? ` The gap is widest in summer, when the sky over ${esc(city.name)} never gets fully dark.` : ''}</p>
+    <table class="timetable fajr-week">
+      <caption class="sr-only">Fajr and sunrise in ${esc(city.name)}, next 7 days</caption>
+      <thead><tr><th scope="col"><span class="sr-only">Date</span></th><th scope="col">Fajr</th><th scope="col">Sunrise</th></tr></thead>
+      <tbody>${fajrWeek.map((d) => { const t = dayFor(d); return `
+        <tr data-date="${d}"${d === date ? ' class="today" aria-current="date"' : ''}><th scope="row">${shortDay(d)}</th><td>${fmt(t[0])}</td><td>${fmt(t[1])}</td></tr>`; }).join('')}
+      </tbody>
+    </table>
+    </div>`;
+
 const P5 = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const K5 = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 const mosquesHtml = !mosques.length ? '' : `
@@ -389,6 +412,7 @@ const seo = `<section class="seo" id="seo">
     ${thisMonth.html}${nextMonthHtml}
     </div>
     ${thisMonth.note}${nextMonthNote}
+${fajrHtml}
 
     <div class="card">
     <h2>${ico('tune')}How are ${esc(city.name)} prayer times calculated?</h2>

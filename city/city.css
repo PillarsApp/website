@@ -621,3 +621,8 @@ html { scroll-snap-type: y mandatory; }
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 max(var(--st), 48px));
   mask-image: linear-gradient(180deg, transparent 0, #000 max(var(--st), 48px));
 }
+/* Fajr section: compact 7-day Fajr + sunrise table, full card width, no horizontal scroll. */
+.seo .card .fajr-week { min-width: 0; margin-top: 8px; }
+.seo .card .fajr-week th[scope="row"] { padding-left: 0; box-shadow: none; position: static; }
+.seo .card .fajr-week th:last-child, .seo .card .fajr-week td:last-child { padding-right: 0; }
+.seo .card .fajr-week thead th:first-child { padding-left: 0; box-shadow: none; position: static; }
