@@ -82,8 +82,9 @@ describe("London page", () => {
     }
   });
 
-  it("omits the nearby card while the country has one city", async () => {
-    expect((await render()).html).not.toContain('class="nearby"');
+  it("omits the nearby card when no city is near", () => {
+    const input = { city: london, country: COUNTRIES.uk, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, []), audience: "public" as const };
+    expect(renderCityPage(input).html).not.toContain('class="nearby"');
   });
 
   it("lists nearby cities from the registry when the country has more", () => {

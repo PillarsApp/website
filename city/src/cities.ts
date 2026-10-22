@@ -70,4 +70,54 @@ export const CITIES: readonly City[] = [
       ],
     },
   },
+  {
+    country: "uk", slug: "luton", name: "Luton",
+    lat: 51.8784, lng: -0.4153, timezone: "Europe/London", datePublished: "2026-10-22",
+    mosques: { radiusKm: 8, max: 10, featured: [] },
+  },
+  {
+    country: "uk", slug: "slough", name: "Slough",
+    lat: 51.5111, lng: -0.5941, timezone: "Europe/London", datePublished: "2026-10-22",
+    mosques: { radiusKm: 8, max: 10, featured: [] },
+  },
+  {
+    country: "uk", slug: "watford", name: "Watford",
+    lat: 51.6696, lng: -0.4106, timezone: "Europe/London", datePublished: "2026-10-22",
+    mosques: { radiusKm: 8, max: 10, featured: [] },
+  },
+  {
+    country: "uk", slug: "reading", name: "Reading",
+    lat: 51.4564, lng: -0.9701, timezone: "Europe/London", datePublished: "2026-10-22",
+    mosques: { radiusKm: 8, max: 10, featured: [] },
+  },
+  {
+    country: "uk", slug: "crawley", name: "Crawley",
+    lat: 51.1103, lng: -0.1801, timezone: "Europe/London", datePublished: "2026-10-22",
+    mosques: { radiusKm: 8, max: 10, featured: [] },
+  },
+  {
+    country: "uk", slug: "chelmsford", name: "Chelmsford",
+    lat: 51.7345, lng: 0.4731, timezone: "Europe/London", datePublished: "2026-10-22",
+    mosques: { radiusKm: 8, max: 10, featured: [] },
+  },
+  {
+    country: "uk", slug: "oxford", name: "Oxford",
+    lat: 51.752, lng: -1.2578, timezone: "Europe/London", datePublished: "2026-10-22",
+    mosques: { radiusKm: 8, max: 10, featured: [] },
+  },
+  {
+    country: "uk", slug: "cambridge", name: "Cambridge",
+    lat: 52.1976, lng: 0.1392, timezone: "Europe/London", datePublished: "2026-10-22",
+    mosques: { radiusKm: 8, max: 10, featured: [] },
+  },
+  {
+    country: "uk", slug: "milton-keynes", name: "Milton Keynes",
+    lat: 52.0407, lng: -0.7594, timezone: "Europe/London", datePublished: "2026-10-22",
+    mosques: { radiusKm: 8, max: 10, featured: [] },
+  },
+  {
+    country: "uk", slug: "birmingham", name: "Birmingham",
+    lat: 52.4798, lng: -1.9031, timezone: "Europe/London", datePublished: "2026-10-22",
+    mosques: { radiusKm: 10, max: 10, featured: [] },
+  },
 ];

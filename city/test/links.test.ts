@@ -50,10 +50,10 @@ describe("every URL the Worker's pages emit is served", () => {
   });
 
   it("flags a dangling route and a missing asset", async () => {
-    const html = '<a href="/prayer-times/uk/luton/">x</a><img src="/prayer-times/_/nope.png"><a href="widget/">fine</a>';
+    const html = '<a href="/prayer-times/uk/narnia/">x</a><img src="/prayer-times/_/nope.png"><a href="widget/">fine</a>';
     expect(await unservedPaths(`${ORIGIN}/prayer-times/uk/london/`, html)).toEqual([
       "/prayer-times/_/nope.png -> no file",
-      "/prayer-times/uk/luton/ -> 404",
+      "/prayer-times/uk/narnia/ -> 404",
     ]);
   });
 

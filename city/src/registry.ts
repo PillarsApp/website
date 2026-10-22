@@ -33,6 +33,10 @@ export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; l
   return 2 * 6371 * Math.asin(Math.sqrt(h));
 }
 
+// "Near" stops here. London to Birmingham (about 163 km) was the farthest pair
+// in the hand-curated list this replaced.
+export const NEARBY_MAX_KM = 170;
+
 const keyOf = (ref: CityRef) => `${ref.country}/${ref.slug}`;
 
 function validate(city: City): void {
@@ -71,6 +75,7 @@ export function staticRegistry(cities: readonly City[] = CITIES): CityRegistry {
       return cities
         .filter((c) => c.country === city.country && c.slug !== city.slug)
         .map((c) => ({ c, km: haversineKm(city, c) }))
+        .filter((x) => x.km <= NEARBY_MAX_KM)
         .sort((a, b) => a.km - b.km)
         .slice(0, n)
         .map((x) => x.c);

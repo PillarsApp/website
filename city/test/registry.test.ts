@@ -26,9 +26,10 @@ describe("registry", () => {
     expect(() => staticRegistry([{ ...london, slug: "London" }])).toThrow(/bad slug/);
   });
 
-  it("derives nearby from the registry, same country only, nearest first", async () => {
+  it("derives nearby from the registry, same country only, nearest first, within NEARBY_MAX_KM", async () => {
     const reg = staticRegistry([london, leeds, luton, toronto]);
-    expect((await reg.nearby(london, 10)).map((c) => c.slug)).toEqual(["luton", "leeds"]);
+    expect((await reg.nearby(london, 10)).map((c) => c.slug)).toEqual(["luton"]);
+    expect((await staticRegistry([leeds, luton]).nearby(leeds, 10)).map((c) => c.slug)).toEqual([]);
     expect((await reg.nearby(london, 1)).map((c) => c.slug)).toEqual(["luton"]);
     expect(await staticRegistry([london]).nearby(london, 10)).toEqual([]);
   });

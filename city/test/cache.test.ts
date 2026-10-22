@@ -29,6 +29,12 @@ describe("edge cache", () => {
     expect(sMaxAge(res)).toBeLessThanOrEqual(600);
   });
 
+  it("caches until midnight when the city simply has no mosques", async () => {
+    const now = Date.UTC(2026, 10, 7, 11, 0);
+    const { res } = await serve(PAGE, now, { kind: "unavailable", reason: "empty" });
+    expect(Math.abs(sMaxAge(res) - (Date.UTC(2026, 10, 8, 0, 0) - now) / 1000)).toBeLessThanOrEqual(5);
+  });
+
   it("shares one entry across ?clock, ?now, ?theme, ?safe and utm_*", async () => {
     const now = Date.UTC(2026, 10, 6, 11, 0);
     const first = await serve(PAGE, now);

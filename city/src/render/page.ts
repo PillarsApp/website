@@ -28,7 +28,7 @@ export function renderCityPage(input: PageInput): Rendered {
   const html = fillRegions(template, regions(input, clock));
   const midnight = clock.nextMidnight(input.now);
   const freshUntil =
-    input.mosques.kind === "unavailable" && input.mosques.reason !== "no-query"
+    input.mosques.kind === "unavailable" && (input.mosques.reason === "timeout" || input.mosques.reason === "error")
       ? Math.min(midnight, input.now + UNAVAILABLE_RETRY_MS)
       : midnight;
   return { html, freshUntil };
