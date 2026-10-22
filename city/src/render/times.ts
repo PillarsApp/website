@@ -173,7 +173,7 @@ export function cityClock(city: City, country: Country): CityClock {
       const pt = new adhan.PrayerTimes(coords, at, standard);
       cached = {
         date: d,
-        t: [pt.fajr, pt.sunrise, pt.dhuhr, pt.asr, pt.maghrib, pt.isha].map((x) => x.getTime()) as unknown as DayTimes["t"],
+        t: [pt.fajr.getTime(), pt.sunrise.getTime(), pt.dhuhr.getTime(), pt.asr.getTime(), pt.maghrib.getTime(), pt.isha.getTime()],
         asrHanafi: new adhan.PrayerTimes(coords, at, hanafi).asr.getTime(),
       };
       days.set(d, cached);
