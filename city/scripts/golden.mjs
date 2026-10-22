@@ -38,9 +38,12 @@ async function loadCandidate() {
         import { CITIES, COUNTRIES } from "./src/cities.ts";
         import { FOUR_MOSQUES } from "./test/mosque-fixtures.ts";
         export function run(date) {
-          const city = CITIES[0], country = COUNTRIES[city.country];
+          // The old build calculated London with the Moonsighting Committee method; London now follows the
+          // Unified timetable, so the golden renders the calculated standard the old page had.
+          const standard = { kind: "gps", name: "Moonsighting Committee method", asrFirst: "Shafi", badge: "", isha: "" };
+          const city = { ...CITIES[0], standard }, country = COUNTRIES[city.country];
           const now = cityClock(city, country).localInstant(date, ${OLD_BUILD_INSTANT.hour}, ${OLD_BUILD_INSTANT.minute});
-          return renderCityPage({ city, country, date, now, mosques: { ...FOUR_MOSQUES, date }, links: linksFor(city, []), audience: "public" }).html;
+          return renderCityPage({ city, country, timetable: null, date, now, mosques: { ...FOUR_MOSQUES, date }, links: linksFor(city, []), audience: "public" }).html;
         }`,
       resolveDir: cityDir,
       loader: "ts",
@@ -114,6 +117,31 @@ const INTENDED = [
   ],
   ["#city-data carries the country's lang so the client names the zone in the same locale as the server",
     [/^\s*"lang": "[^"]*",\n/gm, ""],
+  ],
+  ["every city follows a standard (src/cities.ts): #city-data names it and the Asr it lists first",
+    [/^\s*"standard": "[^"]*",\n/gm, ""],
+    [/^\s*"asrFirst": "[^"]*",\n/gm, ""],
+  ],
+  ["the chip's badge is a button that opens the standard dialog, a new template region",
+    [/^\s*<svg class="chip-badge"[^\n]*\n/gm, ""],
+    [/^\s*<button type="button" class="chip-badge"[\s\S]*?<\/button>\n/gm, ""],
+    [/<!-- build:dialog -->[\s\S]*?<!-- \/build:dialog -->\n/, ""],
+  ],
+  ["the London Unified Prayer Timetable clauses of the old copy are the standard's own copy now, and the timetable FAQ is per standard kind",
+    [/, while many London mosques follow the London Unified Prayer Timetable/g, ""],
+    [/ Many London mosques publish the London Unified Prayer Timetable instead, so their Fajr \(often spelled Fajar\) can differ by several minutes\./g, " Fajr is also often spelled Fajar."],
+    [/ Many London mosques follow the London Unified Prayer Timetable instead\./g, ""],
+    [/\n\s*<p class="standard-isha">[^\n]*<\/p>/g, ""],
+    [/ The Shafi'i time is listed first\./g, ""],
+    [/\s*<details class="faq-item" name="faq">\s*<summary><h3 class="faq-h">(?:Which Timetable Do London Mosques Follow\?|Do These Times Match London Mosques\?)<\/h3><\/summary>[\s\S]*?<\/details>/g, ""],
+    [/(<script type="application\/ld\+json">\n)([\s\S]*?)(\n<\/script>)/, (_, open, json, close) => {
+      const ld = JSON.parse(json);
+      for (const n of ld["@graph"]) if (n["@type"] === "FAQPage") n.mainEntity = n.mainEntity.filter((q) => !/^(Which timetable do|Do these times match) London mosques/.test(q.name));
+      return open + JSON.stringify(ld, null, 2) + close;
+    }],
+  ],
+  ["page/city.css gained the badge button, the standard dialog and the estimate marks",
+    [/<style id="city-css">[\s\S]*?<\/style>/, '<style id="city-css">CSS</style>'],
   ],
   ["whitespace between regions",
     [/[ \t]+$/gm, ""],
