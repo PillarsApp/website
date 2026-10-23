@@ -247,7 +247,13 @@
     else if (idx === 1) name = minutesBetween(today.t[1], now) >= 15 ? 'Duha' : 'Sunrise';
     else name = NAMES[idx];
     var el = $('current-name');
-    el.textContent = 'It\u2019s ' + name + ' in ' + city.name;
+    el.textContent = '';
+    [['It\u2019s ', 0], [name, 1], [' in ', 0], [city.name, 1]].forEach(function (part) {
+      var span = document.createElement('span');
+      span.textContent = part[0];
+      if (!part[1]) span.className = 'dim';
+      el.appendChild(span);
+    });
 
     var nextIdx = idx < 5 ? idx + 1 : 0;
     var nextAt = idx < 5 ? today.t[nextIdx] : dayFor(addDays(todayYmd, 1)).t[0];
@@ -372,13 +378,14 @@
       hole: night ? '#002449' : '#EDF7FD'
     };
     var day = dayFor(selected), t = day.t;
+    var tA = asrShow != null ? asrShow : t[3];   // Asr while the Earlier/Later switch glides the dot
     var s = scaled(SEG_START, W, H), m = scaled(SEG_MID, W, H), e = scaled(SEG_END, W, H);
     var Ls = table(s), Lm = table(m), Le = table(e);
 
     var fajrT = MIDNIGHT_T + (minutesBetween(day.start, t[0]) / minutesBetween(day.start, t[1])) / 2;
     var dayMin = minutesBetween(t[1], t[4]);
     var dhuhrT = minutesBetween(t[1], t[2]) / dayMin;
-    var asrT = minutesBetween(t[1], t[3]) / dayMin;
+    var asrT = (asrShow != null ? (tA - t[1]) / 60000 : minutesBetween(t[1], tA)) / dayMin;
     var ishaT = (minutesBetween(t[4], t[5]) / minutesBetween(t[4], day.end)) / 2;
 
     var sunriseLen = lenAt(Lm, SUNRISE_T), dhuhrLen = lenAt(Lm, dhuhrT), asrLen = lenAt(Lm, asrT),
@@ -391,7 +398,7 @@
       progress.push(sub(s, MIDNIGHT_T, nowT));
     } else if (now < t[4]) {
       progress.push(s);
-      var tip = progressLength(now, [[t[1], sunriseLen], [t[2], dhuhrLen], [t[3], asrLen], [t[4], maghribLen]]);
+      var tip = progressLength(now, [[t[1], sunriseLen], [t[2], dhuhrLen], [tA, asrLen], [t[4], maghribLen]]);
       progress.push(sub(m, 0, tAtLen(Lm, tip)));
     } else {
       progress.push(s);
@@ -416,7 +423,7 @@
     svg.appendChild(el('circle', { cx: sr[0].toFixed(2), cy: sr[1].toFixed(2), r: 4, fill: C.hole }));
     svg.appendChild(el('circle', { cx: sr[0].toFixed(2), cy: sr[1].toFixed(2), r: 5.5, fill: 'none', stroke: now > t[1] ? C.done : C.todo, 'stroke-width': 4 }));
     dot(pointAt(m, dhuhrT), now > t[2]);
-    dot(pointAt(m, asrT), now > t[3]);
+    dot(pointAt(m, asrT), now > tA);
     dot(pointAt(m, MAGHRIB_T), now > t[4]);
     dot(pointAt(e, ishaT), now > t[5]);
   }
@@ -627,9 +634,21 @@
     Promise.all(anims.map(function (a) { return a.finished; })).then(clean, clean);
     setTimeout(clean, 320 + 25 * k + 200);   // background tabs may never finish the animations
   }
-  var asrTimer = 0;
+  var asrTimer = 0, asrShow = null, asrRaf = 0;
+  // Glide the Asr dot along the curve from the old time to the new one, in step with the digit roll.
+  function glideAsr(from, to) {
+    cancelAnimationFrame(asrRaf);
+    var start = performance.now(), dur = 420;
+    (function step(ts) {
+      var k = Math.min(1, (ts - start) / dur), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      asrShow = from + (to - from) * e;
+      renderCurve(nowMs());
+      if (k < 1) asrRaf = requestAnimationFrame(step); else asrShow = null;
+    })(start);
+  }
   function setAsr(later) {
     if (later === asrLater) return;
+    var fromAsr = dayFor(selected).t[3];
     asrLater = later;
     try { localStorage.setItem(ASR_KEY, later ? 'later' : 'earlier'); } catch (e) { /* storage blocked */ }
     dayCache = {};
@@ -644,8 +663,9 @@
     var t = toggle.closest('.row').querySelector('.t');
     var next = formatTime(dayFor(selected).t[3]);
     morphTime(t, next, later ? -1 : 1);
+    glideAsr(fromAsr, dayFor(selected).t[3]);
     clearTimeout(asrTimer);
-    asrTimer = setTimeout(function () { animateNext = true; render(); }, 420);   // after the digit roll
+    asrTimer = setTimeout(function () { cancelAnimationFrame(asrRaf); asrShow = null; animateNext = true; render(); }, 420);   // after the digit roll; lands the dot even if frames were throttled
   }
 
   // ---------- Server-rendered SEO content (src/render/page.ts) ----------
