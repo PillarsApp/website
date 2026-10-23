@@ -6,18 +6,21 @@ import { renderWidget } from "./render/widget";
 import { renderHubStub, renderCountryStub, renderNotFound } from "./render/stubs";
 import { cityClock } from "./render/times";
 import { timetableFor } from "./timetables";
-import { SITE } from "./cities";
+import { CITIES, SITE } from "./cities";
 import { edgeCache } from "./cache";
 import type { Audience, City, CityRef, Country, Instant, LocalDate, Rendered, Timetable } from "./types";
 
 export interface Deps {
-  registry: CityRegistry;
+  registry: (audience: Audience) => CityRegistry;
   mosqueSource: (env: Env) => MosqueSource;
   now: () => Instant;
 }
 
+const previewRegistry = staticRegistry();
+const publicRegistry = staticRegistry(CITIES.filter((c) => c.live));
+
 const defaultDeps: Deps = {
-  registry: staticRegistry(),
+  registry: (audience) => (audience === "public" ? publicRegistry : previewRegistry),
   mosqueSource: (env) => liveMosqueSource({
     directory: env.MASJID_TIMES as unknown as MosqueDirectory | undefined,
   }),
@@ -31,6 +34,7 @@ interface Call<P> {
   readonly env: Env;
   readonly ctx: ExecutionContext;
   readonly deps: Deps;
+  readonly registry: CityRegistry;
 }
 type Handler<P> = (call: Call<P>) => Promise<Response>;
 
@@ -46,28 +50,29 @@ function stubResponse(html: string): Response {
 }
 
 const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
-  hub: async ({ deps, env }) => {
+  hub: async ({ registry, env }) => {
     const countries = await Promise.all(
-      deps.registry.countries().map(async (c) => ({
+      registry.countries().map(async (c) => ({
         name: c.name,
         href: routes.country.href({ country: c.slug }),
-        cities: (await deps.registry.inCountry(c.slug)).map(cityLink),
+        cities: (await registry.inCountry(c.slug)).map(cityLink),
       })),
     );
     return stubResponse(renderHubStub(countries.filter((c) => c.cities.length), audienceOf(env)));
   },
-  country: async ({ params, deps, env }) => {
-    const country = deps.registry.country(params.country);
+  country: async ({ params, registry, env }) => {
+    const country = registry.country(params.country);
     if (!country) return notFound();
-    const cities = await deps.registry.inCountry(country.slug);
+    const cities = await registry.inCountry(country.slug);
+    if (!cities.length) return notFound();
     return stubResponse(renderCountryStub(country.name, cities.map(cityLink), HUB_LINK, audienceOf(env)));
   },
   city: (call) =>
     serveCity(call, routes.city.href(call.params), async ({ city, country, timetable, date, now }) => {
-      const { env, deps } = call;
+      const { env, deps, registry } = call;
       const [mosques, nearby] = await Promise.all([
         (city.mosques ? deps.mosqueSource(env) : noMosques).forCity(city, date),
-        deps.registry.nearby(city, 10),
+        registry.nearby(city, 10),
       ]);
       return renderCityPage({
         city, country, timetable, date, now, mosques,
@@ -89,10 +94,10 @@ interface CityRender {
 }
 
 async function serveCity(call: Call<CityRef>, path: string, render: (c: CityRender) => Promise<Rendered>): Promise<Response> {
-  const { url, params, request, env, ctx, deps } = call;
-  const city = await deps.registry.get(params);
+  const { url, params, request, env, ctx, deps, registry } = call;
+  const city = await registry.get(params);
   if (!city) return notFound();
-  const country = deps.registry.country(city.country)!;
+  const country = registry.country(city.country)!;
   const now = devNow(url, env, city, country) ?? deps.now();
   const date = cityClock(city, country).today(now);
   return edgeCache(env, ctx).respond({ request, path, date, now, contentType: HTML }, () => render({ city, country, timetable: timetableFor(city), date, now }));
@@ -114,7 +119,7 @@ export async function handleFetch(request: Request, env: Env, ctx: ExecutionCont
   if (redirect) return Response.redirect(`${url.origin}${redirect}${url.search}`, 301);
   for (const name of Object.keys(routes) as RouteName[]) {
     const params = routes[name].match(url.pathname);
-    if (params) return (handlers[name] as Handler<unknown>)({ url, params, request, env, ctx, deps });
+    if (params) return (handlers[name] as Handler<unknown>)({ url, params, request, env, ctx, deps, registry: deps.registry(audienceOf(env)) });
   }
   return notFound();
 }

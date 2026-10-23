@@ -38,6 +38,7 @@ export const CITIES: readonly City[] = [
     country: "uk",
     slug: "london",
     name: "London",
+    live: true,
     coordinatesLabel: "Central London",
     lat: 51.5072,
     lng: -0.1276,

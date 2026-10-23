@@ -46,6 +46,8 @@ export type Calc =
 
 export interface City extends CityRef {
   readonly name: string;
+  // Served on thepillarsapp.com. Staging and previews serve every city.
+  readonly live?: true;
   readonly lat: number;
   readonly lng: number;
   readonly timezone: string;
