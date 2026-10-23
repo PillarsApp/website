@@ -253,8 +253,8 @@ body.theme-night .std-close:hover { background: rgba(255, 255, 255, .18); }
 .std-close:focus-visible { box-shadow: 0 0 0 2px currentColor; }
 .std-eyebrow { margin: 0 40px 4px 0; font-size: 13px; line-height: 1.4; color: #6C6C70; text-transform: uppercase; letter-spacing: .04em; }
 body.theme-night .std-eyebrow { color: rgba(255, 255, 255, .62); }
-.std-title { display: flex; align-items: center; gap: 8px; margin: 0 40px 14px 0; font-size: 19px; line-height: 1.3; font-weight: 500; }
-.std-badge { width: 20px; height: 20px; flex: none; fill: currentColor; }
+.std-title { margin: 0 40px 14px 0; font-size: 19px; line-height: 1.3; font-weight: 500; }
+.std-badge { display: inline-block; width: 20px; height: 20px; margin-left: 6px; vertical-align: -4px; fill: currentColor; }
 .std-dialog p { margin: 0 0 12px; }
 .std-dialog p:last-child { margin-bottom: 0; }
 .std-dialog strong { font-weight: 600; }
