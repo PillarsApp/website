@@ -82,7 +82,7 @@ npm run golden    # London page against the old Node build, for two dates
 
 ## Deploy
 
-Merging to `main` deploys. `.github/workflows/city.yml` runs `npm test` and `npm run check`, deploys staging, checks that staging serves the London page, then deploys production. A merge that changes nothing under `city/` deploys nothing.
+Merging to `main` deploys. `.github/workflows/city.yml` runs `npm test` and `npm run check`, deploys staging, waits until the staging London page loads this build's client script, then deploys production. A merge that changes nothing under `city/` deploys nothing.
 
 Each pull request that changes `city/` gets a Preview of the staging Worker at `https://pr-<number>-city-pages-staging.omar-abb.workers.dev/prayer-times/`. The workflow comments the link on the pull request, updates the same Preview on every push and deletes it when the pull request closes. A Preview behaves like staging: noindex, no analytics, mosques from `masjid-times-prod`. Its settings are `env.staging.previews` in `wrangler.jsonc`, because a Preview inherits no vars or bindings. Pull requests from forks are tested but get no Preview.
 
