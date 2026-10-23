@@ -419,7 +419,7 @@ body.theme-night .seo {
 .v-clip.clip tr.past { display: none; }
 .seo .card:has(.v-clip.clip) .tt-float { display: none !important; }
 .v-more-btn {
-  display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin: 16px 0 0; padding: 10px 22px;
+  display: flex; width: fit-content; align-items: center; justify-content: center; min-height: 44px; margin: 16px auto 0; padding: 10px 22px;
   border: 1px solid var(--ink); border-radius: 999px; background: none; color: var(--ink); cursor: pointer;
   font: 500 15px/1.2 'Poppins', sans-serif;
 }
