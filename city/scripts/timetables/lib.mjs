@@ -106,16 +106,19 @@ export function validateDays(days, place) {
   return failures;
 }
 
+export function formatTimetable({ days, ...head }) {
+  const rows = Object.entries(days).sort(([a], [b]) => (a < b ? -1 : 1)).map(([d, r]) => `    "${d}": ${JSON.stringify(r).replaceAll(",", ", ")}`);
+  return `${JSON.stringify(head, null, 2).slice(0, -2)},\n  "days": {\n${rows.join(",\n")}\n  }\n}\n`;
+}
+
 export function writeTimetable({ id, name, publisher, sources, zone, place, corrections, days }) {
   const failures = validateDays(days, { ...place, zone });
   const dropped = new Set(failures.map((f) => f.date));
   const sorted = Object.entries(days).filter(([d]) => !dropped.has(d)).sort(([a], [b]) => (a < b ? -1 : 1));
   for (const f of failures) console.log(`dropped ${f.date} ${JSON.stringify(f.row)}: ${f.why}`);
   const retrieved = new Date().toISOString().slice(0, 10);
-  const head = JSON.stringify({ id, name, publisher, sources, retrieved, zone, corrections }, null, 2).slice(0, -2);
-  const rows = sorted.map(([d, r]) => `    "${d}": ${JSON.stringify(r).replaceAll(",", ", ")}`);
   mkdirSync(dataDir, { recursive: true });
-  writeFileSync(join(dataDir, `${id}.json`), `${head},\n  "days": {\n${rows.join(",\n")}\n  }\n}\n`);
+  writeFileSync(join(dataDir, `${id}.json`), formatTimetable({ id, name, publisher, sources, retrieved, zone, corrections, days: Object.fromEntries(sorted) }));
   const nulls = COLUMNS.filter((_, i) => sorted.every(([, r]) => r[i] === null));
   console.log(`${id}: ${sorted.length} days ${sorted[0][0]}..${sorted.at(-1)[0]}; all-null columns ${nulls.join(",") || "none"}; ${corrections.length} corrections; dropped ${dropped.size}`);
 }
