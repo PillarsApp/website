@@ -54,6 +54,16 @@ export interface City extends CityRef {
   readonly calc?: Calc;
   readonly standard: Standard;
   readonly mosques?: MosqueQuery;
+  readonly seo?: CitySeo;
+}
+
+// Hand-tuned search and share copy for a city; cities without it use the generated title and description.
+export interface CitySeo {
+  readonly title: string;
+  readonly descriptionTail: string;
+  readonly shareTitle: string;
+  readonly shareDescription: string;
+  readonly image: { readonly file: string; readonly alt: string };
 }
 
 export type TimetableId =

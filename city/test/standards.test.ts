@@ -53,7 +53,7 @@ describe("the page for a published standard", () => {
     const { html, text } = renderPage(LONDON, "2026-10-22", LONDON_SLICE);
     expect(html).toContain('<span class="t">06:00</span>');
     expect(html).toContain('<span class="t">07:34</span>');
-    expect(text).toContain("London Unified Prayer Timetable · published start times ·");
+    expect(text).toContain("Prayer Times based on verified London Unified Prayer Timetable · Published Start Times ·");
     expect(text).toContain("Times follow the London Unified Prayer Timetable");
     expect(html).not.toContain("Today's times are an estimate");
     expect(html).toMatch(/<tr data-date="2026-10-22" class="today" aria-current="date"><th scope="row">Thu 22<span/);

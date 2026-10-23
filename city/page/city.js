@@ -543,7 +543,7 @@
     // Trust caption: a published standard says whether the selected day's times are its own or an estimate.
     var originEl = document.querySelector('#list-caption [data-origin]');
     if (originEl) {
-      var label = day.origin === 'published' ? 'published start times'
+      var label = day.origin === 'published' ? 'Published Start Times'
         : day.origin === 'last-year' ? 'estimated from its ' + (ymdParts(selected)[0] - 1) + ' timetable'
         : 'calculated until published';
       if (originEl.textContent !== label) originEl.textContent = label;
