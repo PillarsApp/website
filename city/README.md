@@ -70,6 +70,12 @@ For a published standard the clock reads the day's row from the timetable, fills
 
 The clock-change FAQ, the Isha summer answer and the Fajr/Isha method comparisons are derived from the city's zone, latitude and method, so a new city needs no copy change. A country with custom angles (France, Morocco, Indonesia and others) can be written in the data (`calc: { method: "Custom", … }`), but `page/city.js` reads `CalculationMethod[city.method]` and needs a matching change first.
 
+## Refresh the timetables
+
+`npm run timetables` re-runs every script in `scripts/timetables/` and prints a report: the last published day of each timetable and whether its script ran. It exits 1 when a script failed or a timetable runs out within 30 days. The London script needs `LONDON_PRAYER_TIMES_KEY` in the environment (the value is in `.dev.vars`), and the Chelmsford and Leicester scripts need `pdftotext` (poppler).
+
+`.github/workflows/timetables.yml` runs it every Monday at 06:17 UTC, and on demand from the Actions tab. When a published time changed and the tests pass, it opens a pull request from a new `timetables/refresh` branch, which closes any older one. Merging that pull request deploys. When the report needs attention or the tests fail, the workflow opens or updates the issue "Prayer timetables need attention", and it closes the issue once nothing does. A script that fails keeps its last good file. A new year usually brings new source URLs or a year to change in a script, and the issue shows that a month ahead.
+
 ## Checks
 
 ```

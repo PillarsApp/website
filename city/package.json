@@ -18,7 +18,8 @@
     "tail:staging": "wrangler tail --env staging",
     "tail:production": "wrangler tail --env production",
     "snapshot": "node scripts/snapshot.mjs",
-    "golden": "node scripts/golden.mjs"
+    "golden": "node scripts/golden.mjs",
+    "timetables": "node scripts/timetables/refresh.mjs"
   },
   "dependencies": {
     "adhan": "4.4.3"
