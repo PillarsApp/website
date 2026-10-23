@@ -155,7 +155,7 @@ describe("the badge dialog", () => {
     const { html } = renderPage(LONDON, "2026-10-22", LONDON_SLICE);
     expect(html).toContain('<button type="button" class="chip-badge" id="chip-badge" aria-haspopup="dialog" aria-controls="std-dialog" aria-label="About these times: London Unified Prayer Timetable">');
     expect(dialog(html)).toContain('<button type="button" class="std-close" id="std-close" aria-label="Close">');
-    expect(dialog(html)).toMatch(/<h2 class="std-title" id="std-title"><svg class="std-badge"[^>]*>.*?<\/svg><span>London Unified Prayer Timetable<\/span><\/h2>/);
+    expect(dialog(html)).toMatch(/<h2 class="std-title" id="std-title"><span>London Unified Prayer Timetable<\/span><svg class="std-badge"[^>]*>.*?<\/svg><\/h2>/);
     expect(dialog(html)).toContain('<p class="std-eyebrow">Verified By Pillars</p>');
   });
 
@@ -206,7 +206,7 @@ describe("every city", () => {
       const ishaCard = /<h2 id="isha">[\s\S]*?<\/details>/.exec(html)![0];
       expect(ishaCard.trim().endsWith(`<p class="standard-isha">${city.standard.isha.replace(/&/g, "&amp;")}</p>\n    </details>`), city.slug).toBe(true);
       if (!city.standard.dialog) expect(text, city.slug).toContain(city.standard.badge);
-      expect(html, city.slug).toContain(`<span>${city.standard.name}</span></h2>`);
+      expect(html, city.slug).toMatch(new RegExp(`<span>${city.standard.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}</span><svg class="std-badge"[^>]*>.*?</svg></h2>`));
       if (timetableId(city.standard)) expect(text, city.slug).toContain("Calculated Until Published");
       else expect(html, city.slug).not.toContain("estimate");
     }
