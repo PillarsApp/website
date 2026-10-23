@@ -247,14 +247,7 @@
     else if (idx === 1) name = minutesBetween(today.t[1], now) >= 15 ? 'Duha' : 'Sunrise';
     else name = NAMES[idx];
     var el = $('current-name');
-    el.textContent = '';
-    [['It\u2019s ', 0], [name, 1], [' in ', 0], [city.name, 1]].forEach(function (part) {
-      if (!part) { el.appendChild(document.createElement('br')); return; }
-      var span = document.createElement('span');
-      span.textContent = part[0];
-      if (!part[1]) span.className = 'dim';
-      el.appendChild(span);
-    });
+    el.textContent = 'It\u2019s ' + name + ' in ' + city.name;
 
     var nextIdx = idx < 5 ? idx + 1 : 0;
     var nextAt = idx < 5 ? today.t[nextIdx] : dayFor(addDays(todayYmd, 1)).t[0];
@@ -705,6 +698,24 @@
   function on(id, ev, fn) { var n = $(id); if (n) n.addEventListener(ev, fn); }
   on('prev', 'click', function () { selected = addDays(selected, -1); render(); });
   on('next', 'click', function () { selected = addDays(selected, 1); render(); });
+
+  // Local-only debug switch (localhost / LAN dev server): cycles the theme Auto → Day → Night via the
+  // same ?theme= override. Never rendered on a real host.
+  if (/^(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+)$/.test(location.hostname)) {
+    var dbg = document.createElement('button');
+    var modes = ['auto', 'day', 'night'];
+    var label = function () { dbg.textContent = 'Theme: ' + (params.get('theme') || 'auto'); };
+    dbg.type = 'button';
+    dbg.style.cssText = 'position:fixed;bottom:calc(96px + env(safe-area-inset-bottom));left:8px;z-index:2000;padding:6px 10px;border:0;border-radius:8px;background:#FF3B30;color:#FFF;font:600 12px Poppins,sans-serif;cursor:pointer';
+    dbg.addEventListener('click', function () {
+      var next = modes[(modes.indexOf(params.get('theme') || 'auto') + 1) % modes.length];
+      if (next === 'auto') params.delete('theme'); else params.set('theme', next);
+      history.replaceState(null, '', location.pathname + (params.toString() ? '?' + params : '') + location.hash);
+      label(); render();
+    });
+    label();
+    body.appendChild(dbg);
+  }
   on('chip', 'click', function (e) {
     if (e.target.closest && e.target.closest('#chip-badge')) return;
     if (selected !== todayYmd) { selected = todayYmd; render(); }
