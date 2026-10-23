@@ -307,86 +307,58 @@ body.theme-night .std-dialog { background: var(--standard-blue); color: #FFFFFF;
   background: var(--separator);
 }
 
-/* ---------- Below the app replica: SEO content ---------- */
+/* ---------- Below the app replica: SEO content ----------
+   Data first, words folded: no cards, the page colour throughout, weight-400 type, thin rules. Today's
+   times lead as a grid, the month is clipped to the coming days, and each prayer is a ruled row whose
+   answer sentence stays visible while the week table and longer text fold in a native <details>. */
 .seo {
-  --text: rgba(0, 25, 62, .72);
+  --text: rgba(0, 25, 62, .6);    /* 4.7:1 on white */
+  --faint: rgba(0, 25, 62, .6);
   --rule: rgba(0, 25, 62, .10);
-  --row-today: rgba(14, 35, 60, .05);
+  --surf: var(--grad-2);          /* page colour, behind the sticky date column */
   width: var(--vw); margin-left: calc(50% - var(--vw) / 2);
-  padding: 72px 16px 160px;   /* clear gap under the app replica's caption */
+  padding: 64px 20px 180px;   /* clear gap under the app replica's caption */
   font-size: 16px; line-height: 1.75;
   color: var(--text);
 }
 body.theme-night .seo {
-  --text: rgba(255, 255, 255, .78);
-  --rule: rgba(255, 255, 255, .12);
-  --row-today: rgba(255, 255, 255, .06);
+  --text: rgba(255, 255, 255, .55);
+  --faint: rgba(255, 255, 255, .5);   /* 4.8:1 on the night page */
+  --rule: rgba(255, 255, 255, .14);
 }
-.seo a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
-.seo h1 {
-  margin: 8px 0 28px;
-  font-size: 28px; line-height: 1.3; font-weight: 500; letter-spacing: -.2px;
-  color: var(--ink);
-}
-.seo h2 {
-  margin: 40px 0 28px;
-  font-size: 24px; line-height: 1.3; font-weight: 500; letter-spacing: -.2px;
-  color: var(--ink);
-}
-.seo h3 {
-  margin: 20px 0 4px;
-  font-size: 15px; line-height: 1.45; font-weight: 600;
-  color: var(--ink);
-}
+.seo a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.seo a:hover { text-decoration-color: currentColor; }
+.seo h1, .seo h2, .seo h3 { font-weight: 400; color: var(--ink); }
+.seo h1 { margin: 0 0 6px; font-size: 24px; line-height: 1.2; letter-spacing: -.02em; }
+.seo h2 { margin: 0 0 16px; font-size: 24px; line-height: 1.2; letter-spacing: -.02em; }
+.seo h3 { margin: 32px 0 4px; font-size: 16px; line-height: 1.45; }
 .seo p { margin: 0 0 1em; }
-.seo .answer { color: var(--ink); font-size: 17px; line-height: 1.7; font-weight: 500; font-variant-numeric: tabular-nums; }
+.seo .card + .card { margin-top: 72px; }
+.seo .card p, .seo .card .method, .seo .card .faq-a { max-width: 65ch; }
+.seo .card > :last-child { margin-bottom: 0; }
 
-/* Breadcrumb in the blog meta-line style: quiet grey, chevrons, no underline until hover. */
-.crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; font: 400 15px/1.6 'Poppins', sans-serif; color: #5F6F82; }
-body.theme-night .crumbs ol { color: #8493A4; }
+/* Breadcrumb: quiet meta line, chevrons, no underline. */
+.crumbs ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; font: 400 13px/1.6 'Poppins', sans-serif; color: var(--text); }
 /* Chevron separator; the empty alt text keeps it out of the accessibility tree (aria-hidden). */
 .crumbs li + li::before { content: '\203A'; content: '\203A' / ''; margin: 0 11px; font-size: .85em; }
+.seo .crumbs { margin: 0 0 12px; }
 .seo .crumbs a { color: inherit; text-decoration: none; transition: color .15s ease; }
-.seo .crumbs a:hover, .seo .crumbs a:focus-visible { color: var(--deep-blue); text-decoration: none; }
-body.theme-night .seo .crumbs a:hover, body.theme-night .seo .crumbs a:focus-visible { color: #FFFFFF; }
+.seo .crumbs a:hover, .seo .crumbs a:focus-visible { color: var(--ink); }
+
+/* Answer line: one quotable sentence, laid out as lead / date, then today's six times as a ruled grid. */
+.seo .answer { font-variant-numeric: tabular-nums; }
+#answer { margin: 0; }
+#answer .a-lead, #answer .a-date { display: block; font-size: 14px; line-height: 1.5; }
+#answer .a-times { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 18px; border-top: 1px solid var(--rule); }
+#answer .a-t { display: flex; flex-direction: column; padding: 14px 0 16px; border-bottom: 1px solid var(--rule); }
+#answer .a-n { font-size: 13px; line-height: 1.5; }
+#answer .a-v { margin-top: 2px; font-size: 22px; line-height: 1.2; letter-spacing: -.02em; color: var(--ink); }
+#answer .a-v small { display: block; margin-top: 2px; font-size: 12px; line-height: 1.4; letter-spacing: 0; color: var(--text); }
+.seo .source-line { margin: 14px 0 0; font-size: 13px; line-height: 1.6; }
 
 .method { margin: 0; }
-
-/* Deep-blue cards: every section below the replica (breadcrumb stays outside). White text on navy in
-   both themes; night uses a navy a step lighter than the page so it reads as a card. */
-.seo .card {
-  --ink: #FFFFFF;
-  --text: rgba(255, 255, 255, .78);
-  --rule: rgba(255, 255, 255, .12);
-  --row-today: rgba(255, 255, 255, .10);
-  --accent: #FFFFFF;
-  margin: 28px auto 0;
-  padding: 32px 24px;
-  border-radius: 20px;
-  background: var(--deep-blue);
-  color: var(--text);
-}
-body.theme-night .seo .card { background: var(--deep-blue); }
-.seo .card + .card { margin-top: 48px; }
-.seo > .table-note + .card { margin-top: 56px; }
-.seo > nav + .card { margin-top: 24px; }
-/* Comfortable measure on wide screens. */
-.seo .card p, .seo .card .method, .seo .card .faq-a { max-width: 65ch; }
-.seo .card > h3 { margin-top: 24px; }
-.seo .card .table-wrap + h3 { margin-top: 32px; }
-.seo .card > :first-child { margin-top: 0; }
-.seo .card > :last-child { margin-bottom: 0; }
-.seo .card h2 { margin-top: 28px; }
-.seo .card > h2:first-child { margin-top: 0; }
-.seo .card .answer { color: #FFFFFF; }
-.seo .card .mosques li:last-child { border-bottom: 0; padding-bottom: 0; }
-.seo .card .faq { border-bottom: 0; }
-.seo .card .faq-item:first-child { border-top: 0; }
-.seo .card h2 + .faq { margin-top: 0; }   /* heading to first question text: 28px gap + 18px row padding */
-.seo .card .faq-item:last-child .faq-a p { padding-bottom: 4px; }
-.table-wrap { overflow-x: auto; margin: 0 -24px; padding: 0; }
-.timetable th:last-child, .timetable td:last-child { padding-right: 24px; }
-.timetable thead th:first-child { padding-left: 24px; }
+.table-wrap { overflow-x: auto; margin: 0 -20px; padding: 0; }
+.timetable th:last-child, .timetable td:last-child { padding-right: 20px; }
 .timetable {
   width: 100%; border-collapse: collapse;
   font-size: 15px; line-height: 1.4;
@@ -394,44 +366,78 @@ body.theme-night .seo .card { background: var(--deep-blue); }
   text-align: right;
 }
 .timetable caption { caption-side: bottom; text-align: left; padding-top: 10px; font-size: 12px; }
-.timetable th, .timetable td { padding: 14px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; vertical-align: middle; }
+.timetable th, .timetable td { padding: 14px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; vertical-align: middle; font-weight: 400; }
 .timetable { min-width: 600px; }
-.timetable th[scope="row"] { position: sticky; left: 0; background: var(--deep-blue); padding-left: 24px; z-index: 1; }
-.timetable thead th { font-weight: 600; color: rgba(255, 255, 255, .7); font-size: 13px; }
-.timetable th[scope="row"] { text-align: left; font-weight: 500; color: var(--ink); }
-.timetable thead th:first-child { text-align: left; }
-.timetable .hj { display: block; font-size: 12px; font-weight: 400; color: var(--text); }
-.timetable .sub { display: block; font-size: 11px; font-weight: 400; color: var(--text); }
+/* Date column stays put while times scroll sideways: page colour behind it, so times slide under. */
+.timetable th[scope="row"], .timetable thead th:first-child { position: sticky; left: 0; z-index: 1; padding-left: 20px; text-align: left; background: var(--surf); }
+.timetable thead th:first-child { z-index: 2; }
+.timetable thead th { color: var(--text); font-size: 13px; vertical-align: bottom; }
+.timetable tbody td, .timetable tbody th { color: var(--ink); }
+.timetable .hj { display: block; font-size: 11px; color: var(--faint); }
+.timetable .sub { display: block; font-size: 11px; color: var(--text); }
 .timetable thead .sub { font-size: 10px; }
-.timetable thead .tag {
-  display: inline-block; vertical-align: middle;
-  margin-left: 5px; padding: 1px 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, currentColor 14%, transparent);
-  font-size: 10.5px; font-weight: 500; letter-spacing: .2px; line-height: 1.4;
-}
-.timetable tbody td, .timetable tbody th { color: #FFFFFF; }
-.timetable tr.past th, .timetable tr.past td, .timetable tr.past .hj { color: rgba(255, 255, 255, .5); }   /* dimmed but still 4.5:1 (WCAG AA) */
-.timetable tr.today th, .timetable tr.today td { font-weight: 700; color: #FFFFFF; }
+.timetable thead .tag { margin-left: .3em; font-size: 11px; color: var(--faint); }
+.timetable tr.past th, .timetable tr.past td, .timetable tr.past .hj { color: var(--faint); }
+.timetable tr.today th, .timetable tr.today td { font-weight: 600; color: var(--ink); }
 /* Estimated rows (a published standard that has not covered the date yet): a star after the date. */
 .timetable .est, .table-note .est, .est-note .est, .method .est { font-weight: 600; color: var(--gold); }
 .timetable th[scope="row"] .est { margin-left: 3px; }
-.seo .card .est-note { margin: 8px 0 0; font-size: 13px; line-height: 1.6; }
+.seo .est-note { margin: 8px 0 0; font-size: 13px; line-height: 1.6; }
 /* Divider lines between rows (no stripes); none under the last row, where the card ends. */
 .timetable tbody tr:last-child th, .timetable tbody tr:last-child td { border-bottom: 0; }
 
 .method div { padding: 16px 0; border-bottom: 1px solid var(--rule); }
-.method div:first-child { padding-top: 0; }
+.method div:first-child { border-top: 1px solid var(--rule); }
 .method div:last-child { padding-bottom: 0; border-bottom: 0; }
-.method dt { font-size: 12px; line-height: 1.5; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: rgba(255, 255, 255, .55); }
-.method dd { margin: 4px 0 0; font-size: 16px; line-height: 1.5; font-weight: 500; color: var(--ink); }
+.method dt { font-size: 13px; line-height: 1.5; color: var(--text); }
+.method dd { margin: 4px 0 0; font-size: 15px; line-height: 1.55; color: var(--ink); }
+
+/* Month timetable: clipped to the coming days until "Show the full timetable" (city.js adds .clip and
+   reveals the button, so without script the whole month shows). */
+.v-clip.clip { max-height: 560px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+.v-clip.clip tr.past { display: none; }
+.seo .card:has(.v-clip.clip) .tt-float { display: none !important; }
+.v-more-btn {
+  display: inline-flex; align-items: center; min-height: 44px; margin: 4px 0 0; padding: 0;
+  border: 0; background: none; color: var(--ink); cursor: pointer;
+  font: 400 15px/1 'Poppins', sans-serif;
+  text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 5px;
+}
+.v-more-btn:hover { text-decoration-color: currentColor; }
+.v-more-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+.seo .table-note { margin: 14px 0 0; font-size: 13px; line-height: 1.6; }
+
+/* Prayer rows: heading and today's time, the answer always visible, the rest folded. */
+.v-fold { border-top: 1px solid var(--rule); padding-top: 20px; }
+.v-fold:last-child { border-bottom: 1px solid var(--rule); }
+.v-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin: 0 0 8px; }
+.seo .v-head h2 { margin: 0; font-size: 18px; line-height: 1.3; letter-spacing: -.01em; }
+.v-t { flex: none; color: var(--ink); font-size: 18px; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.seo .v-fold .answer { margin: 0; font-size: 15px; line-height: 1.6; }
+.v-fold .answer [data-today] { color: var(--ink); }
+.v-more summary {
+  display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  min-height: 48px; padding: 4px 0 8px;
+  list-style: none; cursor: pointer;
+  font-size: 14px; line-height: 1.4; color: var(--text);
+}
+.v-more summary::-webkit-details-marker { display: none; }
+.v-more summary::after { content: '+'; flex: none; font-size: 20px; font-weight: 300; line-height: 1; }
+.v-more[open] summary::after { content: '\2212'; }
+.v-more summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
+.seo .v-more p { margin: 0 0 12px; font-size: 15px; line-height: 1.6; }
+.v-more > :last-child { margin-bottom: 20px; }
+.seo .fajr-week { min-width: 0; margin: 4px 0 20px; }
+.seo .fajr-week th, .seo .fajr-week td { padding: 11px 0; }
+.seo .fajr-week th[scope="row"], .seo .fajr-week thead th:first-child { position: static; padding-left: 0; }
+.seo .fajr-week tbody tr:last-child th, .seo .fajr-week tbody tr:last-child td { border-bottom: 1px solid var(--rule); }
 
 /* Mosques: name, address, athan/jamaat grid */
 .mosques { list-style: none; margin: 0; padding: 0; }
 .mosques li { padding: 24px 0; border-bottom: 1px solid var(--rule); }
 .mosques li:first-child { padding-top: 4px; }
-.seo .mosques h3 { margin: 0 0 2px; font-size: 16px; line-height: 1.45; font-weight: 500; }
-.mosques h3 a { text-decoration: none; color: #FFFFFF; }
+.seo .mosques h3 { margin: 0 0 2px; font-size: 16px; line-height: 1.45; }
+.mosques h3 a { text-decoration: none; color: var(--ink); }
 .seo .mosques .addr { margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: var(--text); }
 .mtimes {
   width: 100%; border-collapse: collapse; table-layout: fixed;
@@ -439,8 +445,8 @@ body.theme-night .seo .card { background: var(--deep-blue); }
   font-variant-numeric: tabular-nums;
 }
 .mtimes th, .mtimes td { padding: 4px 2px; white-space: nowrap; }
-.mtimes thead th { font-size: 11px; font-weight: 500; color: var(--text); }
-.mtimes tbody th { text-align: left; font-weight: 500; font-size: 12px; color: var(--text); width: 60px; }
+.mtimes thead th { font-size: 11px; font-weight: 400; color: var(--text); }
+.mtimes tbody th { text-align: left; font-weight: 400; font-size: 12px; color: var(--text); width: 60px; }
 .mtimes tbody td { color: var(--ink); }
 .mtimes thead td:first-child { width: 60px; }
 .seo .mosques .jummah { margin: 8px 0 0; font-size: 13px; }
@@ -454,17 +460,17 @@ body.theme-night .seo .card { background: var(--deep-blue); }
   display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
   min-height: 56px; padding: 18px 0;
   list-style: none; cursor: pointer;
-  font-size: 15px; line-height: 1.45; font-weight: 500;
+  font-size: 16px; line-height: 1.45; font-weight: 400; color: var(--ink);
 }
 .faq-item summary::-webkit-details-marker { display: none; }
 .faq-item summary::after {
   content: '+'; flex: none;
-  font-size: 20px; line-height: 24.65px; color: var(--text); opacity: .8;   /* line box = the question's first line */
+  font-size: 20px; font-weight: 300; line-height: 23.2px; color: var(--text);   /* line box = the question's first line */
 }
 .faq-item[open] summary::after { content: '\2212'; }
-.faq-item summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
-.seo .faq-h { margin: 0; font-size: 17px; line-height: 1.45; font-weight: 500; letter-spacing: -.015em; color: var(--ink); }
-.faq-a p { margin: 0; padding: 4px 0 24px; font-size: 16px; line-height: 1.75; }
+.faq-item summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; border-radius: 4px; }
+.seo .faq-h { margin: 0; font-size: 16px; line-height: 1.45; font-weight: 400; color: var(--ink); }
+.faq-a p { margin: 0; padding: 4px 0 24px; font-size: 15px; line-height: 1.65; }
 @supports selector(::details-content) {
   .faq-item::details-content {
     block-size: 0; opacity: 0; overflow: hidden;
@@ -482,10 +488,10 @@ body.theme-night .seo .card { background: var(--deep-blue); }
   display: inline-block;
   padding: 8px 16px;
   border: 1px solid currentColor; border-radius: 999px;
-  color: #FFFFFF; text-decoration: none;
+  color: var(--ink); text-decoration: none;
   font-size: 15px; line-height: 1.4;
 }
-.nearby a:hover, .hub-link a:hover { background: rgba(255, 255, 255, .08); }
+.nearby a:hover, .hub-link a:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
 .seo .hub-link { display: flex; margin: 0; }   /* same 10px as the pill rows above: one group */
 
 /* ---------- Floating app banner: the /qibla page's banner (q-ab), same look and behaviour ---------- */
@@ -533,7 +539,6 @@ body.theme-night .seo .card { background: var(--deep-blue); }
   .app-banner { background: rgba(44, 44, 46, .86); box-shadow: 0 8px 30px rgba(0, 0, 0, .4), 0 0 0 .5px rgba(255, 255, 255, .1); }
   .ab-stars, .ab-meta { color: #BDBDC2; }   /* 4.5:1+ even when the dark glass sits over the white day page */
 }
-.timetable thead th { vertical-align: bottom; }
 
 /* Asr toggle: a small segmented pill (Earlier | Later) after "Asr". Equal halves, and a thumb that slides
    under the chosen one (iOS segmented-control feel) while the label colours crossfade. */
@@ -575,35 +580,15 @@ body.theme-night { --on-ink: var(--deep-blue); }
 .hl-ghost { position: absolute; list-style: none; border: 3px solid var(--ink); border-radius: 10px; pointer-events: none; }
 .row.current.hl-hidden { border-color: transparent; }
 @media (prefers-reduced-motion: reduce) { .asr-thumb, .asr-opt { transition: none; } }
-/* Content column follows the screen width: 16px gutters on phones, capped on wide screens. */
+/* Content column follows the screen width: 20px gutters on phones, capped on wide screens. */
 .seo > * { max-width: 760px; margin-left: auto; margin-right: auto; }
-.seo > nav { padding-left: 11px; }
-/* Date column stays put while times scroll: header cell sticks too, with a soft edge so times slide under it. */
-.timetable thead th:first-child { position: sticky; left: 0; z-index: 2; background: var(--deep-blue); }
-.timetable thead th:first-child, .timetable th[scope="row"] { box-shadow: 8px 0 8px -6px rgba(0, 0, 0, .45); }
 /* Column headings follow the screen while the month scrolls past: city.js floats a fixed clone of the
    thead (CSS sticky can't, the wrapper scrolls sideways). The clone stays below the app banner (z 1000). */
 .tt-float { position: fixed; top: 0; z-index: 900; overflow: hidden; pointer-events: none; display: none; will-change: transform; }
 .tt-float.on { display: block; }
 .tt-float .timetable { position: relative; min-width: 0; table-layout: fixed; }
-.tt-float .timetable thead th { background: var(--deep-blue); box-shadow: 0 1px 0 var(--rule); }
+.tt-float .timetable thead th { background: var(--surf); color: var(--text); font-size: 13px; font-weight: 400; box-shadow: 0 1px 0 var(--rule); }
 
-/* Section-heading icons: decorative, white, after the last word (joined to it so they wrap together). */
-.seo .card .h-end { white-space: nowrap; }
-/* Filled icon above each heading, left-aligned. */
-.seo .card .h-ico { display: block; width: 28px; height: 28px; margin: 0 0 14px; color: #FFFFFF; }
-
-/* Timetable note: under the card, aligned with the card's inner text edge. */
-.seo > .table-note { margin-top: 16px; margin-bottom: 0; padding: 0 24px; font-size: 13px; line-height: 1.6; color: var(--text); }
-/* FAQ: more room under the heading; questions match the answer size, in solid white. */
-.seo .card .faq-item summary { font-size: 16px; color: #FFFFFF; }
-/* Answer line: one quotable sentence, laid out as lead / date / times / meta for easy scanning. */
-.seo .card .answer > [class^="a-"] { display: block; }
-.seo .card .answer .a-lead { font-size: 18px; font-weight: 500; color: #FFFFFF; line-height: 1.4; }
-.seo .card .answer .a-date { margin-top: 4px; font-size: 14px; font-weight: 400; color: rgba(255, 255, 255, .6); }
-.seo .card .answer .a-times { margin-top: 16px; font-size: 16px; font-weight: 500; color: #FFFFFF; line-height: 1.8; font-variant-numeric: tabular-nums; }
-.seo .card .answer + .source-line { margin-top: -4px; }
-.seo .card .source-line { font-size: 13px; line-height: 1.6; color: rgba(255, 255, 255, .6); }
 /* Scroll bar: blurred strip with the current prayer + time left, shown once the header scrolls away. */
 /* iOS-style glass: the sky's top colour (--grad-1) at ~60% over a strong blur, so content shows through. */
 :root { --bar-bg: rgba(197, 223, 241, .6); }
@@ -632,12 +617,6 @@ body.theme-night { --bar-bg: rgba(3, 24, 49, .72); }   /* night: the top of the 
 .topbar .tb-time { display: inline-flex; }
 .topbar .tb-digit { display: inline-block; width: .64em; text-align: center; }
 .topbar .tb-colon { display: inline-block; width: .3em; text-align: center; }
-/* Breadcrumb sits inside the first card, above the heading. */
-.seo .card .crumbs { margin: 0 0 20px; }
-.seo .card .crumbs ol, body.theme-night .seo .card .crumbs ol { color: rgba(255, 255, 255, .55); font-size: 14px; }
-.seo .card .crumbs a:hover, .seo .card .crumbs a:focus-visible { color: #FFFFFF; }
-/* Timetable column headings: full white. */
-.seo .card .timetable thead th, .tt-float .timetable thead th { color: #FFFFFF; }
 /* Status-bar / overscroll area takes the top of the sky (Safari samples the root background). */
 html { background-color: #C5DFF1; }
 html:has(body.theme-night) { background-color: #031831; }
@@ -656,37 +635,33 @@ html { scroll-snap-type: y mandatory; }
   -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 max(var(--st), 48px));
   mask-image: linear-gradient(180deg, transparent 0, #000 max(var(--st), 48px));
 }
-/* Fajr section: compact 7-day Fajr + sunrise table, full card width, no horizontal scroll. */
-.seo .card .fajr-week { min-width: 0; margin-top: 8px; }
-.seo .card .fajr-week th[scope="row"] { padding-left: 0; box-shadow: none; position: static; }
-.seo .card .fajr-week th:last-child, .seo .card .fajr-week td:last-child { padding-right: 0; }
-.seo .card .fajr-week thead th:first-child { padding-left: 0; box-shadow: none; position: static; }
-
 /* Embed widget card: live preview, the iframe snippet and a copy button. */
-.seo .card .widget-preview { display: block; width: 100%; max-width: 320px; height: 330px; margin: 8px 0 20px; border: 0; border-radius: 14px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .14); }
-.seo .card .embed-code { margin: 0 0 16px; padding: 14px 16px; border-radius: 12px; background: rgba(255, 255, 255, .08); color: #FFFFFF; font: 400 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-all; }
+.seo .card .widget-preview { display: block; width: 100%; max-width: 320px; height: 330px; margin: 8px 0 20px; border: 0; border-radius: 14px; box-shadow: 0 0 0 1px var(--rule); }
+.seo .card .embed-code { margin: 0 0 16px; padding: 14px 16px; border-radius: 12px; background: color-mix(in srgb, currentColor 6%, transparent); color: var(--ink); font: 400 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; word-break: break-all; }
 .seo .card .copy-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 0; }
-.seo .card .copy-btn { min-height: 44px; padding: 8px 18px; border: 1px solid #FFFFFF; border-radius: 999px; background: none; color: #FFFFFF; font: 500 15px/1.4 'Poppins', sans-serif; cursor: pointer; }
-.seo .card .copy-btn:hover { background: rgba(255, 255, 255, .08); }
-.seo .card .copy-btn:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 3px; }
-.seo .card .copy-status { font-size: 14px; color: rgba(255, 255, 255, .78); }
+.seo .card .copy-btn { min-height: 44px; padding: 8px 18px; border: 1px solid currentColor; border-radius: 999px; background: none; color: var(--ink); font: 400 15px/1.4 'Poppins', sans-serif; cursor: pointer; }
+.seo .card .copy-btn:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
+.seo .card .copy-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.seo .card .copy-status { font-size: 14px; color: var(--text); }
 
-/* Desktop: no desktop layout yet, so the page stays a phone-width column with a light rail down each
-   side. --vw is the width the full-bleed parts (curve, content) break out to: the viewport on phones,
-   the column here. Gutter on both edges keeps the fixed rails and the centred body on one centre line. */
-:root { --vw: 100vw; }
-@media (min-width: 600px) {
-  :root { --vw: 430px; --rail: 12px; --frame: #C5DFF1; --surround: #EEF5FB; }
-  html:has(body.theme-night) { --frame: #1E3A5F; --surround: #021226; }
-  html { scrollbar-gutter: stable both-edges; }
-  html, html:has(body.theme-night) { background-color: var(--surround) !important; }   /* beats the inline status-bar colour city.js sets */
-  body { position: relative; max-width: 430px; margin: 0 auto; }
-  body::after {
-    content: ""; position: fixed; top: 0; bottom: 0; z-index: 940; pointer-events: none; box-sizing: border-box;
-    left: calc(50% - 215px - var(--rail)); width: calc(430px + 2 * var(--rail));
-    border-left: var(--rail) solid var(--frame); border-right: var(--rail) solid var(--frame);
-  }
-  .topbar { left: calc(50% - 215px); right: calc(50% - 215px); }
+/* Wider than a phone: no desktop layout yet, so the page stays a phone-width column with a light rail
+   down each side. No breakpoint: the column is min(viewport, 430px) at every width, so dragging a window
+   narrower shrinks it smoothly into the phone layout (the rails just slide off the edges). --vw is the
+   width the full-bleed parts (curve, content) break out to. Gutter on both edges keeps the fixed rails
+   and the centred body on one centre line. */
+:root { --vw: min(100vw, 430px); --rail: 12px; --frame: #C5DFF1; --surround: #EEF5FB; }
+html:has(body.theme-night) { --frame: #1E3A5F; --surround: #021226; }
+html { scrollbar-gutter: stable both-edges; }
+body { position: relative; max-width: 430px; margin: 0 auto; }
+body::after {
+  content: ""; position: fixed; top: 0; bottom: 0; z-index: 940; pointer-events: none; box-sizing: border-box;
+  left: calc(50% - 215px - var(--rail)); width: calc(430px + 2 * var(--rail));
+  border-left: var(--rail) solid var(--frame); border-right: var(--rail) solid var(--frame);
+}
+.topbar { left: max(0px, calc(50% - 215px)); right: max(0px, calc(50% - 215px)); }
+/* Phones keep the root colour city.js sets for the status bar; only wider screens show the surround. */
+@media (min-width: 431px) {
+  html, html:has(body.theme-night) { background-color: var(--surround) !important; }
 }
 
 /* Back-to-top circle: same glass as the top bar, shown with it, above the app banner at the column's right edge. */

@@ -202,8 +202,8 @@ describe("every city", () => {
     expect(CITIES).toHaveLength(26);
     for (const city of CITIES) {
       const { html, text } = renderPage(city);
-      const ishaCard = /<h2 id="isha">[\s\S]*?<\/div>/.exec(html)![0];
-      expect(ishaCard.trim().endsWith(`<p class="standard-isha">${city.standard.isha.replace(/&/g, "&amp;")}</p>\n    </div>`), city.slug).toBe(true);
+      const ishaCard = /<h2 id="isha">[\s\S]*?<\/details>/.exec(html)![0];
+      expect(ishaCard.trim().endsWith(`<p class="standard-isha">${city.standard.isha.replace(/&/g, "&amp;")}</p>\n    </details>`), city.slug).toBe(true);
       if (!city.standard.dialog) expect(text, city.slug).toContain(city.standard.badge);
       expect(html, city.slug).toContain(`<h2 class="std-title" id="std-title">${city.standard.name}`);
       if (timetableId(city.standard)) expect(text, city.slug).toContain("Calculated Until Published");

@@ -896,6 +896,21 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
   });
 });
 
+// Timetable: clipped to the coming days until "Show the full timetable". The server sends the whole month
+// unclipped with the button hidden, so without script nothing is cut off.
+(function () {
+  var clip = document.getElementById('tt-clip'), btn = document.getElementById('tt-more');
+  if (!clip || !btn) return;
+  clip.classList.add('clip');
+  btn.hidden = false;
+  btn.addEventListener('click', function () {
+    var open = !clip.classList.toggle('clip');
+    btn.setAttribute('aria-expanded', String(open));
+    btn.textContent = open ? 'Show less' : 'Show the full timetable';
+    window.dispatchEvent(new Event('resize'));   // the floating column headings re-measure
+  });
+})();
+
 // Timetable: the column headings float at the top of the screen while the month scrolls past, then the
 // table's last row pushes them off. A fixed clone of the thead, because the wrapper scrolls sideways
 // (which stops CSS sticky). The clone scrolls in step with the wrapper, so the date corner stays sticky.
