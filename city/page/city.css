@@ -644,24 +644,23 @@ html { scroll-snap-type: y mandatory; }
 .seo .card .copy-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .seo .card .copy-status { font-size: 14px; color: var(--text); }
 
-/* Wider than a phone: no desktop layout yet, so the page stays a phone-width column with a light rail
-   down each side. No breakpoint: the column is min(viewport, 430px) at every width, so dragging a window
-   narrower shrinks it smoothly into the phone layout (the rails just slide off the edges). --vw is the
-   width the full-bleed parts (curve, content) break out to. Gutter on both edges keeps the fixed rails
-   and the centred body on one centre line. */
-:root { --vw: min(100vw, 430px); --rail: 12px; --frame: #C5DFF1; --surround: #EEF5FB; }
+/* Wider than a phone: no desktop layout yet, so from 600px the page eases into a 430px column with a
+   light rail down each side (box-shadows on body, so they follow its width as it animates). Below 600px
+   it is the full-width phone layout. body is a size container, so the full-bleed parts (curve, content)
+   break out to its width via --vw = 100cqw and track the animation too. */
+:root { --vw: 100cqw; --rail: 12px; --frame: #C5DFF1; --surround: #EEF5FB; }
 html:has(body.theme-night) { --frame: #1E3A5F; --surround: #021226; }
 html { scrollbar-gutter: stable both-edges; }
-body { position: relative; max-width: 430px; margin: 0 auto; }
-body::after {
-  content: ""; position: fixed; top: 0; bottom: 0; z-index: 940; pointer-events: none; box-sizing: border-box;
-  left: calc(50% - 215px - var(--rail)); width: calc(430px + 2 * var(--rail));
-  border-left: var(--rail) solid var(--frame); border-right: var(--rail) solid var(--frame);
+body {
+  position: relative; max-width: 100%; margin: 0 auto; container-type: inline-size;
+  box-shadow: calc(-1 * var(--rail)) 0 0 transparent, var(--rail) 0 0 transparent;
+  transition: max-width .35s ease;   /* rails ride the body edges in from off-screen; no colour fade, so no flash when the theme sets */
 }
-.topbar { left: max(0px, calc(50% - 215px)); right: max(0px, calc(50% - 215px)); }
-/* Phones keep the root colour city.js sets for the status bar; only wider screens show the surround. */
-@media (min-width: 431px) {
-  html, html:has(body.theme-night) { background-color: var(--surround) !important; }
+@media (prefers-reduced-motion: reduce) { body { transition: none; } }
+@media (min-width: 600px) {
+  body { max-width: 430px; box-shadow: calc(-1 * var(--rail)) 0 0 var(--frame), var(--rail) 0 0 var(--frame); }
+  html, html:has(body.theme-night) { background-color: var(--surround) !important; }   /* phones keep the status-bar colour city.js sets */
+  .topbar { left: calc(50% - 215px); right: calc(50% - 215px); }
 }
 
 /* Back-to-top circle: same glass as the top bar, shown with it, above the app banner at the column's right edge. */
