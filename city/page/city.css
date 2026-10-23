@@ -601,7 +601,7 @@ body.theme-night { --on-ink: var(--deep-blue); }
 /* Scroll bar: blurred strip with the current prayer + time left, shown once the header scrolls away. */
 /* iOS-style glass: the sky's top colour (--grad-1) at ~60% over a strong blur, so content shows through. */
 :root { --bar-bg: rgba(197, 223, 241, .6); }
-body.theme-night { --bar-bg: rgba(0, 25, 62, .72); }   /* night: the cards' --deep-blue #00193E */
+body.theme-night { --bar-bg: rgba(3, 24, 49, .72); }   /* night: the top of the sky, --grad-1 #031831 */
 .topbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 950;
   height: calc(52px + var(--st));
@@ -679,3 +679,25 @@ html { scroll-snap-type: y mandatory; }
   body { position: relative; max-width: 430px; margin: 0 auto; }
   .topbar { left: calc(50% - 215px); right: calc(50% - 215px); }
 }
+
+/* Back-to-top circle: same glass as the top bar, shown with it, above the app banner at the column's right edge. */
+.to-top {
+  position: fixed; z-index: 990;
+  right: max(12px, calc(50% - var(--vw) / 2 + 12px));
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%;
+  display: none; align-items: center; justify-content: center;
+  background: var(--bar-bg); color: var(--ink);
+  -webkit-backdrop-filter: saturate(180%) blur(24px);
+  backdrop-filter: saturate(180%) blur(24px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+  cursor: pointer;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity .25s ease, transform .25s ease, display .25s allow-discrete;
+}
+.to-top.on { display: flex; opacity: 1; transform: none; }
+@starting-style { .to-top.on { opacity: 0; transform: translateY(8px); } }
+.to-top svg { width: 26px; height: 26px; fill: currentColor; }
+.to-top:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* Night: navy glass vanishes over the navy content, so a light frosted circle with a hairline. */
+body.theme-night .to-top { background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), 0 2px 10px rgba(0, 0, 0, .3); }

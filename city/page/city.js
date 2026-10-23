@@ -934,13 +934,19 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
 // scrolls up under it, so the time left stays in view anywhere on the page.
 (function () {
   var bar = document.getElementById('topbar'), pill = document.getElementById('countdown');
+  var top = document.getElementById('to-top');
   if (!bar || !pill) return;
   var on = false, queued = false;
   function update() {
     queued = false;
     var show = pill.getBoundingClientRect().bottom < bar.offsetHeight;
-    if (show !== on) { on = show; bar.classList.toggle('on', show); }
+    if (show !== on) { on = show; bar.classList.toggle('on', show); if (top) top.classList.toggle('on', show); }
   }
+  // Back-to-top circle: shows with the bar, scrolls home to the app section.
+  if (top) top.addEventListener('click', function () {
+    var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
+  });
   function queue() { if (!queued) { queued = true; requestAnimationFrame(update); } }
   window.addEventListener('scroll', queue, { passive: true });
   window.addEventListener('resize', queue, { passive: true });
