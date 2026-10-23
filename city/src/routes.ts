@@ -42,6 +42,8 @@ export const routes = {
   city: route<CityRef>(new RegExp(`^${PREFIX}/${COUNTRY}/${SLUG}/$`), cityRef, (p) => `${PREFIX}/${p.country}/${p.slug}/`),
 
   widget: route<CityRef>(new RegExp(`^${PREFIX}/${COUNTRY}/${SLUG}/widget/$`), cityRef, (p) => `${PREFIX}/${p.country}/${p.slug}/widget/`),
+
+  sitemap: route<Empty>(new RegExp(`^${PREFIX}/sitemap\\.xml$`), () => ({}), () => `${PREFIX}/sitemap.xml`),
 } as const;
 
 export type RouteName = keyof typeof routes;

@@ -7,6 +7,7 @@ A Cloudflare Worker that serves `https://thepillarsapp.com/prayer-times/{country
 | `/prayer-times/uk/london/` | the city page, rendered by the Worker |
 | `/prayer-times/uk/london/widget/` | the embeddable widget (framable, noindex) |
 | `/prayer-times/`, `/prayer-times/uk/` | noindex index pages, so every breadcrumb resolves |
+| `/prayer-times/sitemap.xml` | a sitemap of the live city pages, submitted in Search Console, because Webflow's `/sitemap.xml` cannot list them |
 | `/prayer-times/_/…` | static files: fonts, vendored adhan, the hashed client script |
 | the slashless forms | 301 to the slashed form, query kept |
 | anything else under the prefix | the Worker's own 404 |

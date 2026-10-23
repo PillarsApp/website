@@ -38,6 +38,15 @@ export function renderCountryStub(country: string, cities: readonly Link[], hub:
   return shell(`Prayer Times in ${country}`, `<p><a href="${hub.href}">${esc(hub.name)}</a></p>\n<h1>Prayer times in ${esc(country)}</h1>\n${list(cities)}`, analyticsFor(audience));
 }
 
+// Webflow's /sitemap.xml cannot list the Worker's pages, so the Worker publishes its own for Search Console.
+export function renderSitemap(urls: readonly string[]): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map((u) => `  <url><loc>${esc(u)}</loc></url>`).join("\n")}
+</urlset>
+`;
+}
+
 export function renderNotFound(hub: Link): string {
   return shell("Page not found", `<h1>Page not found</h1>\n<p><a href="${hub.href}">${esc(hub.name)}</a></p>`);
 }

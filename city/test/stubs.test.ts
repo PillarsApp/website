@@ -60,4 +60,13 @@ describe("thepillarsapp.com", () => {
     expect(hub).not.toContain("Chicago");
     expect((await get("/prayer-times/us/chicago/")).status).toBe(200);
   });
+
+  it("publishes a sitemap of the live city pages for Search Console", async () => {
+    const res = await live("/prayer-times/sitemap.xml");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/xml; charset=utf-8");
+    const xml = await res.text();
+    expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
+    expect([...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])).toEqual(["https://thepillarsapp.com/prayer-times/uk/london/"]);
+  });
 });

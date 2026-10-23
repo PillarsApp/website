@@ -3,7 +3,7 @@ import { staticRegistry, type CityRegistry } from "./registry";
 import { liveMosqueSource, noMosques, type MosqueDirectory, type MosqueSource } from "./mosques";
 import { renderCityPage } from "./render/page";
 import { renderWidget } from "./render/widget";
-import { renderHubStub, renderCountryStub, renderNotFound } from "./render/stubs";
+import { renderHubStub, renderCountryStub, renderNotFound, renderSitemap } from "./render/stubs";
 import { cityClock } from "./render/times";
 import { timetableFor } from "./timetables";
 import { CITIES, SITE } from "./cities";
@@ -80,6 +80,12 @@ const handlers: { [K in RouteName]: Handler<RouteParams<K>> } = {
         audience: audienceOf(env),
       });
     }),
+  sitemap: async ({ registry }) => {
+    const cities = (await Promise.all(registry.countries().map((c) => registry.inCountry(c.slug)))).flat();
+    return new Response(renderSitemap(cities.map((c) => SITE.origin + routes.city.href(c))), {
+      headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+    });
+  },
   widget: (call) =>
     serveCity(call, routes.widget.href(call.params), async ({ city, country, timetable, date, now }) =>
       renderWidget({ city, country, timetable, date, now, pageUrl: SITE.origin + routes.city.href(city) })),
