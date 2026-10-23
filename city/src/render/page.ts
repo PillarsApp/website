@@ -60,7 +60,7 @@ function regions(input: PageInput, clock: CityClock): Record<TemplateRegion, str
     head: head(view),
     css: `<style id="city-css">${CSS}</style>`,
     preload: preloadFonts(links),
-    chip: `<button type="button" class="chip-badge" id="chip-badge" aria-haspopup="dialog" aria-controls="std-dialog" aria-label="About these times: ${esc(city.standard.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m23 12-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82L8.6 22.5l3.4-1.47 3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z"/></svg></button>
+    chip: `<button type="button" class="chip-badge" id="chip-badge" aria-haspopup="dialog" aria-controls="std-dialog" aria-label="About these times: ${esc(city.standard.name)}">${badgeIcon("")}</button>
       <span class="chip-name" id="chip-name">${esc(city.name)} Prayer Times</span>`,
     dialog: standardDialog(view),
     date: `<div class="date-greg" id="date-greg">${clock.appDate(input.date)}</div>
@@ -249,7 +249,7 @@ function listCaption(view: View): string {
   const angles = c.fajrAngle === c.ishaAngle ? `Fajr &amp; Isha ${c.fajrAngle}°` : `Fajr ${c.fajrAngle}° · Isha ${c.ishaAngle}°`;
   const zone = `<span data-tz-name>${clock.zoneLong(today.t[2])} (${clock.zoneAbbr(today.t[2])})</span>`;
   const text = view.published
-    ? `Prayer Times based on verified ${esc(standard.name)} · <span data-origin>${originLabel(today.origin, Number(input.date.slice(0, 4)))}</span> · ${zone}`
+    ? `${badgeIcon("cap-badge")}Prayer Times based on verified ${esc(standard.name)} · <span data-origin>${originLabel(today.origin, Number(input.date.slice(0, 4)))}</span> · ${zone}`
     : standard.kind === "gps"
     ? `Based on ${esc(city.coordinatesLabel ?? city.name)} (${deg(city.lat, "N", "S")}, ${deg(city.lng, "E", "W")}) · ${methodName} · ${angles} · ${zone}`
     : `${esc(standard.name)} · ${methodName} · ${angles} · ${zone}`;
@@ -310,11 +310,24 @@ function kindParagraph(view: Ctx): string {
     : `These are the start times the ${standard.name} publishes, loaded from the timetable rather than calculated.`;
 }
 
+const BADGE_PATH = "m23 12-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82L8.6 22.5l3.4-1.47 3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z";
+// The verified badge: chip button, caption and the standard sheet all draw the same shape.
+const badgeIcon = (cls: string) => `<svg${cls ? ` class="${cls}"` : ""} viewBox="0 0 24 24" aria-hidden="true"><path d="${BADGE_PATH}"/></svg>`;
+
+// Bold the names a reader scans for: the timetable itself, the mosques that publish it, and Hanafi.
+function boldTerms(view: View, p: string): string {
+  const terms = [view.standard.name, "Hanafi"].map(esc);
+  let html = esc(p).replace(/([A-Z][\w&#;']*(?: [A-Z][\w&#;']*)* Mosque(?: \([^)]*\))?)/g, "<strong>$1</strong>");
+  for (const t of terms) html = html.split(t).join(`<strong>${t}</strong>`);
+  return html.replace(/<strong>([^<]*)<strong>([^<]*)<\/strong>([^<]*)<\/strong>/g, "<strong>$1$2$3</strong>");
+}
+
 function standardDialog(view: View): string {
   return `<dialog class="std-dialog" id="std-dialog" aria-labelledby="std-title">
       <button type="button" class="std-close" id="std-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
-      <h2 class="std-title" id="std-title">${esc(view.standard.name)}</h2>
-      ${dialogParagraphs(view).map((p) => `<p>${esc(p)}</p>`).join("\n      ")}
+      <p class="std-eyebrow">Verified By Pillars</p>
+      <h2 class="std-title" id="std-title">${badgeIcon("std-badge")}<span>${esc(view.standard.name)}</span></h2>
+      ${dialogParagraphs(view).map((p) => `<p>${boldTerms(view, p)}</p>`).join("\n      ")}
     </dialog>`;
 }
 
