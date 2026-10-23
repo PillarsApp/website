@@ -21,11 +21,10 @@
   --vh: 100vh;
   --S: calc(var(--vh) - var(--st) - var(--sb));   /* SizeConfig.safeScreenHeight */
 
-  /* First view: the sky takes the app's 4/11 of the safe height, shrinking only so the
-     Isha row ends at the bottom of the screen (the floating banner may cover it; the
-     caption sits below the fold). It never drops below --sky-min, so the curve keeps its
-     arc; on very small phones the list runs below the fold instead of squashing it. */
-  --banner-reserve: calc(96px + var(--sb));
+  /* First view: the sky always takes the app's 4/11 of the safe height (never below --sky-min).
+     Nothing is squeezed to fit: where the list and caption don't fit above the banner, the
+     first screen grows and scrolls a little before the content below snaps in. */
+  --banner-reserve: calc(112px + var(--sb));   /* banner (79) + its 12px inset + a 21px gap above it */
   --row-h: 53.5px;       /* prayer_time_slot.dart: 14 + 17px Poppins line (25.5) + 14 */
   --date-gap: 20px;
   --date-h: 50px;
@@ -42,7 +41,7 @@
   --avail: calc(var(--vh) - var(--st) - var(--to-isha));
   --ov: .71;             /* content starts this far down the sky (TODAY tag sits in the curve's dip) */
   --lift: 8px;           /* curve raised towards the countdown pill */
-  --sky-h: max(var(--sky-min), min(calc(var(--S) * .41), calc(var(--avail) / var(--ov)), calc((var(--avail) - 102px) / (var(--ov) - .3333))));
+  --sky-h: max(var(--sky-min), calc(var(--S) * .41));
   --sky-b: calc(var(--st) + var(--curve-shift) + var(--sky-h));
   --curve-shift: calc(max(0px, calc(102px + var(--lift) - var(--sky-h) * .3333)) - var(--lift));
 
@@ -134,8 +133,7 @@ body.theme-night .sun { display: none; }
 }
 .screen {
   position: relative;
-  height: var(--vh);
-  min-height: 560px;
+  min-height: max(560px, var(--vh));
   display: flex; flex-direction: column;
 }
 
@@ -338,7 +336,7 @@ body.theme-night .std-eyebrow { color: rgba(255, 255, 255, .62); }
   --rule: rgba(0, 25, 62, .10);
   --surf: var(--grad-2);          /* page colour, behind the sticky date column */
   width: var(--vw); margin-left: calc(50% - var(--vw) / 2);
-  padding: 64px 20px 180px;   /* clear gap under the app replica's caption */
+  padding: 96px 20px 180px;   /* clear gap under the app replica's caption, and the glass top bar once snapped */
   font-size: 16px; line-height: 1.75;
   color: var(--text);
 }
@@ -426,6 +424,10 @@ body.theme-night .seo {
 .v-more-btn:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
 .v-more-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
 .seo .table-note { margin: 14px 0 0; font-size: 13px; line-height: 1.6; }
+.note-i { display: inline-block; width: 13px; height: 13px; margin: 0 5px 0 0; vertical-align: -2px; fill: currentColor; }
+.verified-box h2 .std-badge { margin-left: 8px; }
+/* Folded timetable: only this month shows, so only its note does. */
+.v-more-btn:not([hidden])[aria-expanded="false"] ~ .table-note ~ .table-note { display: none; }
 
 /* Prayer rows: heading and today's time, the answer always visible, the rest folded. */
 .v-fold { border-top: 1px solid var(--rule); padding-top: 20px; }

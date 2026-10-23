@@ -8,6 +8,7 @@ Flags live in `src/render/page.ts`.
 
 - **Embed widget card**: `SHOW_WIDGET_CARD`. Hidden 23 Oct 2026.
 - **Nearby cities card**: `SHOW_NEARBY_CARD`. Hidden 23 Oct 2026. Its test in `test/page.test.ts` is skipped.
+- **"Verified by Pillars" box**: `SHOW_VERIFIED_BOX`. A card at the end of the page with the timetable name, the badge, one line on what it means and a "How We Verify" button that opens the verified sheet. Only for cities that follow a published timetable. Hidden 23 Oct 2026.
 - **Breadcrumb hub and country links, plus BreadcrumbList schema**: `HUBS_LIVE`. Turn this on once the `/prayer-times/` and `/prayer-times/uk/` hub pages exist.
 
 ## Not built yet
