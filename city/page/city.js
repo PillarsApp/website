@@ -831,14 +831,14 @@
     });
     if (city.mosques) tool({
       name: 'get_jumuah_and_mosques',
-      description: 'Mosques in ' + city.place + ' listed on this page with their jama\'ah (iqamah) times and Jumu\'ah times, plus the next Friday\'s Dhuhr start time. If placeholder is true the mosques and times are dummy layout data, not real.',
+      description: 'Mosques in ' + city.place + ' listed on this page with their jama\'ah (iqamah) times and Jumu\'ah times, plus the next Friday\'s Dhuhr start time.',
       inputSchema: noArgs,
       annotations: { readOnlyHint: true },
       execute: async function () {
         var fri = todayYmd;
         while (dateObj(fri).getUTCDay() !== 5) fri = addDays(fri, 1);
         return JSON.stringify({
-          city: city.place, placeholder: !!city.mosquesPlaceholder, mosque_times_date: city.mosquesDate,
+          city: city.place, mosque_times_date: city.mosquesDate,
           next_friday: { date: fri, dhuhr_starts: formatTime(dayFor(fri).base[2]) },
           mosques: city.mosques
         });

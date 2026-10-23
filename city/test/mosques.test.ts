@@ -166,4 +166,10 @@ describe("no placeholders in the Worker", () => {
     }
   });
 
+  it("never tells agents the mosque data might be dummy", () => {
+    const client = Object.values(import.meta.glob("../page/city.js", { query: "?raw", import: "default", eager: true }) as Record<string, string>);
+    expect(client).toHaveLength(1);
+    expect(client[0]).not.toMatch(/placeholder|dummy/i);
+  });
+
 });
