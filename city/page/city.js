@@ -738,14 +738,14 @@
     label();
     body.appendChild(dbg);
   }
-  on('chip', 'click', function (e) {
-    if (e.target.closest && e.target.closest('#chip-badge')) return;
-    if (selected !== todayYmd) { selected = todayYmd; render(); }
-  });
-  // The badge opens the standard dialog. showModal gives Escape, a backdrop and focus return for free;
-  // a click on the backdrop closes it too.
+  // Anywhere on the chip opens the standard dialog, except on another day, where the chip goes back to
+  // today first. showModal gives Escape, a backdrop and focus return for free; a click on the backdrop closes it too.
   var dialog = $('std-dialog');
-  on('chip-badge', 'click', function () { if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', ''); });
+  on('chip', 'click', function (e) {
+    var onBadge = e.target.closest && e.target.closest('#chip-badge');
+    if (selected !== todayYmd && !onBadge) { selected = todayYmd; render(); return; }
+    if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
+  });
   on('std-dialog', 'click', function (e) { if (e.target === dialog) dialog.close(); });
   on('std-close', 'click', function () { if (dialog.close) dialog.close(); else dialog.removeAttribute('open'); });
   on('list', 'click', function (e) {

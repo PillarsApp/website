@@ -207,7 +207,7 @@ body.theme-night .tree { display: none; }
   -webkit-text-stroke-width: .45px;
   background: none;
   white-space: nowrap;
-  cursor: default;
+  cursor: pointer;
 }
 .chip-today { color: var(--chip-today); white-space: pre; }
 /* Badge before the city name, in the city colour (navy by day, gold at night): a button that opens the
@@ -251,7 +251,7 @@ body.theme-night .std-close { background: rgba(255, 255, 255, .12); }
 body.theme-night .std-close:hover { background: rgba(255, 255, 255, .18); }
 .std-close:focus { outline: none; }
 .std-close:focus-visible { box-shadow: 0 0 0 2px currentColor; }
-.std-eyebrow { margin: 0 40px 4px 0; font-size: 13px; line-height: 1.4; color: #6C6C70; }
+.std-eyebrow { margin: 0 40px 4px 0; font-size: 13px; line-height: 1.4; color: #6C6C70; text-transform: uppercase; letter-spacing: .04em; }
 body.theme-night .std-eyebrow { color: rgba(255, 255, 255, .62); }
 .std-title { display: flex; align-items: center; gap: 8px; margin: 0 40px 14px 0; font-size: 19px; line-height: 1.3; font-weight: 500; }
 .std-badge { width: 20px; height: 20px; flex: none; fill: currentColor; }
