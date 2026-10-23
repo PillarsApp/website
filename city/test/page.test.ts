@@ -76,6 +76,12 @@ describe("London page", () => {
     }
   });
 
+  it("offers the date form as a WebMCP tool Chrome can run without a submit button", () => {
+    const form = /<form id="date-form"[^>]*>/.exec(template)![0];
+    expect(form).toContain('toolname="show_prayer_times_for_date"');
+    expect(form).toContain("toolautosubmit");
+  });
+
   it("answers an unknown city or country with the Worker's 404", async () => {
     for (const path of ["/prayer-times/uk/narnia/", "/prayer-times/zz/london/", "/prayer-times/ca/london/"]) {
       expect((await fetchWith(path, deps(DOWN))).status, path).toBe(404);
