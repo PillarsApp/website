@@ -706,7 +706,7 @@
     var modes = ['auto', 'day', 'night'];
     var label = function () { dbg.textContent = 'Theme: ' + (params.get('theme') || 'auto'); };
     dbg.type = 'button';
-    dbg.style.cssText = 'position:fixed;bottom:calc(96px + env(safe-area-inset-bottom));left:8px;z-index:2000;padding:6px 10px;border:0;border-radius:8px;background:#FF3B30;color:#FFF;font:600 12px Poppins,sans-serif;cursor:pointer';
+    dbg.style.cssText = 'position:fixed;bottom:calc(96px + env(safe-area-inset-bottom));left:8px;z-index:2000;padding:6px 10px;border:0;border-radius:8px;background:#C4001A;color:#FFF;font:600 12px Poppins,sans-serif;cursor:pointer';
     dbg.addEventListener('click', function () {
       var next = modes[(modes.indexOf(params.get('theme') || 'auto') + 1) % modes.length];
       if (next === 'auto') params.delete('theme'); else params.set('theme', next);
