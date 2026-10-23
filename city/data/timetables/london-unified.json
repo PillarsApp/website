@@ -6,7 +6,7 @@
     "https://www.londonprayertimes.com/api/times/?format=json&24hours=true&year=2026",
     "https://londonsalahtimes.com/downloads/LUPT-2027.xlsx"
   ],
-  "retrieved": "2026-10-22",
+  "retrieved": "2026-10-23",
   "zone": "Europe/London",
   "corrections": [],
   "days": {

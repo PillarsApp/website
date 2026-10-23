@@ -5,7 +5,7 @@
   "sources": [
     "https://centralmosque.co.uk/?rest_route=/dpt/v1/prayertime&filter=year"
   ],
-  "retrieved": "2026-10-22",
+  "retrieved": "2026-10-23",
   "zone": "Europe/London",
   "corrections": [
     {
