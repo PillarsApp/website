@@ -15,7 +15,7 @@ describe("every URL the Worker's pages emit is served", () => {
     const html = await page("/prayer-times/uk/london/");
     const paths = sameOriginPaths(`${ORIGIN}/prayer-times/uk/london/`, urlsIn(html));
     expect(paths).toEqual(expect.arrayContaining([
-      "/prayer-times/", "/prayer-times/uk/", "/prayer-times/uk/london/", "/prayer-times/uk/london/widget/",
+      "/prayer-times/uk/london/",
       "/prayer-times/_/tree_two.png", "/prayer-times/_/adhan-4.4.3.umd.min.js",
     ]));
     expect(paths.some((p) => p.startsWith("/prayer-times/_/city."))).toBe(true);

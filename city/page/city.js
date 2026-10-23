@@ -543,9 +543,9 @@
     // Trust caption: a published standard says whether the selected day's times are its own or an estimate.
     var originEl = document.querySelector('#list-caption [data-origin]');
     if (originEl) {
-      var label = day.origin === 'published' ? 'published start times'
-        : day.origin === 'last-year' ? 'estimated from its ' + (ymdParts(selected)[0] - 1) + ' timetable'
-        : 'calculated until published';
+      var label = day.origin === 'published' ? 'Published Start Times'
+        : day.origin === 'last-year' ? 'Estimated From Its ' + (ymdParts(selected)[0] - 1) + ' Timetable'
+        : 'Calculated Until Published';
       if (originEl.textContent !== label) originEl.textContent = label;
     }
     var list = $('list'), focused = list.contains(document.activeElement) && document.activeElement.getAttribute('data-asr');
@@ -714,6 +714,7 @@
   var dialog = $('std-dialog');
   on('chip-badge', 'click', function () { if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', ''); });
   on('std-dialog', 'click', function (e) { if (e.target === dialog) dialog.close(); });
+  on('std-close', 'click', function () { if (dialog.close) dialog.close(); else dialog.removeAttribute('open'); });
   on('list', 'click', function (e) {
     var b = e.target.closest && e.target.closest('[data-asr]');
     if (b) setAsr(b.getAttribute('data-asr') === 'later');
@@ -749,6 +750,18 @@
     if (timetable) out.origin = d.origin;
     return out;
   }
+  // Declarative WebMCP: the hidden date form steps the page to a day and answers with its times.
+  on('date-form', 'submit', function (e) {
+    e.preventDefault();
+    var ymd = e.target.elements.date.value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return;
+    selected = ymd; render();
+    if (e.respondWith) {
+      var out = { city: city.place, date: ymd, timezone: city.timezone, standard: city.standard }, t = timesOut(dayFor(ymd));
+      for (var k in t) out[k] = t[k];
+      e.respondWith(Promise.resolve(JSON.stringify(out)));
+    }
+  });
   var mc = document.modelContext || navigator.modelContext;
   function tool(def) {
     try { mc.registerTool(def); } catch (e) { /* tool registration is optional */ }

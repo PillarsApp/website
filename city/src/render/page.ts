@@ -61,8 +61,8 @@ function regions(input: PageInput, clock: CityClock): Record<TemplateRegion, str
     head: head(view),
     css: `<style id="city-css">${CSS}</style>`,
     preload: preloadFonts(links),
-    chip: `<span class="chip-name" id="chip-name">${esc(city.name)} Prayer Times</span>
-      <button type="button" class="chip-badge" id="chip-badge" aria-haspopup="dialog" aria-controls="std-dialog" aria-label="About these times: ${esc(city.standard.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m23 12-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82L8.6 22.5l3.4-1.47 3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z"/></svg></button>`,
+    chip: `<button type="button" class="chip-badge" id="chip-badge" aria-haspopup="dialog" aria-controls="std-dialog" aria-label="About these times: ${esc(city.standard.name)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m23 12-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82L8.6 22.5l3.4-1.47 3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z"/></svg></button>
+      <span class="chip-name" id="chip-name">${esc(city.name)} Prayer Times</span>`,
     dialog: standardDialog(view),
     date: `<div class="date-greg" id="date-greg">${clock.appDate(input.date)}</div>
         <div class="date-hijri" id="date-hijri">${clock.hijri(input.date).long}</div>`,
@@ -85,6 +85,14 @@ function timesText(view: Ctx): string {
   return PRAYERS.map((p, i) => (i === 3
     ? `Asr ${clock.time(firstAsr(view, today))} (${otherAsrLabel(view)} ${clock.time(otherAsr(view, today))})`
     : `${p.name} ${clock.time(today.t[i])}`)).join(", ");
+}
+
+// Search-snippet times: one Asr, and "Zuhr", the spelling most UK searches use.
+function shortTimesText(view: Ctx): string {
+  const { clock, today } = view;
+  return PRAYERS.map((p, i) => (i === 1 ? "" : i === 2 ? `Zuhr ${clock.time(today.t[i])}` : i === 3
+    ? `Asr ${clock.time(firstAsr(view, today))}`
+    : `${p.name} ${clock.time(today.t[i])}`)).filter(Boolean).join(", ");
 }
 
 // Timetable rows the client can reach by stepping days: from the first of last month to the end of the
@@ -111,8 +119,14 @@ function head(view: View): string {
   const url = links.canonical;
   const hubUrl = SITE.origin + links.hub;
   const countryUrl = SITE.origin + links.country;
-  const title = `${city.name} Prayer Times Today – Salah Times, Fajr to Isha | ${SITE.name}`;
-  const description = `${city.name} prayer times today, ${clock.longDate(date)}: ${timesText(view)}. Monthly timetable${view.published ? ` from ${standardRef(standard)}` : " and calculation method"}.`;
+  const { seo } = city;
+  const title = seo?.title ?? `${city.name} Prayer Times Today – Salah Times, Fajr to Isha | ${SITE.name}`;
+  const description = seo
+    ? `${city.name} prayer times today, ${clock.appDate(date)}: ${shortTimesText(view)}.${view.today.origin === "published" ? ` ${seo.descriptionTail}` : ""}`
+    : `${city.name} prayer times today, ${clock.longDate(date)}: ${timesText(view)}. Monthly timetable${view.published ? ` from ${standardRef(standard)}` : " and calculation method"}.`;
+  const shareTitle = seo?.shareTitle ?? `${city.name} Prayer Times Today`;
+  const shareDescription = seo?.shareDescription ?? description;
+  const image = seo ? { url: `${SITE.origin}${links.assets}/${seo.image.file}`, alt: seo.image.alt } : null;
   const qibla = clock.qibla();
   const live = mosques.kind === "live" ? mosques : null;
 
@@ -120,15 +134,19 @@ function head(view: View): string {
     { "@type": "Organization", "@id": SITE.organizationId, name: SITE.name, url: `${SITE.origin}/`, logo: links.logo },
     {
       "@type": "WebPage", "@id": `${url}#webpage`, url, name: title, description,
+      ...(image ? { primaryImageOfPage: { "@type": "ImageObject", url: image.url, width: 1200, height: 630 } } : {}),
       inLanguage: country.lang, datePublished: city.datePublished, dateModified: clock.isoLocal(input.now),
       publisher: { "@id": SITE.organizationId },
-      breadcrumb: { "@id": `${url}#breadcrumb` },
+      ...(HUBS_LIVE ? { breadcrumb: { "@id": `${url}#breadcrumb` } } : {}),
       about: {
         "@type": "City", name: city.name,
         geo: { "@type": "GeoCoordinates", latitude: city.lat, longitude: city.lng },
         containedInPlace: { "@type": "Country", name: country.name },
       },
     },
+  ];
+  if (HUBS_LIVE) {
+    graph.push(
     {
       "@type": "BreadcrumbList", "@id": `${url}#breadcrumb`,
       itemListElement: [
@@ -136,8 +154,9 @@ function head(view: View): string {
         { "@type": "ListItem", position: 2, name: country.name, item: countryUrl },
         { "@type": "ListItem", position: 3, name: city.name, item: url },
       ],
-    },
-  ];
+    }
+    );
+  }
   if (live && live.mosques.length) {
     graph.push({
       "@type": "ItemList", "@id": `${url}#mosques`, name: `Mosques in ${city.name}`,
@@ -173,12 +192,19 @@ ${robots}<link rel="canonical" href="${url}">
 <meta property="og:site_name" content="${SITE.name}">
 <meta property="og:locale" content="${country.lang.replace("-", "_")}">
 <meta property="og:url" content="${url}">
-<meta property="og:title" content="${esc(`${city.name} Prayer Times Today`)}">
-<meta property="og:description" content="${esc(description)}">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="${esc(`${city.name} Prayer Times Today`)}">
-<meta name="twitter:description" content="${esc(description)}">
-<script id="city-data" type="application/json">
+<meta property="og:title" content="${esc(shareTitle)}">
+<meta property="og:description" content="${esc(shareDescription)}">
+${image ? `<meta property="og:image" content="${image.url}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${esc(image.alt)}">
+` : ""}<meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}">
+<meta name="twitter:title" content="${esc(shareTitle)}">
+<meta name="twitter:description" content="${esc(shareDescription)}">
+${image ? `<meta name="twitter:image" content="${image.url}">
+<meta name="twitter:image:alt" content="${esc(image.alt)}">
+` : ""}<script id="city-data" type="application/json">
 ${jsonInScript(cityData)}
 </script>
 <script type="application/ld+json">
@@ -212,9 +238,9 @@ const deg = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(2)}�
 
 // What a day's times are, for the trust caption; page/city.js writes the same words as the visitor steps days.
 function originLabel(origin: DayOrigin, year: number): string {
-  if (origin === "published") return "published start times";
-  if (origin === "last-year") return `estimated from its ${year - 1} timetable`;
-  return "calculated until published";
+  if (origin === "published") return "Published Start Times";
+  if (origin === "last-year") return `Estimated From Its ${year - 1} Timetable`;
+  return "Calculated Until Published";
 }
 
 function listCaption(view: View): string {
@@ -224,7 +250,7 @@ function listCaption(view: View): string {
   const angles = c.fajrAngle === c.ishaAngle ? `Fajr &amp; Isha ${c.fajrAngle}°` : `Fajr ${c.fajrAngle}° · Isha ${c.ishaAngle}°`;
   const zone = `<span data-tz-name>${clock.zoneLong(today.t[2])} (${clock.zoneAbbr(today.t[2])})</span>`;
   const text = view.published
-    ? `${esc(standard.name)} · <span data-origin>${originLabel(today.origin, Number(input.date.slice(0, 4)))}</span> · ${zone}`
+    ? `Prayer Times based on verified ${esc(standard.name)} · <span data-origin>${originLabel(today.origin, Number(input.date.slice(0, 4)))}</span> · ${zone}`
     : standard.kind === "gps"
     ? `Based on ${esc(city.coordinatesLabel ?? city.name)} (${deg(city.lat, "N", "S")}, ${deg(city.lng, "E", "W")}) · ${methodName} · ${angles} · ${zone}`
     : `${esc(standard.name)} · ${methodName} · ${angles} · ${zone}`;
@@ -278,7 +304,7 @@ function kindParagraph(view: Ctx): string {
 
 function standardDialog(view: View): string {
   return `<dialog class="std-dialog" id="std-dialog" aria-labelledby="std-title">
-      <form method="dialog"><button type="submit" class="std-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></form>
+      <button type="button" class="std-close" id="std-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
       <h2 class="std-title" id="std-title">${esc(view.standard.name)}</h2>
       ${dialogParagraphs(view).map((p) => `<p>${esc(p)}</p>`).join("\n      ")}
     </dialog>`;
@@ -495,7 +521,7 @@ function methodCard(view: View): string {
     <div class="card">
     <h2>${icon("tune")}Where do ${name} prayer times come from?</h2>
     <dl class="method">
-      <div><dt>Source</dt><dd>${esc(standardRef(standard))}${retrieved}</dd></div>
+      <div><dt>Source</dt><dd>${esc(standardRef(standard).replace(/^the /, "The "))}${retrieved}</dd></div>
       <div><dt>Times</dt><dd>Published start times, not calculated.${gaps ? ` A column the timetable leaves out is calculated with the ${view.methodName} method.` : ""}</dd></div>
       <div><dt>Asr</dt><dd>${asr}</dd></div>
       <div><dt>Not yet published</dt><dd>Days the timetable does not cover yet are estimated from its previous year, moved by whole days so clock changes land right, or calculated when there is no earlier year. They are marked ${ESTIMATE_MARK}.</dd></div>
@@ -548,6 +574,15 @@ function mosqueRow(m: Mosque, clock: CityClock, hasAthan: boolean): string {
         <p class="jummah">Jumu'ah ${m.jummah.map((j) => clock.wallClock(j, false)).join(", ")}</p>` : ""}
       </li>`;
 }
+
+// London launches alone (23 Oct 2026): the hub and country pages are not public yet, so the page
+// links to neither, in markup or schema. Flip when they ship.
+const HUBS_LIVE = false;
+
+// Parked (23 Oct 2026): the embed card is hidden until we revisit it; the /widget/ route still serves.
+const SHOW_WIDGET_CARD = false;
+// Parked (23 Oct 2026): the nearby-cities card is hidden too.
+const SHOW_NEARBY_CARD = false;
 
 function widgetCard(input: PageInput): string {
   const { city, links } = input;
@@ -605,8 +640,8 @@ function seoSection(view: View): string {
     <div class="card">
       <nav class="crumbs" aria-label="Breadcrumb">
         <ol>
-          <li><a href="${links.hub}">Prayer Times</a></li>
-          <li><a href="${links.country}">${esc(country.name)}</a></li>
+          <li>${HUBS_LIVE ? `<a href="${links.hub}">Prayer Times</a>` : "Prayer Times"}</li>
+          <li>${HUBS_LIVE ? `<a href="${links.country}">${esc(country.name)}</a>` : esc(country.name)}</li>
           <li aria-current="page">${name}</li>
         </ol>
       </nav>
@@ -625,7 +660,7 @@ ${maghribCard(view)}
 ${ishaCard(view)}
 ${methodCard(view)}
 ${mosquesCard(input.mosques, clock, city.name, date)}
-${widgetCard(input)}
+${SHOW_WIDGET_CARD ? widgetCard(input) : ""}
 
     <div class="card">
     <h2>${icon("help")}Frequently asked questions</h2>
@@ -636,5 +671,5 @@ ${widgetCard(input)}
       </details>`).join("\n      ")}
     </div>
     </div>
-${nearbyCard(input)}  </section>`;
+${SHOW_NEARBY_CARD ? nearbyCard(input) : ""}  </section>`;
 }

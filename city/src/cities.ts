@@ -43,6 +43,13 @@ export const CITIES: readonly City[] = [
     lng: -0.1276,
     timezone: "Europe/London",
     datePublished: "2026-10-17",
+    seo: {
+      title: "London Prayer Times Today | Fajr, Asr, Maghrib & Isha",
+      descriptionTail: "London Unified Timetable & monthly calendar.",
+      shareTitle: "London Prayer Times Today",
+      shareDescription: "Fajr, Zuhr, Asr, Maghrib and Isha times for London from the London Unified Prayer Timetable, with a monthly calendar and local mosques.",
+      image: { file: "og-london.png", alt: "London Prayer Times by Pillars: daily Fajr to Isha times from the London Unified Prayer Timetable" },
+    },
     standard: {
       kind: "city-timetable",
       name: "London Unified Prayer Timetable",

@@ -210,10 +210,10 @@ body.theme-night .tree { display: none; }
   cursor: default;
 }
 .chip-today { color: var(--chip-today); white-space: pre; }
-/* Badge at the end of the chip, in the city colour (navy by day, gold at night): a button that opens the
+/* Badge before the city name, in the city colour (navy by day, gold at night): a button that opens the
    standard dialog. The icon is nudged so its centre sits on the cap-height centre of the Poppins text
    (measured 0.4px high otherwise); the hit area is padded out to 24px without moving the icon. */
-.chip-badge { display: inline-flex; width: 12px; height: 12px; margin: -6px -6px -6px 4px; padding: 6px; box-sizing: content-box; border: 0; background: none; color: var(--chip-city); flex: none; cursor: pointer; border-radius: 50%; }
+.chip-badge { display: inline-flex; width: 12px; height: 12px; margin: -6px -2px -6px -6px; padding: 6px; box-sizing: content-box; border: 0; background: none; color: var(--chip-city); flex: none; cursor: pointer; border-radius: 50%; }
 .chip-badge svg { width: 12px; height: 12px; fill: currentColor; transform: translateY(.4px); }
 .chip-badge:focus-visible { outline: 2px solid var(--chip-city); outline-offset: -2px; }
 .chip-name { color: var(--chip-city); white-space: pre; }
@@ -231,7 +231,7 @@ body.theme-night .tree { display: none; }
 }
 body.theme-night .std-dialog { background: var(--standard-blue); color: #FFFFFF; }
 .std-dialog::backdrop { background: rgba(0, 25, 62, .45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.std-dialog form { position: absolute; top: 8px; right: 8px; margin: 0; }
+.std-dialog .std-close { position: absolute; top: 8px; right: 8px; margin: 0; }
 .std-close { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
 .std-close svg { width: 18px; height: 18px; }
 .std-close:hover { background: rgba(127, 127, 127, .12); }
@@ -512,7 +512,7 @@ body.theme-night .seo .card { background: var(--deep-blue); }
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 /* margin-top: measured ink gap title->meta equals stars->title (1px left it ~1.6px tighter). */
-.ab-meta { margin-top: 2.6px; font-size: 13px; line-height: 1.3; color: #8E8E93; }
+.ab-meta { margin-top: 2.6px; font-size: 13px; line-height: 1.3; color: #98989E; }
 .ab-get {
   flex: none;
   min-width: 64px; padding: 7px 12px;
@@ -593,7 +593,7 @@ body.theme-night { --on-ink: var(--deep-blue); }
 /* FAQ: more room under the heading; questions match the answer size, in solid white. */
 .seo .card .faq-item summary { font-size: 16px; color: #FFFFFF; }
 /* Answer line: one quotable sentence, laid out as lead / date / times / meta for easy scanning. */
-.seo .card .answer > span:not(.sr-only) { display: block; }
+.seo .card .answer > [class^="a-"] { display: block; }
 .seo .card .answer .a-lead { font-size: 18px; font-weight: 500; color: #FFFFFF; line-height: 1.4; }
 .seo .card .answer .a-date { margin-top: 4px; font-size: 14px; font-weight: 400; color: rgba(255, 255, 255, .6); }
 .seo .card .answer .a-times { margin-top: 16px; font-size: 16px; font-weight: 500; color: #FFFFFF; line-height: 1.8; font-variant-numeric: tabular-nums; }

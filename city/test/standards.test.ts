@@ -53,7 +53,7 @@ describe("the page for a published standard", () => {
     const { html, text } = renderPage(LONDON, "2026-10-22", LONDON_SLICE);
     expect(html).toContain('<span class="t">06:00</span>');
     expect(html).toContain('<span class="t">07:34</span>');
-    expect(text).toContain("London Unified Prayer Timetable · published start times ·");
+    expect(text).toContain("Prayer Times based on verified London Unified Prayer Timetable · Published Start Times ·");
     expect(text).toContain("Times follow the London Unified Prayer Timetable");
     expect(html).not.toContain("Today's times are an estimate");
     expect(html).toMatch(/<tr data-date="2026-10-22" class="today" aria-current="date"><th scope="row">Thu 22<span/);
@@ -61,19 +61,19 @@ describe("the page for a published standard", () => {
 
   it("marks the days it had to estimate, in the month table, the week tables and the caption", () => {
     const { html, text } = renderPage(LONDON, "2026-10-30", LONDON_SLICE);
-    expect(text).toContain("London Unified Prayer Timetable · calculated until published ·");
+    expect(text).toContain("Prayer Times based on verified London Unified Prayer Timetable · Calculated Until Published ·");
     expect(text).toContain("Today's times are an estimate");
     expect(html).toMatch(/<tr data-date="2026-10-22" class="past"><th scope="row">Thu 22<span class="hj"/);
     expect(html).toMatch(/<tr data-date="2026-10-30" class="today estimate" aria-current="date"><th scope="row">Fri 30<span class="est"/);
     expect(text).toContain("* calculated until London Unified Prayer Timetable publishes these dates.");
     const { text: nextYear } = renderPage(LONDON, "2027-10-22", LONDON_SLICE);
-    expect(nextYear).toContain("estimated from its 2026 timetable");
+    expect(nextYear).toContain("Estimated From Its 2026 Timetable");
     expect(nextYear).toContain("Today's times are estimated from London Unified Prayer Timetable's 2026 timetable until it publishes 2027.");
   });
 
   it("still renders, all estimated, when the timetable file is absent", () => {
     const { html, text } = renderPage(BIRMINGHAM, "2026-10-22", null);
-    expect(text).toContain("Birmingham Central Mosque · calculated until published ·");
+    expect(text).toContain("Birmingham Central Mosque · Calculated Until Published ·");
     expect(text).toContain("Today's times are calculated until Birmingham Central Mosque publishes them.");
     expect(html).toMatch(/<tr data-date="2026-10-22" class="today estimate"/);
     expect(cityData(html).timetable).toEqual({});
@@ -154,7 +154,7 @@ describe("the badge dialog", () => {
   it("opens from the chip's badge button and closes with a labelled button", () => {
     const { html } = renderPage(LONDON, "2026-10-22", LONDON_SLICE);
     expect(html).toContain('<button type="button" class="chip-badge" id="chip-badge" aria-haspopup="dialog" aria-controls="std-dialog" aria-label="About these times: London Unified Prayer Timetable">');
-    expect(dialog(html)).toContain('<form method="dialog"><button type="submit" class="std-close" aria-label="Close">');
+    expect(dialog(html)).toContain('<button type="button" class="std-close" id="std-close" aria-label="Close">');
     expect(dialog(html)).toContain('<h2 class="std-title" id="std-title">London Unified Prayer Timetable</h2>');
   });
 
@@ -206,7 +206,7 @@ describe("every city", () => {
       expect(ishaCard.trim().endsWith(`<p class="standard-isha">${city.standard.isha.replace(/&/g, "&amp;")}</p>\n    </div>`), city.slug).toBe(true);
       if (!city.standard.dialog) expect(text, city.slug).toContain(city.standard.badge);
       expect(html, city.slug).toContain(`<h2 class="std-title" id="std-title">${city.standard.name}`);
-      if (timetableId(city.standard)) expect(text, city.slug).toContain("calculated until published");
+      if (timetableId(city.standard)) expect(text, city.slug).toContain("Calculated Until Published");
       else expect(html, city.slug).not.toContain("estimate");
     }
   });
