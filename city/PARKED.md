@@ -18,3 +18,17 @@ Flags live in `src/render/page.ts`.
 - **Hub pages**: `/prayer-times/` and a page for each country.
 - **More cities**: London is the only live city so far.
 - **US and Canada**.
+
+## SEO and indexing to-dos
+
+- **Link to London from the main site**: add a link from the homepage or footer. Google re-crawls those pages often, so this is the quickest way to get the city page indexed.
+- **Add London to `llms.txt`**: this is done by hand in Webflow. The line to add is:
+  `- [London prayer times](https://thepillarsapp.com/prayer-times/uk/london/): today's Fajr to Isha times from the London Unified Prayer Timetable, monthly calendar, local mosques`
+- **IndexNow ping**: tell Bing and others about new city pages as they go live.
+- **Share image on PR previews**: `og:image` always points at production, so a preview link shows no image until merge. Point it at the preview's own copy instead.
+
+## Clean-ups from the PR No. 10 review
+
+- **Flags are global**: `SHOW_WIDGET_CARD`, `SHOW_NEARBY_CARD` and `HUBS_LIVE` apply to every city. Make them per city once more cities go live.
+- **"Zuhr" is hardcoded**: the spelling is fixed in the SEO description for cities that have an `seo` block. Make it follow the city's own spelling.
+- **Share image filename isn't versioned**: `og-london.png` is cached for a week, so a new image takes up to a week to show. Add a version or hash to the filename.
