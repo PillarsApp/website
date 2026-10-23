@@ -231,7 +231,7 @@ body.theme-night .tree { display: none; }
 }
 body.theme-night .std-dialog { background: var(--standard-blue); color: #FFFFFF; }
 .std-dialog::backdrop { background: rgba(0, 25, 62, .45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.std-dialog form { position: absolute; top: 8px; right: 8px; margin: 0; }
+.std-dialog .std-close { position: absolute; top: 8px; right: 8px; margin: 0; }
 .std-close { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
 .std-close svg { width: 18px; height: 18px; }
 .std-close:hover { background: rgba(127, 127, 127, .12); }

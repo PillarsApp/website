@@ -154,7 +154,7 @@ describe("the badge dialog", () => {
   it("opens from the chip's badge button and closes with a labelled button", () => {
     const { html } = renderPage(LONDON, "2026-10-22", LONDON_SLICE);
     expect(html).toContain('<button type="button" class="chip-badge" id="chip-badge" aria-haspopup="dialog" aria-controls="std-dialog" aria-label="About these times: London Unified Prayer Timetable">');
-    expect(dialog(html)).toContain('<form method="dialog"><button type="submit" class="std-close" aria-label="Close">');
+    expect(dialog(html)).toContain('<button type="button" class="std-close" id="std-close" aria-label="Close">');
     expect(dialog(html)).toContain('<h2 class="std-title" id="std-title">London Unified Prayer Timetable</h2>');
   });
 

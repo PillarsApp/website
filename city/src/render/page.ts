@@ -304,7 +304,7 @@ function kindParagraph(view: Ctx): string {
 
 function standardDialog(view: View): string {
   return `<dialog class="std-dialog" id="std-dialog" aria-labelledby="std-title">
-      <form method="dialog"><button type="submit" class="std-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></form>
+      <button type="button" class="std-close" id="std-close" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
       <h2 class="std-title" id="std-title">${esc(view.standard.name)}</h2>
       ${dialogParagraphs(view).map((p) => `<p>${esc(p)}</p>`).join("\n      ")}
     </dialog>`;
