@@ -3,7 +3,7 @@
 // to finish, then prints a Markdown report of what each timetable publishes. The scripts' own output
 // goes to stderr. Exits 1 when a script failed or a timetable runs out within WARN_DAYS.
 import { spawnSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dataDir, flag } from "./lib.mjs";
@@ -17,8 +17,12 @@ const ids = readdirSync(here).filter((f) => f.endsWith(".mjs") && f !== "lib.mjs
 
 const rows = ids.map((id) => {
   console.error(`=== ${id}`);
+  const file = join(dataDir, `${id}.json`);
+  const before = readFileSync(file, "utf8");
   const ok = spawnSync(process.execPath, [join(here, `${id}.mjs`)], { stdio: ["ignore", 2, 2] }).status === 0;
-  const through = Object.keys(JSON.parse(readFileSync(join(dataDir, `${id}.json`), "utf8")).days).at(-1);
+  // A script can write its file and then fail, so a failure keeps the last good file.
+  if (!ok) writeFileSync(file, before);
+  const through = Object.keys(JSON.parse(ok ? readFileSync(file, "utf8") : before).days).at(-1);
   const left = Math.round((Date.parse(through) - Date.parse(today)) / 86400000);
   return { id, ok, through, left, attention: !ok || left < WARN_DAYS };
 });
