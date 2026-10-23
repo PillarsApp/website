@@ -151,7 +151,6 @@ body.theme-night .sun { display: none; }
   color: var(--ink);
 }
 .current-name { padding-right: 16px; text-wrap: balance; }   /* long city names wrap instead of running off */
-.current-name .dim { opacity: .5; }
 .countdown {
   margin: 10px 0 0 -7px;   /* 10px under the heading (owner's call over the app's 2); pill at the 27px edge */
   display: inline-flex; align-items: center;
@@ -171,7 +170,7 @@ body.theme-night .sun { display: none; }
    of the centred column) x the sky height. */
 .curve-box {
   position: absolute; z-index: 1;
-  top: calc(var(--st) + var(--curve-shift)); left: calc(50% - 50vw); width: 100vw;
+  top: calc(var(--st) + var(--curve-shift)); left: calc(50% - var(--vw) / 2); width: var(--vw);
   height: var(--sky-h);
   overflow: hidden;
   pointer-events: none;
@@ -214,7 +213,7 @@ body.theme-night .tree { display: none; }
    standard dialog. The icon is nudged so its centre sits on the cap-height centre of the Poppins text
    (measured 0.4px high otherwise); the hit area is padded out to 24px without moving the icon. */
 .chip-badge { display: inline-flex; width: 12px; height: 12px; margin: -6px -2px -6px -6px; padding: 6px; box-sizing: content-box; border: 0; background: none; color: var(--chip-city); flex: none; cursor: pointer; border-radius: 50%; }
-.chip-badge svg { width: 12px; height: 12px; fill: currentColor; transform: translateY(.4px); }
+.chip-badge svg { width: 12px; height: 12px; fill: currentColor; transform: translateY(-.2px); }
 .chip-badge:focus-visible { outline: 2px solid var(--chip-city); outline-offset: -2px; }
 .chip-name { color: var(--chip-city); white-space: pre; }
 
@@ -308,7 +307,7 @@ body.theme-night .std-dialog { background: var(--standard-blue); color: #FFFFFF;
   --text: rgba(0, 25, 62, .72);
   --rule: rgba(0, 25, 62, .10);
   --row-today: rgba(14, 35, 60, .05);
-  width: 100vw; margin-left: calc(50% - 50vw);
+  width: var(--vw); margin-left: calc(50% - var(--vw) / 2);
   padding: 72px 16px 160px;   /* clear gap under the app replica's caption */
   font-size: 16px; line-height: 1.75;
   color: var(--text);
@@ -665,3 +664,14 @@ html { scroll-snap-type: y mandatory; }
 .seo .card .copy-btn:hover { background: rgba(255, 255, 255, .08); }
 .seo .card .copy-btn:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 3px; }
 .seo .card .copy-status { font-size: 14px; color: rgba(255, 255, 255, .78); }
+
+/* Desktop: no desktop layout yet, so the page stays a phone-width column on a black surround.
+   --vw is the width the full-bleed parts (curve, content) break out to: the viewport on phones,
+   the column here. */
+:root { --vw: 100vw; }
+@media (min-width: 600px) {
+  :root { --vw: 430px; }
+  html, html:has(body.theme-night) { background-color: #000000 !important; }   /* beats the inline status-bar colour city.js sets */
+  body { position: relative; max-width: 430px; margin: 0 auto; }
+  .topbar { left: calc(50% - 215px); right: calc(50% - 215px); }
+}
