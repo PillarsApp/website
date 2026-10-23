@@ -1,0 +1,30 @@
+/* Back-to-top arrow, shared by /qibla and the city prayer-time pages.
+   Markup: <button type="button" class="btt" aria-label="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+   stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19V5"/>
+   <path d="M5 12l7-7 7 7"/></svg></button>
+   Toggle .is-on to show it. Centred at the bottom; a page with a floating banner sets style.bottom to sit 10px above it.
+   Dark glass by default (the Qibla look); add .btt-light on light pages. */
+.btt {
+  position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 1001;
+  display: flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; margin: 0 0 0 -26px; padding: 0; box-sizing: border-box;
+  border-radius: 50%; color: #fff; cursor: pointer;
+  background: rgba(255, 255, 255, .1);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .12);
+  opacity: 0; visibility: hidden; transform: translateY(10px);
+  transition: opacity .3s ease, transform .3s ease, visibility 0s .3s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btt.is-on { opacity: 1; visibility: visible; transform: none; transition: opacity .3s ease, transform .3s ease; }
+.btt svg { display: block; width: 24px; height: 24px; }
+.btt:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.btt-light {
+  color: #00193E; background: rgba(255, 255, 255, .72);
+  border-color: rgba(0, 25, 62, .08);
+  box-shadow: 0 10px 30px rgba(0, 25, 62, .16), inset 0 1px 0 rgba(255, 255, 255, .6);
+}
+.btt-light:focus-visible { outline-color: #00193E; }
+@media (prefers-reduced-motion: reduce) { .btt, .btt.is-on { transform: none; } }

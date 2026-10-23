@@ -222,6 +222,8 @@
     if (next !== theme) {
       theme = next;
       body.classList.toggle('theme-night', theme === 'night');
+      var btt = document.getElementById('to-top');
+      if (btt) btt.classList.toggle('btt-light', theme !== 'night');
       buildStars();
       // Status-bar colour = the top of the sky. No theme-color ships in the HTML: a static value
       // (it was night navy) is what iOS Safari painted all day. A fresh meta element per theme
@@ -976,16 +978,21 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
   function update() {
     queued = false;
     var show = pill.getBoundingClientRect().bottom < bar.offsetHeight;
-    if (show !== on) { on = show; bar.classList.toggle('on', show); if (top) top.classList.toggle('on', show); }
+    if (show !== on) { on = show; bar.classList.toggle('on', show); if (top) { top.classList.toggle('is-on', show); if (show) place(); } }
   }
-  // Back-to-top circle: shows with the bar, scrolls home to the app section.
+  // Back-to-top arrow: shows with the bar, 10px above the app banner, scrolls home to the app section.
+  var banner = document.getElementById('app-banner');
+  function place() {
+    var r = banner && banner.offsetHeight ? banner.getBoundingClientRect() : null;
+    top.style.bottom = r && r.top < innerHeight ? (innerHeight - r.top + 10) + 'px' : '';
+  }
   if (top) top.addEventListener('click', function () {
     var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
   });
   function queue() { if (!queued) { queued = true; requestAnimationFrame(update); } }
   window.addEventListener('scroll', queue, { passive: true });
-  window.addEventListener('resize', queue, { passive: true });
+  window.addEventListener('resize', function () { if (on && top) place(); queue(); }, { passive: true });
   update();
 })();
 
