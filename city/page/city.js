@@ -544,8 +544,8 @@
     var originEl = document.querySelector('#list-caption [data-origin]');
     if (originEl) {
       var label = day.origin === 'published' ? 'Published Start Times'
-        : day.origin === 'last-year' ? 'estimated from its ' + (ymdParts(selected)[0] - 1) + ' timetable'
-        : 'calculated until published';
+        : day.origin === 'last-year' ? 'Estimated From Its ' + (ymdParts(selected)[0] - 1) + ' Timetable'
+        : 'Calculated Until Published';
       if (originEl.textContent !== label) originEl.textContent = label;
     }
     var list = $('list'), focused = list.contains(document.activeElement) && document.activeElement.getAttribute('data-asr');

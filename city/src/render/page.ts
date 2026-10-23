@@ -122,7 +122,7 @@ function head(view: View): string {
   const { seo } = city;
   const title = seo?.title ?? `${city.name} Prayer Times Today â€“ Salah Times, Fajr to Isha | ${SITE.name}`;
   const description = seo
-    ? `${city.name} prayer times today, ${clock.appDate(date)}: ${shortTimesText(view)}. ${seo.descriptionTail}`
+    ? `${city.name} prayer times today, ${clock.appDate(date)}: ${shortTimesText(view)}.${view.today.origin === "published" ? ` ${seo.descriptionTail}` : ""}`
     : `${city.name} prayer times today, ${clock.longDate(date)}: ${timesText(view)}. Monthly timetable${view.published ? ` from ${standardRef(standard)}` : " and calculation method"}.`;
   const shareTitle = seo?.shareTitle ?? `${city.name} Prayer Times Today`;
   const shareDescription = seo?.shareDescription ?? description;
@@ -239,8 +239,8 @@ const deg = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(2)}Â
 // What a day's times are, for the trust caption; page/city.js writes the same words as the visitor steps days.
 function originLabel(origin: DayOrigin, year: number): string {
   if (origin === "published") return "Published Start Times";
-  if (origin === "last-year") return `estimated from its ${year - 1} timetable`;
-  return "calculated until published";
+  if (origin === "last-year") return `Estimated From Its ${year - 1} Timetable`;
+  return "Calculated Until Published";
 }
 
 function listCaption(view: View): string {
