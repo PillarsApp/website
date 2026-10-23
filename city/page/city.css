@@ -221,24 +221,45 @@ body.theme-night .tree { display: none; }
 /* The standard dialog: a small sheet in the page's colours. Native <dialog>, so Escape, the backdrop
    and focus return are the browser's. */
 .std-dialog {
-  width: min(100% - 32px, 400px); max-height: calc(100% - 32px);
-  margin: auto; padding: 22px 22px 20px;
-  border: 0; border-radius: 16px;
+  /* A bottom sheet inside the phone column: slides up, rounded top corners, blur only over the column. */
+  position: fixed; inset: auto 0 0; width: min(100%, 430px); max-width: none; max-height: 85vh;
+  margin: auto auto 0; padding: 28px 24px calc(28px + env(safe-area-inset-bottom));
+  border: 0; border-radius: 24px 24px 0 0;
   background: #FFFFFF; color: var(--deep-blue);
-  font: 400 14px/1.6 'Poppins', sans-serif;
+  font: 400 15px/1.65 'Poppins', sans-serif;
   text-align: left;
-  box-shadow: 0 12px 40px rgba(0, 25, 62, .25);
+  box-shadow: 0 -8px 40px rgba(0, 25, 62, .18);
+  transform: translateY(100%);
+  transition: transform .38s cubic-bezier(.32, .72, 0, 1), overlay .38s allow-discrete, display .38s allow-discrete;
 }
+.std-dialog[open] { transform: none; }
+@starting-style { .std-dialog[open] { transform: translateY(100%); } }
 body.theme-night .std-dialog { background: var(--standard-blue); color: #FFFFFF; }
-.std-dialog::backdrop { background: rgba(0, 25, 62, .45); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.std-dialog .std-close { position: absolute; top: 8px; right: 8px; margin: 0; }
-.std-close { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
-.std-close svg { width: 18px; height: 18px; }
-.std-close:hover { background: rgba(127, 127, 127, .12); }
-.std-close:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
-.std-title { margin: 0 36px 10px 0; font-size: 16px; line-height: 1.4; font-weight: 500; }
-.std-dialog p { margin: 0 0 10px; }
+.std-dialog::backdrop {
+  background: rgba(0, 25, 62, 0); -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0);
+  transition: background .38s ease, backdrop-filter .38s ease, -webkit-backdrop-filter .38s ease, overlay .38s allow-discrete, display .38s allow-discrete;
+}
+.std-dialog[open]::backdrop { background: rgba(0, 25, 62, .35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+@starting-style { .std-dialog[open]::backdrop { background: rgba(0, 25, 62, 0); -webkit-backdrop-filter: blur(0); backdrop-filter: blur(0); } }
+@media (min-width: 600px) { .std-dialog::backdrop { clip-path: inset(0 calc(50% - 215px)); } }   /* only the phone column */
+@media (prefers-reduced-motion: reduce) { .std-dialog, .std-dialog::backdrop { transition: none; } }
+.std-dialog .std-close { position: absolute; top: 16px; right: 16px; margin: 0; }
+.std-close { width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(0, 25, 62, .07); color: inherit; cursor: pointer; }
+body.theme-night .std-close { background: rgba(255, 255, 255, .12); }
+.std-close svg { width: 14px; height: 14px; }
+.std-close:hover { background: rgba(0, 25, 62, .12); }
+body.theme-night .std-close:hover { background: rgba(255, 255, 255, .18); }
+.std-close:focus { outline: none; }
+.std-close:focus-visible { box-shadow: 0 0 0 2px currentColor; }
+.std-eyebrow { margin: 0 40px 4px 0; font-size: 13px; line-height: 1.4; color: #6C6C70; }
+body.theme-night .std-eyebrow { color: rgba(255, 255, 255, .62); }
+.std-title { display: flex; align-items: center; gap: 8px; margin: 0 40px 14px 0; font-size: 19px; line-height: 1.3; font-weight: 500; }
+.std-badge { width: 20px; height: 20px; flex: none; fill: currentColor; }
+.std-dialog p { margin: 0 0 12px; }
 .std-dialog p:last-child { margin-bottom: 0; }
+.std-dialog strong { font-weight: 600; }
+/* Small grey badge at the start of the trust caption under the prayer list. */
+.cap-badge { width: 11px; height: 11px; margin: 0 4px 0 0; vertical-align: -1px; fill: currentColor; }
 
 /* Date row (same as the mosque page) */
 .date-row {
