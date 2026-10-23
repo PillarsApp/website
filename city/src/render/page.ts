@@ -314,6 +314,8 @@ function kindParagraph(view: Ctx): string {
 const BADGE_PATH = "m23 12-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82L8.6 22.5l3.4-1.47 3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z";
 // The verified badge: chip button, caption and the standard sheet all draw the same shape.
 const badgeIcon = (cls: string) => `<svg${cls ? ` class="${cls}"` : ""} viewBox="0 0 24 24" aria-hidden="true"><path d="${BADGE_PATH}"/></svg>`;
+// Small "i" at the start of the fine-print notes under a section.
+const INFO_ICON = `<svg class="note-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-1-13h2v2h-2zm0 4h2v6h-2z"/></svg>`;
 
 // Bold the names a reader scans for: the timetable itself, the mosques that publish it, and Hanafi.
 function boldTerms(view: View, p: string): string {
@@ -434,7 +436,7 @@ function monthTable(view: View, year: number, month: number): MonthTable {
     : `<th scope="col">${p.name}</th>`)).join("");
   return {
     label,
-    note: `<p class="table-note" id="${noteId}">${esc(city.name)} local time. Asr I: Shafi'i, Maliki, Hanbali. Asr II: Hanafi.${dstNote}${estimateNote(view, dates)}</p>`,
+    note: `<p class="table-note" id="${noteId}">${INFO_ICON}${esc(city.name)} local time. Asr I: Shafi'i, Maliki, Hanbali. Asr II: Hanafi.${dstNote}${estimateNote(view, dates)}</p>`,
     html: `<div class="table-wrap">
       <table class="timetable" aria-describedby="${noteId}">
         <caption class="sr-only">${esc(city.name)} prayer timetable, ${label}</caption>
@@ -457,7 +459,7 @@ function weekTable(view: View, caption: string, cols: readonly (readonly [string
       <tbody>${week.map((d) => `
         <tr data-date="${d}"${d === input.date ? ' class="today" aria-current="date"' : ""}><th scope="row">${dayLabel(view, d)}</th>${cols.map(([, f]) => `<td>${clock.time(f(d))}</td>`).join("")}</tr>`).join("")}
       </tbody>
-    </table>${note ? `\n    <p class="est-note">${note.trim()}</p>` : ""}`;
+    </table>${note ? `\n    <p class="est-note">${INFO_ICON}${note.trim()}</p>` : ""}`;
 }
 
 // One prayer as a ruled row: heading and today's time, the answer sentence always visible, and the
@@ -612,6 +614,20 @@ const HUBS_LIVE = false;
 const SHOW_WIDGET_CARD = false;
 // Parked (23 Oct 2026): the nearby-cities card is hidden too.
 const SHOW_NEARBY_CARD = false;
+// Parked (23 Oct 2026): a "Verified by Pillars" box at the end of the page, for cities whose times follow
+// a published timetable. Its button opens the same sheet as the badge.
+const SHOW_VERIFIED_BOX = false;
+
+function verifiedBox(view: View): string {
+  if (view.standard.kind === "gps") return "";
+  return `
+    <div class="card verified-box">
+    <p class="std-eyebrow">Verified By Pillars</p>
+    <h2><span>${esc(view.standard.name)}</span>${badgeIcon("std-badge")}</h2>
+    <p>Every time on this page is checked against the ${esc(view.standard.name)}, so it matches what your local mosques pray to.</p>
+    <button type="button" class="v-more-btn" data-open-std aria-haspopup="dialog" aria-controls="std-dialog">How We Verify</button>
+    </div>`;
+}
 
 function widgetCard(input: PageInput): string {
   const { city, links } = input;
@@ -703,5 +719,5 @@ ${SHOW_WIDGET_CARD ? widgetCard(input) : ""}
     </div>
     </div>
 ${methodCard(view)}
-${SHOW_NEARBY_CARD ? nearbyCard(input) : ""}  </section>`;
+${SHOW_NEARBY_CARD ? nearbyCard(input) : ""}${SHOW_VERIFIED_BOX ? verifiedBox(view) : ""}  </section>`;
 }

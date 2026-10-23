@@ -746,6 +746,7 @@
     if (selected !== todayYmd && !onBadge) { selected = todayYmd; render(); return; }
     if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
   });
+  document.querySelectorAll('[data-open-std]').forEach(function (b) { b.addEventListener('click', function () { if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', ''); }); });
   on('std-dialog', 'click', function (e) { if (e.target === dialog) dialog.close(); });
   on('std-close', 'click', function () { if (dialog.close) dialog.close(); else dialog.removeAttribute('open'); });
   on('list', 'click', function (e) {
