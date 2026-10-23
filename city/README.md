@@ -82,7 +82,13 @@ npm run golden    # London page against the old Node build, for two dates
 
 ## Deploy
 
-Every deploy runs the client build, `npm test` and `npm run check` first.
+Merging to `main` deploys. `.github/workflows/city.yml` runs `npm test` and `npm run check`, deploys staging, waits until the staging London page loads this build's client script, then deploys production. A merge that changes nothing under `city/` deploys nothing.
+
+Each pull request that changes `city/` gets a Preview of the staging Worker at `https://pr-<number>-city-pages-staging.omar-abb.workers.dev/prayer-times/`. The workflow comments the link on the pull request, updates the same Preview on every push and deletes it when the pull request closes. A Preview behaves like staging: noindex, no analytics, mosques from `masjid-times-prod`. Its settings are `env.staging.previews` in `wrangler.jsonc`, because a Preview inherits no vars or bindings. Pull requests from forks are tested but get no Preview.
+
+The workflow needs the repository secret `CLOUDFLARE_API_TOKEN`, a token made from the "Edit Cloudflare Workers" template for this account and the `thepillarsapp.com` zone. The production routes need the zone.
+
+To deploy by hand, run one of these. Each runs the client build, `npm test` and `npm run check` first.
 
 ```
 npm run deploy:staging       # https://city-pages-staging.omar-abb.workers.dev/prayer-times/uk/london/

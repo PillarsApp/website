@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "city-pages-dev",
+  "account_id": "abb4613e6160d72d113ac54b5f8395e7",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-01",
   "observability": { "enabled": true, "head_sampling_rate": 1 },
@@ -15,10 +16,19 @@
     "staging": {
       "name": "city-pages-staging",
       "workers_dev": true,
+      "preview_urls": true,
       "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod", "entrypoint": "MosqueDirectory" }],
       "assets": { "directory": "./public", "not_found_handling": "none" },
       "vars": {
         "ENVIRONMENT": "staging"
+      },
+      // One Preview per pull request, created by .github/workflows/city.yml.
+      // Previews inherit no vars or bindings.
+      "previews": {
+        "services": [{ "binding": "MASJID_TIMES", "service": "masjid-times-prod", "entrypoint": "MosqueDirectory" }],
+        "vars": {
+          "ENVIRONMENT": "staging"
+        }
       }
     },
     "production": {

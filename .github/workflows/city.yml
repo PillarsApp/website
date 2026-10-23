@@ -1,0 +1,112 @@
+name: City pages
+
+on:
+  push:
+    branches: [main]
+    paths: ["city/**", ".github/workflows/city.yml"]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    paths: ["city/**", ".github/workflows/city.yml"]
+
+# Deploys from main queue behind each other. A new push to a pull request
+# cancels that pull request's run in progress.
+concurrency:
+  group: city-${{ github.event.pull_request.number || 'main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: city
+
+jobs:
+  build:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: city/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run check
+
+      - name: Deploy to staging
+        if: github.event_name == 'push'
+        run: npx wrangler deploy --env staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # Until the new version reaches the edge, staging can still answer with the old one.
+      - name: Check staging serves this build
+        if: github.event_name == 'push'
+        run: |
+          bundle=$(basename public/prayer-times/_/city.*.js)
+          for _ in 1 2 3 4 5 6; do
+            curl --fail --silent --show-error https://city-pages-staging.omar-abb.workers.dev/prayer-times/uk/london/ | grep -qF "$bundle" && exit 0
+            sleep 10
+          done
+          echo "staging does not serve $bundle"
+          exit 1
+      - name: Deploy to production
+        if: github.event_name == 'push'
+        run: npx wrangler deploy --env production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # Pull requests from forks get no secrets, so they are tested but not previewed.
+      - name: Deploy the pull request preview
+        id: preview
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          npx wrangler preview --env staging --name "pr-$PR" --json > preview.out
+          # wrangler prints the asset upload log on stdout before the JSON.
+          url=$(sed -n '/^{/,$p' preview.out | jq -er '.preview.urls[0]')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Comment the preview URL
+        if: steps.preview.outputs.url
+        run: |
+          gh pr comment "$PR" --edit-last --create-if-none --body "Preview of $SHA merged into $BASE: $URL/prayer-times/"
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+          URL: ${{ steps.preview.outputs.url }}
+          GH_TOKEN: ${{ github.token }}
+
+  delete-preview:
+    if: github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: city/package-lock.json
+      - run: npm ci
+      - name: Delete the pull request preview
+        run: |
+          if ! npx wrangler preview delete --env staging --name "pr-$PR" --skip-confirmation 2> delete.err; then
+            cat delete.err
+            # A pull request closed before its first preview has none to delete.
+            grep -q "Preview not found" delete.err
+          fi
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
