@@ -115,8 +115,13 @@ export async function handleFetch(request: Request, env: Env, ctx: ExecutionCont
   if (request.method !== "GET" && request.method !== "HEAD") {
     return new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD" } });
   }
+  // The zone leaves Always Use HTTPS off, because behind Webflow's Cloudflare it can get in the way of the
+  // certificate renewal; the Worker upgrades its own paths instead, in the same hop as the slash.
+  const insecure = url.protocol === "http:" && env.ENVIRONMENT !== "dev";
   const redirect = canonicalRedirect(url.pathname);
-  if (redirect) return Response.redirect(`${url.origin}${redirect}${url.search}`, 301);
+  if (redirect || insecure) {
+    return Response.redirect(`${insecure ? `https://${url.host}` : url.origin}${redirect ?? url.pathname}${url.search}`, 301);
+  }
   for (const name of Object.keys(routes) as RouteName[]) {
     const params = routes[name].match(url.pathname);
     if (params) return (handlers[name] as Handler<unknown>)({ url, params, request, env, ctx, deps, registry: deps.registry(audienceOf(env)) });
