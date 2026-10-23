@@ -1,5 +1,6 @@
 import template from "../../page/template.html";
 import cssSource from "../../page/city.css";
+import bttCss from "../../../shared/back-to-top.css";
 import { SITE } from "../cities";
 import { timetableId } from "../timetables";
 import type { City, DayOrigin, LocalDate, Mosque, MosqueSection, PageInput, PageLinks, PrayerKey, Rendered, Standard, Timetable, TimetableDay } from "../types";
@@ -7,7 +8,7 @@ import { cityClock, PRAYERS, type CityClock, type DayTimes } from "./times";
 import { esc, fillRegions, jsonInScript, minifyCss, plainText, titleHeadings } from "./html";
 import { analyticsFor } from "./analytics";
 
-const CSS = minifyCss(cssSource);
+const CSS = minifyCss(bttCss + cssSource);
 
 export const UNAVAILABLE_RETRY_MS = 10 * 60 * 1000;
 
