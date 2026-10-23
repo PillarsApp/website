@@ -1,6 +1,7 @@
-import { SELF } from "cloudflare:test";
+import { SELF, createExecutionContext } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { DOWN, deps, fetchWith } from "./fixtures";
+import { handleFetch } from "../src/index";
+import { DOWN, deps, fetchWith, testEnv } from "./fixtures";
 
 const get = (path: string) => SELF.fetch(`https://thepillarsapp.com${path}`);
 const inProduction = (path: string) => fetchWith(path, deps(DOWN), { ENVIRONMENT: "production" });
@@ -43,5 +44,20 @@ describe("hub and country stubs", () => {
     const html = await res.text();
     expect(html).toContain('<a href="/prayer-times/">Prayer times</a>');
     expect(html).not.toContain("plausible");
+  });
+});
+
+describe("thepillarsapp.com", () => {
+  const live = (path: string) => handleFetch(new Request(`https://thepillarsapp.com${path}`), testEnv({ ENVIRONMENT: "production" }), createExecutionContext());
+
+  it("serves only the cities marked live, while staging and previews serve every city", async () => {
+    expect((await live("/prayer-times/uk/london/")).status).toBe(200);
+    for (const path of ["/prayer-times/us/chicago/", "/prayer-times/uk/luton/", "/prayer-times/uk/luton/widget/", "/prayer-times/us/", "/prayer-times/ca/"]) {
+      expect((await live(path)).status, path).toBe(404);
+    }
+    const hub = await (await live("/prayer-times/")).text();
+    expect(hub).toContain('<a href="/prayer-times/uk/london/">London</a>');
+    expect(hub).not.toContain("Chicago");
+    expect((await get("/prayer-times/us/chicago/")).status).toBe(200);
   });
 });

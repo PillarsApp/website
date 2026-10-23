@@ -12,6 +12,14 @@ describe("slashless URLs", () => {
     expect(res.headers.get("location")).toBe("https://example.com/prayer-times/uk/london/?clock=12&theme=night");
   });
 
+  it("301 plain http to https, adding the slash in the same hop", async () => {
+    for (const [path, to] of [["/prayer-times/uk/london/", "/prayer-times/uk/london/"], ["/prayer-times/uk/london?x=1", "/prayer-times/uk/london/?x=1"]]) {
+      const res = await SELF.fetch(`http://example.com${path}`, { redirect: "manual" });
+      expect(res.status, path).toBe(301);
+      expect(res.headers.get("location"), path).toBe(`https://example.com${to}`);
+    }
+  });
+
   it("redirect the hub, a country and a widget", () => {
     expect(canonicalRedirect("/prayer-times")).toBe("/prayer-times/");
     expect(canonicalRedirect("/prayer-times/uk")).toBe("/prayer-times/uk/");

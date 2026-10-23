@@ -17,7 +17,7 @@ export const DOWN: MosqueSection = { kind: "unavailable", reason: "error" };
 
 export function deps(section: MosqueSection, now: number = LONDON_NOON_OCT_22, registry: CityRegistry = staticRegistry()): Deps {
   const source: MosqueSource = { forCity: async () => section };
-  return { registry, mosqueSource: () => source, now: () => now };
+  return { registry: () => registry, mosqueSource: () => source, now: () => now };
 }
 
 // A city page rendered at noon on a date, with the visible text flattened for copy assertions.

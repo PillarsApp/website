@@ -62,6 +62,8 @@ Add one entry to `CITIES` in `src/cities.ts`, with the standard its times follow
     isha: "… lists Isha about 4 minutes later than this page." } },
 ```
 
+A city is served on thepillarsapp.com only once it has `live: true`. Staging and previews serve every city, so a page can be reviewed before it goes live. In production, a city without the flag, and a country with no live city, get the 404.
+
 A standard is `gps` (calculated), `city-timetable` or `mosque`; the last two name a `timetable` id (a file under `data/timetables/`) or `null` when the standard's own times match the calculation. `asrFirst` is the Asr the list shows by default; `badge` and `isha` are the copy in the badge dialog and at the end of the Isha card. The dialog, the source line, the trust caption, the method card and the FAQ all follow the standard, so a city needs no copy change beyond those two lines.
 
 For a published standard the clock reads the day's row from the timetable, fills any null column from the calculation, falls back to last year's row carried forward by whole days (so a clock change that moved between years lands right), and calculates when neither year is published. Every day that is not published is marked as an estimate. The client (`page/city.js`) applies the same rules to the rows the page inlines.
