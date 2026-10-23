@@ -665,13 +665,17 @@ html { scroll-snap-type: y mandatory; }
 .seo .card .copy-btn:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 3px; }
 .seo .card .copy-status { font-size: 14px; color: rgba(255, 255, 255, .78); }
 
-/* Desktop: no desktop layout yet, so the page stays a phone-width column on a black surround.
+/* Desktop: no desktop layout yet, so the page stays a phone-width column on a themed surround.
    --vw is the width the full-bleed parts (curve, content) break out to: the viewport on phones,
    the column here. */
 :root { --vw: 100vw; }
 @media (min-width: 600px) {
   :root { --vw: 430px; }
-  html, html:has(body.theme-night) { background-color: #000000 !important; }   /* beats the inline status-bar colour city.js sets */
+  /* Surround in the theme's own colours, a shade deeper than the page so the column reads as a phone:
+     day a deeper sky blue, night a near-black midnight navy. !important beats the inline
+     status-bar colour city.js sets on <html>. */
+  html { background-color: #9BBEDA !important; }
+  html:has(body.theme-night) { background-color: #010B18 !important; }
   body { position: relative; max-width: 430px; margin: 0 auto; }
   .topbar { left: calc(50% - 215px); right: calc(50% - 215px); }
 }
