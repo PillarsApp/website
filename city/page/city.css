@@ -289,6 +289,10 @@ body.theme-night .std-dialog { background: var(--standard-blue); color: #FFFFFF;
   color: var(--ink); opacity: .35;   /* same as the finished rows above it */
 }
 .row.finished > * { opacity: .35; }
+/* The Asr switch stays a readable control after Asr has passed: its row dims "Asr" by colour, not
+   opacity (opacity would fade the switch with it and fail 4.5:1 contrast). */
+.row.finished > .name:has(.asr-toggle) { opacity: 1; color: color-mix(in srgb, var(--ink) 35%, transparent); }
+.row.finished .asr-toggle { color: var(--ink); }
 .row.current {
   border: 3px solid var(--ink);
   border-radius: 10px;
@@ -504,14 +508,14 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 .ab-icon { display: block; width: 52px; height: 52px; border-radius: 12px; flex: none; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .1); }
 .ab-text { flex: 1; min-width: 0; line-height: 1.25; }
 .ab-stars, .ab-title, .ab-meta { display: block; }
-.ab-stars { display: flex; align-items: center; gap: 6px; margin: 0 0 2px; font-size: 13px; color: #8E8E93; white-space: nowrap; line-height: 1.3; }
+.ab-stars { display: flex; align-items: center; gap: 6px; margin: 0 0 2px; font-size: 13px; color: #6C6C70; white-space: nowrap; line-height: 1.3; }
 .ab-stars b { color: #FFBC91; letter-spacing: 1px; font-size: 13px; font-weight: 400; }
 .ab-title {
   font-size: clamp(14px, 4.1vw, 16.1px); line-height: 1.25; letter-spacing: -.1px; font-weight: 600;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 /* margin-top: measured ink gap title->meta equals stars->title (1px left it ~1.6px tighter). */
-.ab-meta { margin-top: 2.6px; font-size: 13px; line-height: 1.3; color: #98989E; }
+.ab-meta { margin-top: 2.6px; font-size: 13px; line-height: 1.3; color: #6C6C70; }   /* light glass: iOS secondary label, 4.5:1+ (dark mode below) */
 .ab-get {
   flex: none;
   min-width: 64px; padding: 7px 12px;
@@ -526,6 +530,7 @@ body.theme-night .seo .card { background: var(--deep-blue); }
 @media (prefers-color-scheme: dark) {
   .app-banner, .app-banner:hover, .app-banner:visited { color: #FFFFFF; }
   .app-banner { background: rgba(44, 44, 46, .86); box-shadow: 0 8px 30px rgba(0, 0, 0, .4), 0 0 0 .5px rgba(255, 255, 255, .1); }
+  .ab-stars, .ab-meta { color: #BDBDC2; }   /* 4.5:1+ even when the dark glass sits over the white day page */
 }
 .timetable thead th { vertical-align: bottom; }
 
