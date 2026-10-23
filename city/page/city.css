@@ -151,6 +151,7 @@ body.theme-night .sun { display: none; }
   color: var(--ink);
 }
 .current-name { padding-right: 16px; text-wrap: balance; }   /* long city names wrap instead of running off */
+.current-name .dim { opacity: .5; }
 .countdown {
   margin: 10px 0 0 -7px;   /* 10px under the heading (owner's call over the app's 2); pill at the 27px edge */
   display: inline-flex; align-items: center;
@@ -670,19 +671,24 @@ html { scroll-snap-type: y mandatory; }
 .seo .card .copy-btn:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 3px; }
 .seo .card .copy-status { font-size: 14px; color: rgba(255, 255, 255, .78); }
 
-/* Desktop: no desktop layout yet, so the page stays a phone-width column on a themed surround.
-   --vw is the width the full-bleed parts (curve, content) break out to: the viewport on phones,
-   the column here. */
+/* Desktop: no desktop layout yet, so the page sits inside a phone silhouette. A fixed frame with rounded
+   corners masks everything outside it with one huge box-shadow (which follows the radius); the page
+   scrolls inside. --vw is the width the full-bleed parts (curve, content) break out to: the viewport
+   on phones, the screen here. */
 :root { --vw: 100vw; }
 @media (min-width: 600px) {
-  :root { --vw: 430px; }
-  /* Surround in the theme's own colours, a shade deeper than the page so the column reads as a phone:
-     day a deeper sky blue, night a near-black midnight navy. !important beats the inline
-     status-bar colour city.js sets on <html>. */
-  html { background-color: #9BBEDA !important; }
-  html:has(body.theme-night) { background-color: #010B18 !important; }
-  body { position: relative; max-width: 430px; margin: 0 auto; }
-  .topbar { left: calc(50% - 215px); right: calc(50% - 215px); }
+  :root { --vw: 430px; --frame-pad: 24px; --frame-w: 12px; --frame: #C5DFF1; --surround: #EEF5FB; }
+  html:has(body.theme-night) { --frame: #1E3A5F; --surround: #021226; }
+  html, html:has(body.theme-night) { background-color: var(--surround) !important; }   /* beats the inline status-bar colour city.js sets */
+  body { position: relative; max-width: 430px; margin: 0 auto; padding-top: calc(var(--frame-pad) + var(--frame-w)); }
+  body::after {
+    content: ""; position: fixed; z-index: 940; pointer-events: none;
+    top: var(--frame-pad); bottom: var(--frame-pad); left: calc(50% - 215px - var(--frame-w)); width: calc(430px + 2 * var(--frame-w));
+    border: var(--frame-w) solid var(--frame); border-radius: 56px;
+    box-shadow: 0 0 0 100vmax var(--surround);
+  }
+  .topbar { top: calc(var(--frame-pad) + var(--frame-w)); left: calc(50% - 215px); right: calc(50% - 215px); border-radius: 44px 44px 0 0; }
+  .app-banner { bottom: calc(var(--frame-pad) + var(--frame-w) + 12px); }
 }
 
 /* Back-to-top circle: same glass as the top bar, shown with it, above the app banner at the column's right edge. */
@@ -706,3 +712,5 @@ html { scroll-snap-type: y mandatory; }
 .to-top:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 /* Night: navy glass vanishes over the navy content, so a light frosted circle with a hairline. */
 body.theme-night .to-top { background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), 0 2px 10px rgba(0, 0, 0, .3); }
+@media (min-width: 600px) { .to-top { bottom: calc(var(--frame-pad) + var(--frame-w) + 96px); } }   /* after the base .to-top rule */
+@media (min-width: 600px) { .screen, .seo { scroll-margin-top: calc(var(--frame-pad) + var(--frame-w)); } }   /* snap below the frame's top edge */
