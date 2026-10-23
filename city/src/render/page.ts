@@ -5,7 +5,6 @@ import { timetableId } from "../timetables";
 import type { City, DayOrigin, LocalDate, Mosque, MosqueSection, PageInput, PageLinks, PrayerKey, Rendered, Standard, Timetable, TimetableDay } from "../types";
 import { cityClock, PRAYERS, type CityClock, type DayTimes } from "./times";
 import { esc, fillRegions, jsonInScript, minifyCss, plainText, titleHeadings } from "./html";
-import { icon } from "./icons";
 import { analyticsFor } from "./analytics";
 
 const CSS = minifyCss(cssSource);
@@ -274,6 +273,15 @@ function todayList(view: Ctx): string {
     : `${p.name} ${todaySpan(clock, today, i)}`)).join(", ");
 }
 
+// The hero's times as grid cells; the text reads exactly as todayList with " · " between prayers.
+function heroTimes(view: Ctx): string {
+  const { clock, today } = view;
+  const hanafiFirst = view.standard.asrFirst === "Hanafi";
+  return PRAYERS.map((p, i) => `<span class="a-t"><span class="a-n">${p.name}</span> <span class="a-v">${i === 3
+    ? `${todaySpan(clock, today, hanafiFirst ? HANAFI_ASR : 3)} <small>(${otherAsrLabel(view)} ${todaySpan(clock, today, hanafiFirst ? 3 : HANAFI_ASR)})</small>`
+    : todaySpan(clock, today, i)}</span></span>`).join('<span class="sr-only"> · </span>');
+}
+
 // The FAQ answers "which timetable" with the same paragraphs as the badge dialog.
 function dialogParagraphs(view: Ctx): readonly string[] {
   const { standard, today, input } = view;
@@ -438,6 +446,19 @@ function weekTable(view: View, caption: string, cols: readonly (readonly [string
     </table>${note ? `\n    <p class="est-note">${note.trim()}</p>` : ""}`;
 }
 
+// One prayer as a ruled row: heading and today's time, the answer sentence always visible, and the
+// week table and longer explanation folded in a native <details> (still in the HTML for crawlers).
+function foldSection(today: DayTimes, clock: CityClock, i: number, id: string, heading: string, answer: string, prayer: string, more: string): string {
+  return `
+    <div class="v-fold">
+    <div class="v-head"><h2 id="${id}">${heading}</h2><span class="v-t" aria-hidden="true">${todaySpan(clock, today, i)}</span></div>
+    ${answer}
+    <details class="v-more">
+    <summary>More about ${prayer}</summary>${more}
+    </details>
+    </div>`;
+}
+
 function fajrCard(view: View): string {
   const { input, clock, today, standard } = view;
   const { city, date } = input;
@@ -457,12 +478,10 @@ function fajrCard(view: View): string {
     <p>Other websites may show a different Fajr time for ${name} because they calculate it from a fixed sun angle instead of taking it from the timetable. The difference is usually a few minutes, and widest in summer.</p>`
     : `<p>These times use the ${view.methodName} method, with Fajr when the sun is ${c.fajrAngle}° below the horizon${highLat}. Fajr is also often spelled Fajar.</p>
     <p>Other websites may show a different Fajr time for ${name} because they use other calculation methods: ${otherMethods}${midsummerMaxDepression(city) < c.fajrAngle ? ` The gap is widest in summer, when the sky over ${name} never gets fully dark.` : ""}</p>`;
-  return `
-    <div class="card">
-    <h2 id="fajr">${icon("wb_twilight")}Fajr time in ${name} today</h2>
-    <p class="answer">Fajr in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(0)}; sunrise is at ${td(1)}, so Fajr ends then. Tomorrow, ${clock.longDate(tomorrow)}, Fajr is at ${clock.time(clock.day(tomorrow).t[0])}.</p>
-    ${how}${week}
-    </div>`;
+  return foldSection(today, clock, 0, "fajr", `Fajr time in ${name} today`,
+    `<p class="answer">Fajr in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(0)}; sunrise is at ${td(1)}, so Fajr ends then. Tomorrow, ${clock.longDate(tomorrow)}, Fajr is at ${clock.time(clock.day(tomorrow).t[0])}.</p>`,
+    "Fajr", `${week}
+    ${how}`);
 }
 
 function maghribCard(view: View): string {
@@ -476,13 +495,11 @@ function maghribCard(view: View): string {
   const begins = view.published
     ? "Maghrib begins once the sun has fully set, at the time the timetable lists"
     : `Maghrib begins once the sun has fully set${mAdj ? `; the ${view.methodName} method adds ${mAdj} minutes to sunset as a precaution` : ""}`;
-  return `
-    <div class="card">
-    <h2 id="maghrib">${icon("sunset")}Maghrib time in ${name} today</h2>
-    <p class="answer">Maghrib in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(4)}. This is also iftar time: when fasting, the fast is opened at Maghrib. Tomorrow, ${clock.longDate(tomorrow)}, Maghrib is at ${clock.time(clock.day(tomorrow).t[4])}.</p>
+  return foldSection(today, clock, 4, "maghrib", `Maghrib time in ${name} today`,
+    `<p class="answer">Maghrib in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(4)}. This is also iftar time: when fasting, the fast is opened at Maghrib. Tomorrow, ${clock.longDate(tomorrow)}, Maghrib is at ${clock.time(clock.day(tomorrow).t[4])}.</p>`,
+    "Maghrib", `${week}
     <p>${begins}. It lasts until Isha begins, at ${td(5)} today. It is recommended to pray it soon after it begins.</p>
-    <p>Because every calculation method works from sunset, Maghrib times for ${name} usually differ by only a few minutes between apps, websites and mosques, mostly from the precaution each one adds.</p>${week}
-    </div>`;
+    <p>Because every calculation method works from sunset, Maghrib times for ${name} usually differ by only a few minutes between apps, websites and mosques, mostly from the precaution each one adds.</p>`);
 }
 
 function ishaCard(view: View): string {
@@ -500,13 +517,11 @@ function ishaCard(view: View): string {
     <p>Isha times for ${name} differ between sites most in summer, when the sky stays light late: apps calculate Isha from a sun angle, while the timetable sets it by its own rule.</p>`
     : `<p>These times use the ${view.methodName} method, with Isha when the sun is ${c.ishaAngle}° below the horizon${highLat}. The time for Isha lasts until Fajr, and it is recommended not to delay it past the middle of the night.</p>
     <p>Isha times for ${name} differ between sites most in summer.${maxDepression < c.ishaAngle ? ` Around midsummer the sun never sinks ${c.ishaAngle}° below the horizon in ${name}, so each method falls back on a high-latitude rule, such as the middle of the night or one-seventh of the night.` : ""} Methods also use different Isha angles: ${c.method === "NorthAmerica" ? `the Muslim World League uses 17° and Karachi 18°, against ${c.ishaAngle}° here` : "the Muslim World League uses 17°, ISNA 15° and Karachi 18°"}, while Umm al-Qura sets Isha 90 minutes after Maghrib.</p>`;
-  return `
-    <div class="card">
-    <h2 id="isha">${icon("bedtime")}Isha time in ${name} today</h2>
-    <p class="answer">Isha in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(5)}. Tomorrow, ${clock.longDate(tomorrow)}, Isha is at ${clock.time(clock.day(tomorrow).t[5])}.</p>
-    ${how}${week}
-    <p class="standard-isha">${esc(standard.isha)}</p>
-    </div>`;
+  return foldSection(today, clock, 5, "isha", `Isha time in ${name} today`,
+    `<p class="answer">Isha in ${name} today, <span data-today-date>${clock.longDate(date)}</span>, is at ${td(5)}. Tomorrow, ${clock.longDate(tomorrow)}, Isha is at ${clock.time(clock.day(tomorrow).t[5])}.</p>`,
+    "Isha", `${week}
+    ${how}
+    <p class="standard-isha">${esc(standard.isha)}</p>`);
 }
 
 function methodCard(view: View): string {
@@ -519,7 +534,7 @@ function methodCard(view: View): string {
     const gaps = input.timetable && Object.values(input.timetable.days).some((row) => row.includes(null));
     return `
     <div class="card">
-    <h2>${icon("tune")}Where do ${name} prayer times come from?</h2>
+    <h2>Where do ${name} prayer times come from?</h2>
     <dl class="method">
       <div><dt>Source</dt><dd>${esc(standardRef(standard).replace(/^the /, "The "))}${retrieved}</dd></div>
       <div><dt>Times</dt><dd>Published start times, not calculated.${gaps ? ` A column the timetable leaves out is calculated with the ${view.methodName} method.` : ""}</dd></div>
@@ -531,7 +546,7 @@ function methodCard(view: View): string {
   const adj = c.adjustments.map((a) => `${a.prayer} ${a.minutes > 0 ? "+" : ""}${a.minutes} min`).join(", ");
   return `
     <div class="card">
-    <h2>${icon("tune")}How are ${name} prayer times calculated?</h2>
+    <h2>How are ${name} prayer times calculated?</h2>
     <dl class="method">${standard.kind === "gps" ? "" : `
       <div><dt>Standard</dt><dd>${esc(standard.name)}</dd></div>`}
       <div><dt>Method</dt><dd>${view.methodName}</dd></div>
@@ -551,7 +566,7 @@ function mosquesCard(section: MosqueSection, clock: CityClock, cityName: string,
   const hasAthan = section.mosques.some((m) => MOSQUE_COLUMNS.some((p) => m.athan[p.key]));
   return `
     <div class="card">
-    <h2 id="mosques">${icon("mosque")}Mosques in ${esc(cityName)} — Jama'ah times</h2>
+    <h2 id="mosques">Mosques in ${esc(cityName)} — Jama'ah times</h2>
     <p>${hasAthan ? "Start (athan) and jama'ah" : "Jama'ah"} (congregation) times for ${clock.longDate(date)}, as published by each mosque. Mosques set their own times, so check with the mosque before you go.</p>
     <ul class="mosques">
       ${section.mosques.map((m) => mosqueRow(m, clock, hasAthan)).join("\n      ")}
@@ -589,7 +604,7 @@ function widgetCard(input: PageInput): string {
   const embedCode = `<iframe src="${links.widgetEmbed}" title="${city.name} prayer times" width="320" height="330" style="border:0;max-width:100%" loading="lazy"></iframe>`;
   return `
     <div class="card">
-    <h2 id="widget">${icon("code")}Add ${esc(city.name)} prayer times to your website</h2>
+    <h2 id="widget">Add ${esc(city.name)} prayer times to your website</h2>
     <p>Mosques, schools and community websites can show today's ${esc(city.name)} prayer times with this free widget. Paste the code into any page: it updates every day, works in light and dark mode and loads nothing from third parties.</p>
     <iframe class="widget-preview" src="${links.widgetPreview}" title="${esc(city.name)} prayer times widget preview" width="320" height="330" loading="lazy"></iframe>
     <pre class="embed-code"><code id="embed-code">${esc(embedCode)}</code></pre>
@@ -602,7 +617,7 @@ function nearbyCard(input: PageInput): string {
   if (!links.nearby.length) return "";
   return `
     <div class="card">
-    <h2>${icon("location_on")}Prayer times near ${esc(city.name)}</h2>
+    <h2>Prayer times near ${esc(city.name)}</h2>
     <ul class="nearby">
       ${links.nearby.map((n) => `<li><a href="${n.href}">${esc(n.name)}</a></li>`).join("\n      ")}
     </ul>
@@ -645,25 +660,27 @@ function seoSection(view: View): string {
           <li aria-current="page">${name}</li>
         </ol>
       </nav>
-    <h1>${icon("schedule")}Prayer Times in ${name}, ${esc(country.name)}</h1>
-    <p class="answer" id="answer" data-date="${date}"><span class="a-lead">Salah (namaz) times in ${name} today</span><span class="sr-only">, </span><span class="a-date"><span data-today-date>${clock.longDate(date)}</span> · <span data-today-hijri>${clock.hijri(date).long}</span></span><span class="sr-only">: </span><span class="a-times">${todayList(view).split(", ").join(" · ")}</span><span class="sr-only">. </span></p>
+    <h1>Prayer Times in ${name}, ${esc(country.name)}</h1>
+    <p class="answer" id="answer" data-date="${date}"><span class="a-lead">Salah (namaz) times in ${name} today</span><span class="sr-only">, </span><span class="a-date"><span data-today-date>${clock.longDate(date)}</span> · <span data-today-hijri>${clock.hijri(date).long}</span></span><span class="sr-only">: </span><span class="a-times">${heroTimes(view)}</span><span class="sr-only">. </span></p>
     ${sourceLine(view)}
     </div>
 
     <div class="card">
-    <h2 id="timetable">${icon("calendar_month")}${name} prayer timetable | ${thisMonth.label}</h2>
+    <h2 id="timetable">${name} prayer timetable | ${thisMonth.label}</h2>
+    <div class="v-clip" id="tt-clip">
     ${thisMonth.html}${nextMonthHtml}
     </div>
+    <button type="button" class="v-more-btn" id="tt-more" aria-controls="tt-clip" aria-expanded="false" hidden>Show the full timetable</button>
     ${thisMonth.note}${nextMonthNote}
-${fajrCard(view)}
-${maghribCard(view)}
-${ishaCard(view)}
-${methodCard(view)}
+    </div>
+
+    <div class="card">${fajrCard(view)}${maghribCard(view)}${ishaCard(view)}
+    </div>
 ${mosquesCard(input.mosques, clock, city.name, date)}
 ${SHOW_WIDGET_CARD ? widgetCard(input) : ""}
 
     <div class="card">
-    <h2>${icon("help")}Frequently asked questions</h2>
+    <h2>Frequently asked questions</h2>
     <div class="faq">
       ${view.faq.map((f) => `<details class="faq-item" name="faq">
         <summary><h3 class="faq-h">${esc(f.question)}</h3></summary>
@@ -671,5 +688,6 @@ ${SHOW_WIDGET_CARD ? widgetCard(input) : ""}
       </details>`).join("\n      ")}
     </div>
     </div>
+${methodCard(view)}
 ${SHOW_NEARBY_CARD ? nearbyCard(input) : ""}  </section>`;
 }
