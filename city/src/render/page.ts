@@ -670,7 +670,7 @@ function seoSection(view: View): string {
     <div class="v-clip" id="tt-clip">
     ${thisMonth.html}${nextMonthHtml}
     </div>
-    <button type="button" class="v-more-btn" id="tt-more" aria-controls="tt-clip" aria-expanded="false" hidden>Show the full timetable</button>
+    <button type="button" class="v-more-btn" id="tt-more" aria-controls="tt-clip" aria-expanded="false" hidden>Show the Full ${esc(thisMonth.label.split(" ")[0])} Timetable</button>
     ${thisMonth.note}${nextMonthNote}
     </div>
 

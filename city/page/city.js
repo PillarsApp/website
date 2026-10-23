@@ -903,10 +903,11 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
   if (!clip || !btn) return;
   clip.classList.add('clip');
   btn.hidden = false;
+  var label = btn.textContent;   // "Show the Full <Month> Timetable", from the server
   btn.addEventListener('click', function () {
     var open = !clip.classList.toggle('clip');
     btn.setAttribute('aria-expanded', String(open));
-    btn.textContent = open ? 'Show less' : 'Show the full timetable';
+    btn.textContent = open ? 'Show Less' : label;
     window.dispatchEvent(new Event('resize'));   // the floating column headings re-measure
   });
 })();
