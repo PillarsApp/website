@@ -612,8 +612,6 @@ const HUBS_LIVE = false;
 
 // Parked (23 Oct 2026): the embed card is hidden until we revisit it; the /widget/ route still serves.
 const SHOW_WIDGET_CARD = false;
-// Parked (23 Oct 2026): the nearby-cities card is hidden too.
-const SHOW_NEARBY_CARD = false;
 // Parked (23 Oct 2026): a "Verified by Pillars" box at the end of the page, for cities whose times follow
 // a published timetable. Its button opens the same sheet as the badge.
 const SHOW_VERIFIED_BOX = false;
@@ -650,8 +648,8 @@ function nearbyCard(input: PageInput): string {
     <h2>Prayer times near ${esc(city.name)}</h2>
     <ul class="nearby">
       ${links.nearby.map((n) => `<li><a href="${n.href}">${esc(n.name)}</a></li>`).join("\n      ")}
-    </ul>
-    <p class="hub-link"><a href="${links.country}">All prayer times in ${esc(country.name)}</a></p>
+    </ul>${HUBS_LIVE ? `
+    <p class="hub-link"><a href="${links.country}">All prayer times in ${esc(country.name)}</a></p>` : ""}
     </div>
 `;
 }
@@ -719,5 +717,5 @@ ${SHOW_WIDGET_CARD ? widgetCard(input) : ""}
     </div>
     </div>
 ${methodCard(view)}
-${SHOW_NEARBY_CARD ? nearbyCard(input) : ""}${SHOW_VERIFIED_BOX ? verifiedBox(view) : ""}  </section>`;
+${nearbyCard(input)}${SHOW_VERIFIED_BOX ? verifiedBox(view) : ""}  </section>`;
 }

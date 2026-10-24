@@ -93,12 +93,12 @@ describe("London page", () => {
     expect(renderCityPage(input).html).not.toContain('class="nearby"');
   });
 
-  // Parked with the nearby-cities card (SHOW_NEARBY_CARD in src/render/page.ts); unskip when it returns.
-  it.skip("lists nearby cities from the registry when the country has more", () => {
+  it("lists nearby cities from the registry when the country has more", () => {
     const luton = { ...london, slug: "luton", name: "Luton", lat: 51.88, lng: -0.42 };
     const input = { city: london, country: COUNTRIES.uk, timetable: null, date: "2026-10-22" as const, now: LONDON_NOON_OCT_22, mosques: DOWN, links: linksFor(london, [luton]), audience: "public" as const };
     const html = renderCityPage(input).html;
     expect(html).toContain('<li><a href="/prayer-times/uk/luton/">Luton</a></li>');
+    expect(html).not.toContain('All prayer times in');
   });
 });
 
