@@ -924,9 +924,12 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
   btn.hidden = false;
   var label = btn.textContent;   // "Show the Full <Month> Timetable", from the server
   btn.addEventListener('click', function () {
+    var before = btn.getBoundingClientRect().top;
     var open = !clip.classList.toggle('clip');
     btn.setAttribute('aria-expanded', String(open));
     btn.textContent = open ? 'Show Less' : label;
+    // Collapsing removes the month above the button; scroll with it so the button stays under the finger.
+    if (!open) window.scrollBy(0, btn.getBoundingClientRect().top - before);
     track('city_timetable_toggled', { expanded: open });
     window.dispatchEvent(new Event('resize'));   // the floating column headings re-measure
   });
