@@ -4,6 +4,19 @@
 // the curve and dots (prayer_curve_geometry.dart + prayer_painters.dart
 // TimeOfDaySineCurvePainter) and the list (prayer_time_slot.dart).
 // All times are city-local; the browser's own time zone never matters.
+
+// Named PostHog events (page/analytics.html boots PostHog on production only; anywhere else this is a no-op).
+// Every event carries the city's path, e.g. "uk/london".
+function track(name, props) {
+  try {
+    var ph = window.posthog;
+    if (!ph || !ph.capture) return;
+    var p = props || {};
+    p.city = location.pathname.replace(/^\/prayer-times\/|\/$/g, '');
+    var leaving = p.leaving; delete p.leaving;   // a tap that navigates away sends straight away
+    ph.capture(name, p, leaving ? { send_instantly: true } : undefined);
+  } catch (e) { /* analytics never breaks the page */ }
+}
 (function () {
   'use strict';
 
@@ -650,6 +663,7 @@
   }
   function setAsr(later) {
     if (later === asrLater) return;
+    track('city_asr_toggled', { asr: later ? 'later' : 'earlier' });
     var fromAsr = asrShow != null ? asrShow : dayFor(selected).t[3];   // mid-glide: start from where the dot is
     asrLater = later;
     try { localStorage.setItem(ASR_KEY, later ? 'later' : 'earlier'); } catch (e) { /* storage blocked */ }
@@ -744,9 +758,10 @@
   on('chip', 'click', function (e) {
     var onBadge = e.target.closest && e.target.closest('#chip-badge');
     if (selected !== todayYmd && !onBadge) { selected = todayYmd; render(); return; }
+    track('city_verified_sheet_opened', { source: onBadge ? 'badge' : 'chip' });
     if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', '');
   });
-  document.querySelectorAll('[data-open-std]').forEach(function (b) { b.addEventListener('click', function () { if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', ''); }); });
+  document.querySelectorAll('[data-open-std]').forEach(function (b) { b.addEventListener('click', function () { track('city_verified_sheet_opened', { source: 'box' }); if (dialog.showModal) dialog.showModal(); else dialog.setAttribute('open', ''); }); });
   on('std-dialog', 'click', function (e) { if (e.target === dialog) dialog.close(); });
   on('std-close', 'click', function () { if (dialog.close) dialog.close(); else dialog.removeAttribute('open'); });
   on('list', 'click', function (e) {
@@ -771,6 +786,7 @@
   if ($('app-banner') && /android/i.test(navigator.userAgent)) {
     $('app-banner').href = 'https://play.google.com/store/apps/details?id=com.pillars.pillars';
   }
+  on('app-banner', 'click', function () { track('city_app_banner_tapped', { store: /android/i.test(navigator.userAgent) ? 'play' : 'app_store', leaving: true }); });
 
   placeSky();
   render();
@@ -911,6 +927,7 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
     var open = !clip.classList.toggle('clip');
     btn.setAttribute('aria-expanded', String(open));
     btn.textContent = open ? 'Show Less' : label;
+    track('city_timetable_toggled', { expanded: open });
     window.dispatchEvent(new Event('resize'));   // the floating column headings re-measure
   });
 })();
@@ -998,6 +1015,7 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
     top.style.bottom = r && r.top < innerHeight ? (innerHeight - r.top + 10) + 'px' : '';
   }
   if (top) top.addEventListener('click', function () {
+    track('city_back_to_top_tapped');
     var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
   });
