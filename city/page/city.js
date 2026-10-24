@@ -768,6 +768,8 @@
   }
   if (mc && typeof mc.registerTool === 'function') {
     var noArgs = { type: 'object', properties: {}, additionalProperties: false };
+    // A published timetable's times are not a calculation method's; naming one would contradict the standard.
+    var methodOut = timetable ? undefined : city.method;
     tool({
       name: 'get_prayer_times',
       description: 'Prayer (salah) times for ' + city.place + ' on a given date: Fajr, Sunrise, Dhuhr, Asr (Shafi\'i and Hanafi), Maghrib, Isha, in local time.',
@@ -779,7 +781,7 @@
       annotations: { readOnlyHint: true },
       execute: async function (args) {
         var ymd = args && /^\d{4}-\d{2}-\d{2}$/.test(args.date || '') ? args.date : todayYmd;
-        var out = { city: city.place, date: ymd, timezone: city.timezone, standard: city.standard, method: city.method }, t = timesOut(dayFor(ymd));
+        var out = { city: city.place, date: ymd, timezone: city.timezone, standard: city.standard, method: methodOut }, t = timesOut(dayFor(ymd));
         for (var k in t) out[k] = t[k];
         return JSON.stringify(out);
       }
@@ -817,7 +819,7 @@
           for (var k in t) row[k] = t[k];
           days.push(row);
         }
-        return JSON.stringify({ city: city.place, month: m, timezone: city.timezone, standard: city.standard, method: city.method, days: days });
+        return JSON.stringify({ city: city.place, month: m, timezone: city.timezone, standard: city.standard, method: methodOut, days: days });
       }
     });
     if (city.qibla) tool({
