@@ -669,9 +669,10 @@ html { scroll-snap-type: y mandatory; }
 
 /* Wider than a phone: no desktop layout yet, so from 600px the page eases into a 430px column with a
    light rail down each side (box-shadows on body, so they follow its width as it animates). Below 600px
-   it is the full-width phone layout. From 600px body is a size container, so the full-bleed parts (curve,
-   content) break out to its width via --vw = 100cqw and track the animation too. Phones skip it: Safari 16-17
-   gave containers layout containment, which pins position: fixed children (banner, top bar) to body. */
+   it is the full-width phone layout. The full-bleed parts (curve, content) break out to body's width via
+   --vw, which city.js keeps at body.clientWidth with a ResizeObserver, so they track the animation too. No
+   size container: Safari 16-17 gave those layout containment, which pins position: fixed children to body.
+   The CSS values are only the before-script fallback. */
 :root { --vw: 100vw; --rail: 12px; --frame: #C5DFF1; --surround: #EEF5FB; }
 html:has(body.theme-night) { --frame: #1E3A5F; --surround: #021226; }
 html { scrollbar-gutter: stable both-edges; }
@@ -682,8 +683,8 @@ body {
 }
 @media (prefers-reduced-motion: reduce) { body { transition: none; } }
 @media (min-width: 600px) {
-  :root { --vw: 100cqw; }
-  body { max-width: 430px; container-type: inline-size; box-shadow: calc(-1 * var(--rail)) 0 0 var(--frame), var(--rail) 0 0 var(--frame); }
+  :root { --vw: 430px; }
+  body { max-width: 430px; box-shadow: calc(-1 * var(--rail)) 0 0 var(--frame), var(--rail) 0 0 var(--frame); }
   html, html:has(body.theme-night) { background-color: var(--surround) !important; }   /* phones keep the status-bar colour city.js sets */
   .topbar { left: calc(50% - 215px); right: calc(50% - 215px); }
 }
