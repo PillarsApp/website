@@ -969,6 +969,16 @@ document.querySelectorAll('details.faq-item').forEach(function (d, _, all) {
   remeasure();
 })();
 
+// Column width for the full-bleed parts (city.css --vw): follows body as it animates between the phone
+// and desktop layouts, and leaves out any classic scrollbar gutter.
+(function () {
+  if (!window.ResizeObserver) return;
+  var root = document.documentElement;
+  function set() { root.style.setProperty('--vw', document.body.clientWidth + 'px'); }
+  set();
+  new ResizeObserver(set).observe(document.body);
+})();
+
 // Scroll bar: a blurred strip with the current prayer and its countdown appears once the header's pill
 // scrolls up under it, so the time left stays in view anywhere on the page.
 (function () {
