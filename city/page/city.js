@@ -650,7 +650,7 @@
   }
   function setAsr(later) {
     if (later === asrLater) return;
-    var fromAsr = dayFor(selected).t[3];
+    var fromAsr = asrShow != null ? asrShow : dayFor(selected).t[3];   // mid-glide: start from where the dot is
     asrLater = later;
     try { localStorage.setItem(ASR_KEY, later ? 'later' : 'earlier'); } catch (e) { /* storage blocked */ }
     dayCache = {};

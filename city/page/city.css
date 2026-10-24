@@ -421,6 +421,7 @@ body.theme-night .seo {
   border: 1px solid var(--ink); border-radius: 999px; background: none; color: var(--ink); cursor: pointer;
   font: 500 15px/1.2 'Poppins', sans-serif;
 }
+.v-more-btn[hidden] { display: none; }
 .v-more-btn:hover { background: color-mix(in srgb, var(--ink) 8%, transparent); }
 .v-more-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
 .seo .table-note { margin: 14px 0 0; font-size: 13px; line-height: 1.6; }
@@ -668,19 +669,21 @@ html { scroll-snap-type: y mandatory; }
 
 /* Wider than a phone: no desktop layout yet, so from 600px the page eases into a 430px column with a
    light rail down each side (box-shadows on body, so they follow its width as it animates). Below 600px
-   it is the full-width phone layout. body is a size container, so the full-bleed parts (curve, content)
-   break out to its width via --vw = 100cqw and track the animation too. */
-:root { --vw: 100cqw; --rail: 12px; --frame: #C5DFF1; --surround: #EEF5FB; }
+   it is the full-width phone layout. From 600px body is a size container, so the full-bleed parts (curve,
+   content) break out to its width via --vw = 100cqw and track the animation too. Phones skip it: Safari 16-17
+   gave containers layout containment, which pins position: fixed children (banner, top bar) to body. */
+:root { --vw: 100vw; --rail: 12px; --frame: #C5DFF1; --surround: #EEF5FB; }
 html:has(body.theme-night) { --frame: #1E3A5F; --surround: #021226; }
 html { scrollbar-gutter: stable both-edges; }
 body {
-  position: relative; max-width: 100%; margin: 0 auto; container-type: inline-size;
+  position: relative; max-width: 100%; margin: 0 auto;
   box-shadow: calc(-1 * var(--rail)) 0 0 transparent, var(--rail) 0 0 transparent;
   transition: max-width .35s ease;   /* rails ride the body edges in from off-screen; no colour fade, so no flash when the theme sets */
 }
 @media (prefers-reduced-motion: reduce) { body { transition: none; } }
 @media (min-width: 600px) {
-  body { max-width: 430px; box-shadow: calc(-1 * var(--rail)) 0 0 var(--frame), var(--rail) 0 0 var(--frame); }
+  :root { --vw: 100cqw; }
+  body { max-width: 430px; container-type: inline-size; box-shadow: calc(-1 * var(--rail)) 0 0 var(--frame), var(--rail) 0 0 var(--frame); }
   html, html:has(body.theme-night) { background-color: var(--surround) !important; }   /* phones keep the status-bar colour city.js sets */
   .topbar { left: calc(50% - 215px); right: calc(50% - 215px); }
 }
